@@ -1,0 +1,14 @@
+.custom-date-picker {
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .custom-date-picker:hover {
+    background-color: #1759C4;
+  }
+  
+  .custom-date-picker:focus-within {
+    outline: none;
+    border-radius: 5px 5px 0px 0px;
+    border-bottom: 2px solid #0944A2;
+    background: #C7DDFF;
+  }

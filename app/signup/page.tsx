@@ -6,6 +6,12 @@ import { Input } from "@/components/forms/input";
 import { Label } from "@/components/forms/label";
 import { FormMessage, Message } from "@/components/forms/form-message";
 import { encodedRedirect } from "@/utils/utils";
+import dynamic from 'next/dynamic';
+
+const GoogleSignInButton = dynamic(
+  () => import('@/components/login/GoogleSingIn'),
+  { ssr: false }
+);
 
 export default function Signup({ searchParams }: { searchParams: Message }) {
   const signUp = async (formData: FormData) => {
@@ -48,7 +54,7 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
   }
 
   return (
-    <div className="w-full flex-1 flex items-center h-screen sm:max-w-md justify-center gap-2 p-4">
+    <div className="w-full flex-1 flex flex-col items-center h-screen sm:max-w-md justify-center gap-2 p-4">
       <Link
         href="/"
         className="absolute left-8 top-8 py-2 px-4 rounded-md no-underline text-foreground bg-btn-background hover:bg-btn-background-hover flex items-center group text-sm"
@@ -70,30 +76,48 @@ export default function Signup({ searchParams }: { searchParams: Message }) {
         Back
       </Link>
 
-      <form className="flex flex-col w-full justify-center gap-2 text-foreground [&>input]:mb-6 max-w-md">
-        <h1 className="text-2xl font-medium">Sign up</h1>
-        <p className="text-sm text text-foreground/60">
+      <div className="w-full max-w-md">
+        <h1 className="text-2xl font-medium mb-2">Sign up</h1>
+        <p className="text-sm text-foreground/60 mb-8">
           Already have an account?{" "}
           <Link className="text-blue-600 font-medium underline" href="/login">
             Log in
           </Link>
         </p>
-        <div className="mt-8 flex flex-col gap-2 [&>input]:mb-3">
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" placeholder="you@example.com" required />
-          <Label htmlFor="password">Password</Label>
-          <Input
-            type="password"
-            name="password"
-            placeholder="••••••••"
-            required
-          />
-          <SubmitButton formAction={signUp} pendingText="Signing up...">
-            Sign up
-          </SubmitButton>
+
+        <form className="flex flex-col w-full justify-center gap-2 text-foreground [&>input]:mb-6">
+          <div className="flex flex-col gap-2 [&>input]:mb-3">
+            <Label htmlFor="email">Email</Label>
+            <Input name="email" placeholder="you@example.com" required />
+            <Label htmlFor="password">Password</Label>
+            <Input
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              required
+            />
+            <SubmitButton formAction={signUp} pendingText="Signing up...">
+              Sign up
+            </SubmitButton>
+          </div>
+          <FormMessage message={searchParams} />
+        </form>
+
+        <div className="mt-8">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <GoogleSignInButton />
+          </div>
         </div>
-        <FormMessage message={searchParams} />
-      </form>
+      </div>
     </div>
   );
 }
