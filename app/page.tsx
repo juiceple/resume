@@ -241,8 +241,8 @@ export default function Index() {
           <p>&copy; 2024 CV메이트. All rights reserved.</p>
         </div>
         <div className='flex gap-10'>
-          <Link href="/이용약관 링크"><p className='underline decoration-solid'>이용약관</p></Link>
-          <Link href="/개인정보 처리방침 링크"><p className='underline decoration-solid'>개인정보 처리방침</p></Link>
+          <Link href="/"><p className='underline decoration-solid'>이용약관</p></Link>
+          <Link href="/"><p className='underline decoration-solid'>개인정보 처리방침</p></Link>
         </div>
       </footer>
     </div>
