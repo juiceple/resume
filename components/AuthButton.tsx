@@ -30,13 +30,13 @@ export default async function AuthButton() {
     <div className="flex gap-2">
       <Link
         href="/login"
-        className="h-8 flex items-center justify-center rounded-md no-underline text-sm font-medium px-4"
+        className="h-8 flex items-center justify-center rounded-md no-underline text-sm font-semibold px-4"
       >
         로그인
       </Link>
       <Link
         href="/signup"
-        className="h-8 flex items-center justify-center rounded-md no-underline bg-black text-white text-sm font-medium px-4"
+        className="h-8 flex items-center justify-center rounded-md no-underline text-sm font-semibold px-4"
       >
         회원가입
       </Link>

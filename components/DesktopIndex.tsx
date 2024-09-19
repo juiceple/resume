@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import AuthButton from '@/components/AuthButton';
 import HomeButton from '@/components/HomeButton';
-import './index.css'
+import './desktop.css'
 import dynamic from 'next/dynamic';
 // 동적 임포트를 사용하여 클라이언트 컴포넌트 로드
 const FadeInText = dynamic(() => import('@/components/FadeInText').then(mod => mod.default), { ssr: false });

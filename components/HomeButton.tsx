@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-type ButtonVariant = 'gradient' | 'white' | 'outlined';
+type ButtonVariant = 'gradient' | 'blue' | 'outlined';
 type ButtonSize = 'small' | 'medium' | 'large';
 
 interface HomeButtonProps {
@@ -16,14 +16,14 @@ const HomeButton: React.FC<HomeButtonProps> = ({ variant, text, url, size = 'med
   
   const variantClasses: Record<ButtonVariant, string> = {
     gradient: "text-blue-500 hover:bg-[#EDF4FF] group",
-    white: "bg-white text-blue-500 hover:bg-gray-100 active:bg-gray-200",
+    blue: "bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 ",
     outlined: "bg-transparent border-2 border-blue-500 text-blue-500 hover:bg-blue-50 active:bg-blue-100"
   };
 
   const sizeClasses: Record<ButtonSize, string> = {
-    small: "w-36 px-4 py-2 text-s min-h-10",
-    medium: "w-48 px-6 py-3 text-xl min-h-12",
-    large: "w-60 px-8 py-4 text-2xl min-h-14"
+    small: "min-w-36 px-4 py-2 text-s min-h-10",
+    medium: "min-w-48 px-6 py-3 text-xl min-h-12",
+    large: "min-w-60 px-8 py-4 text-2xl min-h-14"
   };
 
   const buttonClasses = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]}`;
