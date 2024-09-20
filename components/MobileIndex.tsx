@@ -56,9 +56,9 @@ export default function Index() {
                     </Link>
                 </div>
             </nav>
-            <div className="w-full flex flex-col items-center mt-16">
-                <section className="w-full h-[600px] text-center">
-                    <div className='page-bg p-8'>
+            <div className="w-full flex flex-col mt-16">
+                <section className="w-full h-[600px] text-center relative overflow-hidden">
+                    <div className='page-bg p-8 pt-12 w-full h-full flex flex-col items-center'>
                         <h1 className="text-lg font-bold mb-4">단 2%만이 서류를 통과합니다.</h1>
                         <h2 className="text-lg font-bold mb-8">CV메이트가 상위 2%로 만들어드릴게요.</h2>
                         <p className="mb-2 text-sm sm:text-base">10,000개의 외국 대기업 합격 이력서를 학습한 AI 전문가와 단 몇 분에 꿈을 이루세요!</p>
@@ -66,42 +66,42 @@ export default function Index() {
                         <div className="flex justify-center mb-6">
                             <HomeButton variant="gradient" text="출시 알람 받기" url="https://forms.gle/vFYbvEkf7kAJbtZNA" size="small" />
                         </div>
-                        <div className="flex flex-col items-center w-full max-w-[100%] mx-auto">
-                            <div className="relative w-[300px] h-[220px] mx-auto" style={{ zIndex: 10 }}>
-                                <div className="absolute inset-0 rounded-xl overflow-hidden shadow-lg"
-                                    style={{
-                                        borderRadius: '10px',
-                                        border: '6px solid #333',
-                                        background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.40) 70.66%, rgba(51, 51, 51, 0.64) 90.82%, rgba(0, 0, 0, 0.94) 102.78%), linear-gradient(116deg, #333 0%, #596368 53.13%, #333 100%)',
-                                        filter: 'drop-shadow(0px 10px 10px rgba(0, 0, 0, 0.25))'
-                                    }}>
-                                    <div className="w-full h-full rounded-lg" style={{ border: '1px solid #ddd' }}>
-                                        <div className="relative w-full h-full">
-                                            <Image src='/images/laptop.png' alt="resume background" layout="fill" objectFit="contain" />
-                                        </div>
+                    </div>
+                    <div className="absolute top-[200px] left-1/2 transform -translate-x-1/2 translate-y-1/2 w-full max-w-sm flex flex-col items-center">
+                        <div className="relative w-[300px] h-[220px] mx-auto" style={{ zIndex: 10 }}>
+                            <div className="absolute inset-0 rounded-xl overflow-hidden shadow-lg"
+                                style={{
+                                    borderRadius: '10px',
+                                    border: '6px solid #333',
+                                    background: 'linear-gradient(180deg, rgba(0, 0, 0, 0.40) 70.66%, rgba(51, 51, 51, 0.64) 90.82%, rgba(0, 0, 0, 0.94) 102.78%), linear-gradient(116deg, #333 0%, #596368 53.13%, #333 100%)',
+                                    filter: 'drop-shadow(0px 10px 10px rgba(0, 0, 0, 0.25))'
+                                }}>
+                                <div className="w-full h-full rounded-lg" style={{ border: '1px solid #ddd' }}>
+                                    <div className="relative w-full h-full">
+                                        <Image src='/images/laptop.png' alt="resume background" layout="fill" objectFit="contain" />
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-full w-[350px] mt-[-15px] relative" style={{ zIndex: 20 }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="40" viewBox="0 0 300 40" fill="none" preserveAspectRatio="none">
-                                    <path d="M0 0H300V8C300 10 299 12 297 13C295 14 292 15 290 16C286 17 270 18 270 18H30C29 18 28 18 27 18C24 18 10 18 5 16C3 15 1 14 0 13V0Z" fill="url(#paint0_linear)" />
-                                    <defs>
-                                        <linearGradient id="paint0_linear" x1="300" y1="0" x2="0" y2="0" gradientUnits="userSpaceOnUse">
-                                            <stop stopColor="#212121" />
-                                            <stop offset="0.5" stopColor="#555555" />
-                                            <stop offset="1" stopColor="#212121" />
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
-                            </div>
+                        </div>
+                        <div className="w-full w-[350px] mt-[-15px] relative" style={{ zIndex: 20 }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="40" viewBox="0 0 300 40" fill="none" preserveAspectRatio="none">
+                                <path d="M0 0H300V8C300 10 299 12 297 13C295 14 292 15 290 16C286 17 270 18 270 18H30C29 18 28 18 27 18C24 18 10 18 5 16C3 15 1 14 0 13V0Z" fill="url(#paint0_linear)" />
+                                <defs>
+                                    <linearGradient id="paint0_linear" x1="300" y1="0" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+                                        <stop stopColor="#212121" />
+                                        <stop offset="0.5" stopColor="#555555" />
+                                        <stop offset="1" stopColor="#212121" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
                         </div>
                     </div>
                 </section>
 
                 {/* Features Section */}
-                <section className="w-full h-auto flex flex-col gap-6 p-8 flex items-center">
+                <section className="w-full h-auto flex flex-col gap-6 items-center p-6">
                     <div className='flex flex-col gap-6'>
-                        <FadeInText className="text-2xl font-bold">
+                        <FadeInText className="text-xl font-bold text-start">
                             CV메이트로 빠르고 손쉽게 <br />합격 영문 이력서를 작성해보세요
                         </FadeInText>
                         <div className='w-32'>
@@ -185,14 +185,14 @@ export default function Index() {
                     </div>
                 </section>
                 {/* Event Promotion Section */}
-                <SlideUpSection className="w-full h-[600px] flex flex-col w-full justify-center items-center bg-white py-6 text-center">
+                <SlideUpSection className="w-full flex flex-col w-full justify-center items-center bg-white py-6 pb-12 text-center">
                     <h1 className="text-2xl font-bold mb-[50px]">
                         <span className="highlight-container">
                             <span className="highlight-text px-2 py-0.5">출시 알람 한정</span>
                             <span className="highlight-background"></span>
                         </span> 무료 혜택 제공!
                     </h1>
-                    <div className="flex flex-col items-center max-w-md w-full mx-auto shadow-md start-card p-[20px] gap-4">
+                    <div className="flex flex-col justify-center items-center max-w-md w-full mx-auto shadow-md start-card p-[20px] gap-4">
                         <h3 className="text-xl font-bold">사전예약 EVENT</h3>
                         <h2 className="text-2xl font-bold text-white line-through">5,000원</h2>
                         <h2 className="text-2xl font-bold">0원 스타터 패키지</h2>
