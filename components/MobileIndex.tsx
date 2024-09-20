@@ -68,7 +68,7 @@ export default function Index() {
                         </div>
                     </div>
                     <div className="absolute top-[200px] left-1/2 transform -translate-x-1/2 translate-y-1/2 w-full max-w-sm flex flex-col items-center">
-                        <div className="relative w-[300px] h-[220px] mx-auto" style={{ zIndex: 10 }}>
+                        <div className="relative w-[272px] h-[200px] mx-auto" style={{ zIndex: 10 }}>
                             <div className="absolute inset-0 rounded-xl overflow-hidden shadow-lg"
                                 style={{
                                     borderRadius: '10px',
@@ -83,7 +83,7 @@ export default function Index() {
                                 </div>
                             </div>
                         </div>
-                        <div className="w-full w-[350px] mt-[-15px] relative" style={{ zIndex: 20 }}>
+                        <div className="w-[320px] mt-[-15px] relative" style={{ zIndex: 20 }}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="40" viewBox="0 0 300 40" fill="none" preserveAspectRatio="none">
                                 <path d="M0 0H300V8C300 10 299 12 297 13C295 14 292 15 290 16C286 17 270 18 270 18H30C29 18 28 18 27 18C24 18 10 18 5 16C3 15 1 14 0 13V0Z" fill="url(#paint0_linear)" />
                                 <defs>
