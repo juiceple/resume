@@ -8,7 +8,7 @@ import DocsHeader from '@/components/docs/DocsHeader';
 
 const PointShop = () => {
     return (
-        <div className="w-full mx-auto p-4">
+        <div className="w-full min-h-screen flex flex-col bg-[#EBEEF1] py-12">
             <header className="fixed top-0 left-0 right-0 z-10 bg-white shadow-md">
                 <DocsHeader />
             </header>
@@ -29,7 +29,7 @@ const PointShop = () => {
                 </Card>
                 <Card className="mb-6">
                     <CardContent className='flex flex-col items-center justify-center'>
-                        <div>
+                        <div className='flex items-center justify-center'>
                            <p>{/*이름 자리*/}님이 보유하신 포인트는 {/* 포인트 자리 */} 입니다.</p> 
                         </div>
                     </CardContent>

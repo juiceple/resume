@@ -230,9 +230,9 @@ const SelectOption: React.FC<SelectOptionProps> = ({
     );
 };
 
-const ProfileContent: React.FC<{ 
-    profileData: ProfileData; 
-    saveProfile: (data: Partial<ProfileData>) => Promise<void> 
+const ProfileContent: React.FC<{
+    profileData: ProfileData;
+    saveProfile: (data: Partial<ProfileData>) => Promise<void>
 }> = ({ profileData, saveProfile }) => {
     const [localProfileData, setLocalProfileData] = useState(profileData);
 
@@ -325,19 +325,19 @@ const EditableField: React.FC<{
     return (
         <div className="mb-4">
             <div className="flex justify-between items-center">
-                <label className="text-xl font-semibold text-gray-700">{label}</label>
-                {isEditing ? (
-                    <div className="flex">
-                        <Button onClick={() => setIsEditing(false)} variant="outline">
+                <label className="text-xl font-semibold text-black">{label}</label>
+  {isEditing ? (
+                    <div className="flex gap-2">
+                        <Button onClick={() => setIsEditing(false)} className="rounded-xl bg-gray-100 text-black hover:bg-gray-200">
                             취소
                         </Button>
                         <Button onClick={handleSave} className="rounded-xl bg-blue-500 text-white hover:bg-blue-600">
                             저장
                         </Button>
-                        
+
                     </div>
                 ) : (
-                    <Button onClick={() => setIsEditing(true)} className="rounded-xl bg-blue-500 text-white hover:bg-blue-600">
+                    <Button onClick={() => setIsEditing(true)} className="rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600">
                         수정
                     </Button>
                 )}
@@ -428,9 +428,9 @@ const PasswordChangeForm: React.FC<{
     );
 };
 
-const InfoContent: React.FC<{ 
-    userInfo: UserInfo; 
-    saveUserInfo: (data: Partial<UserInfo>) => Promise<void> 
+const InfoContent: React.FC<{
+    userInfo: UserInfo;
+    saveUserInfo: (data: Partial<UserInfo>) => Promise<void>
 }> = ({ userInfo, saveUserInfo }) => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
@@ -444,7 +444,7 @@ const InfoContent: React.FC<{
 
             if (signInError) throw new Error('현재 비밀번호가 올바르지 않습니다.');
 
-            const { error: updateError } = await supabase.auth.updateUser({ 
+            const { error: updateError } = await supabase.auth.updateUser({
                 password: newPassword
             });
 
@@ -474,9 +474,9 @@ const InfoContent: React.FC<{
                 />
                 <div className="mb-4">
                     <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-700">비밀번호</label>
+                        <label className="text-xl font-semibold text-black">비밀번호</label>
                         {!isChangingPassword && (
-                            <Button onClick={() => setIsChangingPassword(true)} className="rounded-xl bg-blue-500 text-white hover:bg-blue-600">
+                            <Button onClick={() => setIsChangingPassword(true)} className="rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600">
                                 수정
                             </Button>
                         )}
@@ -520,25 +520,31 @@ export default function MyPage() {
     };
 
     return (
-        <div className="w-full min-h-screen flex flex-col bg-gray-100">
+        <div className="w-full min-h-screen flex flex-col bg-[#EBEEF1]">
             <header className="fixed top-0 left-0 right-0 z-10 bg-white shadow-md">
                 <DocsHeader />
             </header>
-            <main className="flex-grow mt-[100px] mx-auto px-4 py-8 w-full max-w-[800px]">
+            <main className="flex-grow mt-[100px] mx-auto px-4 py-8 w-full max-w-[600px]">
                 <h1 className="text-3xl font-bold mb-6">마이페이지</h1>
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                    <div className="flex border-b">
+                <div className="bg-white  overflow-hidden">
+                    <div className="flex gap-1 bg-[#EBEEF1] border-b-2 border-blue-500">
                         {(['profile', 'info'] as const).map((tab) => (
                             <button
                                 key={tab}
-                                className={`flex-1 py-2 px-4 text-center ${activeTab === tab ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}
+                                className={`
+                        w-36 py-2 px-4 items-center justify-center text-center font-semibold  rounded-t-lg
+                        ${activeTab === tab
+                                        ? 'bg-[#EDF4FF] text-black border-2 border-[#2871E6] -mb-[2px]'
+                                        : 'bg-[#E0E2E5] '
+                                    }
+                    `}
                                 onClick={() => handleTabChange(tab)}
                             >
                                 {tab === 'profile' ? '내 커리어' : '회원정보'}
                             </button>
                         ))}
                     </div>
-                    <div className="p-6">
+                    <div className="p-6 bg-white">
                         {isLoading ? (
                             <ProfileSkeleton />
                         ) : error ? (
