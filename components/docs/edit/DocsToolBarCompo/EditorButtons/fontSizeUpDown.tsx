@@ -20,7 +20,7 @@ export function FontSizeController({ docsId }: FontSizeControllerProps) {
       if (basicInfoName) {
         basicInfoName.style.fontSize = `calc(21.3px + ${change}px)`;
       }
-      
+
       otherTiptaps.forEach((element) => {
         (element as HTMLElement).style.fontSize = `calc(13.3px + ${change}px)`;
       });
@@ -107,13 +107,15 @@ export function FontSizeController({ docsId }: FontSizeControllerProps) {
   }
 
   return (
-    <div id="font-size-up-down" className="flex flex-row items-center gap-[6px]">
-      <button onClick={() => changeFontSize(-1)} aria-label="Decrease font size">
-        <Minus size={20} />
+    <div id="font-size-up-down" className="flex items-center bg-[#EDEDED] rounded-md">
+      <button className="toolBarCompo" onClick={() => changeFontSize(-1)} aria-label="Decrease font size">
+        <Minus size={20} color={"#565E69"}/>
       </button>
-      <ALargeSmall size={20}/>
-      <button onClick={() => changeFontSize(1)} aria-label="Increase font size">
-        <Plus size={20}/>
+      <div className="toolBarCompo border-x border-[#A4A4A4]">
+        <ALargeSmall size={20} color={"#565E69"}/>
+      </div>
+      <button className="toolBarCompo" onClick={() => changeFontSize(1)} aria-label="Increase font size">
+        <Plus size={20} color={"#565E69"}/>
       </button>
     </div>
   );

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, FormEvent } from "react";
 import html2canvas from 'html2canvas';
 
-import { Send, ArrowUp,CircleX } from "lucide-react"
+import { Send, ArrowUp, CircleX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import EditHeader from "@/components/docs/edit/DocsEditHeader"
@@ -33,10 +33,10 @@ export default function Edits() {
   // AI 채팅 기능을 위한 useChat 훅 사용
   const [resume, setResume] = useState('');
   const { messages, handleSubmit, input, handleInputChange, isLoading, append } = useChat();
-  const [docsId, setDocsId]=useState<string|null>('')
-  const [URL, setURL]=useState('');
+  const [docsId, setDocsId] = useState<string | null>('')
+  const [URL, setURL] = useState('');
   const [updateStatus, setUpdateStatus] = useState(false);
-  
+
 
   // 폼과 메시지 끝 부분을 위한 ref 생성
   const formRef = useRef<HTMLFormElement>(null);
@@ -52,7 +52,7 @@ export default function Edits() {
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [resumeTitle, setResumeTitle] = useState('');
-  
+
 
   const fetchResume = async (id: string) => {
     try {
@@ -69,29 +69,7 @@ export default function Edits() {
     }
   };
   console.log(`title: ${resumeTitle}`)
-  // 이력서 데이터를 업데이트하는 함수
-  const updateResume = async (updatedContent: any, id: string) => {
-    if (!resume) return;
 
-    try {
-      const response = await fetch(`/api/resumes/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: updatedContent }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update resume');
-      }
-
-      const updatedResume = await response.json();
-      setResume(updatedResume);
-    } catch (error) {
-      console.error('Error updating resume:', error);
-    }
-  };
   //docs id에 해당하는 content가져오기.
   useEffect(() => {
     const id = searchParams.get('id');
@@ -151,11 +129,11 @@ export default function Edits() {
     }
   };
   //upload하는지 확인하는 함수
-  const setUpdateStatusTrue= ()=>{
+  const setUpdateStatusTrue = () => {
     setUpdateStatus(true);
   }
 
-  const setUpdateStatusFalse= ()=>{
+  const setUpdateStatusFalse = () => {
     setUpdateStatus(false);
   }
   console.log(updateStatus);
@@ -164,87 +142,86 @@ export default function Edits() {
   return (
     <div className="flex flex-col h-screen w-full">
       {docsId && (
-        <EditHeader 
-        resumeId={docsId}
-        refreshResumes={refreshResumes}
-        isUpdating={updateStatus}
-      />
+        <EditHeader
+          resumeId={docsId}
+          refreshResumes={refreshResumes}
+          isUpdating={updateStatus}
+        />
       )}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 h-full overflow-hidden">
         {/* 직무 정보 입력 폼 */}
         <div className={`transition-all duration-300 ease-in-out ${showForm ? 'w-[300px]' : 'w-0'}`}>
           {showForm && (
             <form
-            ref={formRef}
-            onSubmit={handleFormSubmit}
-            className="h-full relative flex flex-col overflow-auto bg-gray-300 shadow-lg p-4 items-center justify-between"
-          >
-            {!showChat &&(
-              <button className="absolute right-4" onClick={()=>setShowForm(false)}>
-              <CircleX/>
-            </button>
-            )}
-            
-            <div className="w-full space-y-20 py-10">
-              <div>
-                <div className="mb-2 text-black px-2 py-1 text-s font-semibold border-b-2 border-black">직무명</div>
-                <Textarea
-                  className="w-full pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent  resize-none"
-                  placeholder="예: Account Manager"
-                  onChange={e => setJobFormData({ ...jobformData, job: e.target.value })}
-                  onKeyDown={handleKeyDown}
-                  value={jobformData.job}
-                  rows={1}
-                />
+              ref={formRef}
+              onSubmit={handleFormSubmit}
+              className="h-full relative flex flex-col overflow-auto bg-[#E0E2E5] shadow-lg p-4 items-center justify-between"
+            >
+              {!showChat && (
+                <button className="absolute right-4" onClick={() => setShowForm(false)}>
+                  <CircleX />
+                </button>
+              )}
+
+              <div className="w-full space-y-20 py-10">
+                <div>
+                  <div className="mb-2 text-black px-2 py-1 text-sm focus:none border-b-[1px] border-black">직무명 <span className="text-red-500">*</span></div>
+                  <textarea
+                    className="w-full p-2 border border-[#AEB3BC] rounded-md resize-none focus:outline-none focus:border-black focus:ring-black"
+                    placeholder="예: Account Manager"
+                    onChange={e => setJobFormData({ ...jobformData, job: e.target.value })}
+                    onKeyDown={handleKeyDown}
+                    value={jobformData.job}
+                    rows={1}
+                  />
+                </div>
+                <div>
+                  <div className="mb-2 text-black px-2 py-1 text-sm border-b-[1px] border-black">업무 내용을 한 줄로 작성해주세요. <span className="text-red-500">*</span></div>
+                  <textarea
+                    className="w-full p-2 border border-[#AEB3BC] rounded-md resize-none focus:outline-none focus:border-black focus:ring-black"
+                    placeholder="국/영문으로 작성해주세요"
+                    onChange={e => setJobFormData({ ...jobformData, workOnJob: e.target.value })}
+                    onKeyDown={handleKeyDown}
+                    value={jobformData.workOnJob}
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <div className="mb-2 text-black px-2 py-1 text-sm border-b-[1px] border-black">지원공고를 입력해주세요.</div>
+                  <textarea
+                    className="w-full p-2 border border-[#AEB3BC] rounded-md resize-none focus:outline-none focus:border-black focus:ring-black"
+                    onChange={e => setJobFormData({ ...jobformData, announcement: e.target.value })}
+                    onKeyDown={handleKeyDown}
+                    value={jobformData.announcement}
+                    rows={6}
+                  />
+                </div>
               </div>
-              <div>
-              <div className="mb-2 text-black px-2 py-1 text-s font-semibold border-b-2 border-black">업무 내용을 한 줄로 작성해주세요.</div>
-                <Textarea
-                  className="w-full pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent  resize-none"
-                  placeholder="국/영문으로 작성해주세요"
-                  onChange={e => setJobFormData({ ...jobformData, workOnJob: e.target.value })}
-                  onKeyDown={handleKeyDown}
-                  value={jobformData.workOnJob}
-                  rows={4}
-                />
+              <div className="mt-6">
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={!jobformData.job || !jobformData.workOnJob}
+                  className="rounded-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 flex items-center justify-center"
+                >
+                  <span className="mr-2">생성하기</span>
+                  <Send size={20} />
+                </Button>
               </div>
-              <div>
-              <div className="mb-2 text-black px-2 py-1 text-s font-semibold border-b-2 border-black">지원공고를 입력해주세요.</div>
-                <Textarea
-                  className="w-full pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent  resize-none"
-              
-                  onChange={e => setJobFormData({ ...jobformData, announcement: e.target.value })}
-                  onKeyDown={handleKeyDown}
-                  value={jobformData.announcement}
-                  rows={6}
-                />
-              </div>
-            </div>
-            <div className="mt-6">
-              <Button
-                type="submit"
-                size="lg"
-                disabled={!jobformData.job || !jobformData.workOnJob}
-                className="rounded-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 flex items-center justify-center"
-              >
-                <span className="mr-2">생성하기</span>
-                <Send size={20} />
-              </Button>
-            </div>
-          </form>
+            </form>
           )}
         </div>
 
         {/* AI 채팅 섹션 */}
-        <div className={`transition-all duration-300 ease-in-out ${showChat ? 'w-[466px]' : 'w-0'}`}>
+        <div className={`transition-all duration-300 ease-in-out h-full ${showChat ? 'w-[466px]' : 'w-0'}`}>
           {showChat && (
             <div className="relative h-full flex flex-col bg-white p-4">
-              <button className="absolute right-4" onClick={()=>{
+              <button className="absolute right-4" onClick={() => {
                 setShowForm(false)
                 setShowChat(false)
-                }}>
-              <CircleX/>
-            </button>
+              }}>
+                <CircleX />
+              </button>
               {/* 메시지 표시 영역 */}
               <div className="flex-grow overflow-y-auto mb-4 mt-[30px]">
                 {messages.slice(1).map((message) => (
@@ -262,15 +239,15 @@ export default function Edits() {
                 ref={formRef}
                 onSubmit={handleSubmit}
                 className="flex items-center rounded-full h-[60px] w-[430px]"
-                style={{backgroundColor:"#F4F4F4"}}
+                style={{ backgroundColor: "#F4F4F4" }}
               >
                 <textarea
-                  className="pr-10 text-m h-[55px] border-none focus:none w-[370px] pl-10 rounded-full resize-none focus:outline-none focus:ring-0 focus:border-transparent pt-[16px]"
+                  className="pr-10 text-m h-[55px] border-none focus:none w-[370px] pl-10 rounded-full resize-none focus:outline-none focus:ring-0 pt-[16px]"
                   placeholder="무엇이든 물어보세요!"
                   value={input}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  style={{backgroundColor:"#F4F4F4"}}
+                  style={{ backgroundColor: "#F4F4F4" }}
                 />
                 <button
                   type="submit"
@@ -295,15 +272,15 @@ export default function Edits() {
           } overflow-auto bg-zinc-50`}>
           {resume ? (
             <DocsEditNew
-            resumeinitialData={resume}
-            bulletContent={bulletContent}
-            setShowFormInDocs={toggleFormVisibility}
-            docsId={docsId}
-            setUpdateStatusTrue={setUpdateStatusTrue}
-            setUpdateStatusFalse={setUpdateStatusFalse}
-          />
+              resumeinitialData={resume}
+              bulletContent={bulletContent}
+              setShowFormInDocs={toggleFormVisibility}
+              docsId={docsId}
+              setUpdateStatusTrue={setUpdateStatusTrue}
+              setUpdateStatusFalse={setUpdateStatusFalse}
+            />
           ) : (
-            <div className='docContainer'><DocsPreview/></div>
+            <div className='docContainer'><DocsPreview /></div>
           )}
         </div>
       </div>

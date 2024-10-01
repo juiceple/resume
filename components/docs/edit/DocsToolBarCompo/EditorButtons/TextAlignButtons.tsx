@@ -1,33 +1,54 @@
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import {
-    AlignLeft,
-    AlignRight, 
-    AlignJustify,
-    AlignCenter,
+  AlignLeft,
+  AlignRight,
+  AlignJustify,
+  AlignCenter,
 } from 'lucide-react'
 
 interface TextAlignProps {
   editor: Editor;
 }
 
-const TextAlignButtons:  React.FC<TextAlignProps> = ({ editor })=> {
+const TextAlignButtons: React.FC<TextAlignProps> = ({ editor }) => {
+  const baseButtonClass = "toolBarCompo";
+  const activeButtonClass = `${baseButtonClass} bg-[#C7DDFF] rounded-[5px] `;
   return (
-    <div id="text-align" className="flex gap-[6px] items-center justify-center">
-      <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? 'w-[32px] h-[32px] bg-[#C7DDFF] rounded-[5px] flex items-center justify-center' : 'w-[32px] h-[32px] flex items-center justify-center'}>
-        <AlignLeft size={20}/>
+    <div id="text-align" className="flex items-center border-r-[1px] border-[#A4A4A4]">
+      <button onClick={() => editor.chain().focus().setTextAlign('left').run()} className={editor.isActive({ textAlign: 'left' }) ? activeButtonClass : baseButtonClass}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M17.7656 5C17.7656 4.76379 17.6718 4.53726 17.5048 4.37023C17.3377 4.20321 17.1112 4.10938 16.875 4.10938H3.125C2.88879 4.10938 2.66226 4.20321 2.49523 4.37023C2.32821 4.53726 2.23438 4.76379 2.23438 5C2.23438 5.23621 2.32821 5.46274 2.49523 5.62977C2.66226 5.79679 2.88879 5.89062 3.125 5.89062H16.875C17.1112 5.89062 17.3377 5.79679 17.5048 5.62977C17.6718 5.46274 17.7656 5.23621 17.7656 5ZM13.125 7.23438H3.125C2.88879 7.23438 2.66226 7.32821 2.49523 7.49523C2.32821 7.66226 2.23438 7.88879 2.23438 8.125C2.23438 8.36121 2.32821 8.58774 2.49523 8.75477C2.66226 8.92179 2.88879 9.01562 3.125 9.01562H13.125C13.3612 9.01562 13.5877 8.92179 13.7548 8.75477C13.9218 8.58774 14.0156 8.36121 14.0156 8.125C14.0156 7.88879 13.9218 7.66226 13.7548 7.49523C13.5877 7.32821 13.3612 7.23438 13.125 7.23438ZM16.875 10.3594H3.125C2.88879 10.3594 2.66226 10.4532 2.49523 10.6202C2.32821 10.7873 2.23438 11.0138 2.23438 11.25C2.23438 11.4862 2.32821 11.7127 2.49523 11.8798C2.66226 12.0468 2.88879 12.1406 3.125 12.1406H16.875C17.1112 12.1406 17.3377 12.0468 17.5048 11.8798C17.6718 11.7127 17.7656 11.4862 17.7656 11.25C17.7656 11.0138 17.6718 10.7873 17.5048 10.6202C17.3377 10.4532 17.1112 10.3594 16.875 10.3594ZM13.125 13.4844H3.125C2.88879 13.4844 2.66226 13.5782 2.49523 13.7452C2.32821 13.9123 2.23438 14.1388 2.23438 14.375C2.23438 14.6112 2.32821 14.8377 2.49523 15.0048C2.66226 15.1718 2.88879 15.2656 3.125 15.2656H13.125C13.3612 15.2656 13.5877 15.1718 13.7548 15.0048C13.9218 14.8377 14.0156 14.6112 14.0156 14.375C14.0156 14.1388 13.9218 13.9123 13.7548 13.7452C13.5877 13.5782 13.3612 13.4844 13.125 13.4844Z" fill="#475569" stroke="#475569" stroke-width="0.09375" />
+        </svg>
       </button>
-      <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? 'w-[32px] h-[32px] bg-[#C7DDFF] rounded-[5px] flex items-center justify-center' : 'w-[32px] h-[32px] flex items-center justify-center'}>
-        <AlignCenter size={20}/>
+      <button onClick={() => editor.chain().focus().setTextAlign('center').run()} className={editor.isActive({ textAlign: 'center' }) ? activeButtonClass : baseButtonClass}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M2.23438 5C2.23438 4.76379 2.32821 4.53726 2.49523 4.37023C2.66226 4.20321 2.88879 4.10938 3.125 4.10938H16.875C17.1112 4.10938 17.3377 4.20321 17.5048 4.37023C17.6718 4.53726 17.7656 4.76379 17.7656 5C17.7656 5.23621 17.6718 5.46274 17.5048 5.62977C17.3377 5.79679 17.1112 5.89062 16.875 5.89062H3.125C2.88879 5.89062 2.66226 5.79679 2.49523 5.62977C2.32821 5.46274 2.23438 5.23621 2.23438 5ZM4.37023 7.49523C4.53726 7.32821 4.76379 7.23438 5 7.23438H15C15.2362 7.23438 15.4627 7.32821 15.6298 7.49523C15.7968 7.66226 15.8906 7.88879 15.8906 8.125C15.8906 8.36121 15.7968 8.58774 15.6298 8.75477C15.4627 8.92179 15.2362 9.01562 15 9.01562H5C4.76379 9.01562 4.53726 8.92179 4.37023 8.75477C4.20321 8.58774 4.10938 8.36121 4.10938 8.125C4.10938 7.88879 4.20321 7.66226 4.37023 7.49523ZM3.125 10.3594H16.875C17.1112 10.3594 17.3377 10.4532 17.5048 10.6202C17.6718 10.7873 17.7656 11.0138 17.7656 11.25C17.7656 11.4862 17.6718 11.7127 17.5048 11.8798C17.3377 12.0468 17.1112 12.1406 16.875 12.1406H3.125C2.88879 12.1406 2.66226 12.0468 2.49523 11.8798C2.32821 11.7127 2.23438 11.4862 2.23438 11.25C2.23438 11.0138 2.32821 10.7873 2.49523 10.6202C2.66226 10.4532 2.88879 10.3594 3.125 10.3594ZM5 13.4844H15C15.2362 13.4844 15.4627 13.5782 15.6298 13.7452C15.7968 13.9123 15.8906 14.1388 15.8906 14.375C15.8906 14.6112 15.7968 14.8377 15.6298 15.0048C15.4627 15.1718 15.2362 15.2656 15 15.2656H5C4.76379 15.2656 4.53726 15.1718 4.37023 15.0048C4.20321 14.8377 4.10938 14.6112 4.10938 14.375C4.10938 14.1388 4.20321 13.9123 4.37023 13.7452C4.53726 13.5782 4.76379 13.4844 5 13.4844Z" fill="#475569" stroke="#475569" stroke-width="0.09375" />
+        </svg>
       </button>
-      <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? 'w-[32px] h-[32px] bg-[#C7DDFF] rounded-[5px] flex items-center justify-center' : 'w-[32px] h-[32px] flex items-center justify-center'}>
-        <AlignRight size={20}/>
+      <button onClick={() => editor.chain().focus().setTextAlign('right').run()} className={editor.isActive({ textAlign: 'right' }) ? activeButtonClass : baseButtonClass}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M2.23438 5C2.23438 4.76379 2.32821 4.53726 2.49523 4.37023C2.66226 4.20321 2.88879 4.10938 3.125 4.10938H16.875C17.1112 4.10938 17.3377 4.20321 17.5048 4.37023C17.6718 4.53726 17.7656 4.76379 17.7656 5C17.7656 5.23621 17.6718 5.46274 17.5048 5.62977C17.3377 5.79679 17.1112 5.89062 16.875 5.89062H3.125C2.88879 5.89062 2.66226 5.79679 2.49523 5.62977C2.32821 5.46274 2.23438 5.23621 2.23438 5ZM6.875 7.23438H16.875C17.1112 7.23438 17.3377 7.32821 17.5048 7.49523C17.6718 7.66226 17.7656 7.88879 17.7656 8.125C17.7656 8.36121 17.6718 8.58774 17.5048 8.75477C17.3377 8.92179 17.1112 9.01562 16.875 9.01562H6.875C6.63879 9.01562 6.41226 8.92179 6.24523 8.75477C6.07821 8.58774 5.98438 8.36121 5.98438 8.125C5.98438 7.88879 6.07821 7.66226 6.24523 7.49523C6.41226 7.32821 6.63879 7.23438 6.875 7.23438ZM3.125 10.3594H16.875C17.1112 10.3594 17.3377 10.4532 17.5048 10.6202C17.6718 10.7873 17.7656 11.0138 17.7656 11.25C17.7656 11.4862 17.6718 11.7127 17.5048 11.8798C17.3377 12.0468 17.1112 12.1406 16.875 12.1406H3.125C2.88879 12.1406 2.66226 12.0468 2.49523 11.8798C2.32821 11.7127 2.23438 11.4862 2.23438 11.25C2.23438 11.0138 2.32821 10.7873 2.49523 10.6202C2.66226 10.4532 2.88879 10.3594 3.125 10.3594ZM6.875 13.4844H16.875C17.1112 13.4844 17.3377 13.5782 17.5048 13.7452C17.6718 13.9123 17.7656 14.1388 17.7656 14.375C17.7656 14.6112 17.6718 14.8377 17.5048 15.0048C17.3377 15.1718 17.1112 15.2656 16.875 15.2656H6.875C6.63879 15.2656 6.41226 15.1718 6.24523 15.0048C6.07821 14.8377 5.98438 14.6112 5.98438 14.375C5.98438 14.1388 6.07821 13.9123 6.24523 13.7452C6.41226 13.5782 6.63879 13.4844 6.875 13.4844Z" fill="#475569" stroke="#475569" stroke-width="0.09375" />
+        </svg>
       </button>
-      <button onClick={() => editor.chain().focus().setTextAlign('justify').run()} className={editor.isActive({ textAlign: 'justify' }) ? 'w-[32px] h-[32px] bg-[#C7DDFF] rounded-[5px] flex items-center justify-center' : 'w-[32px] h-[32px] flex items-center justify-center'}>
-        <AlignJustify size={20}/>
+      <button onClick={() => editor.chain().focus().setTextAlign('justify').run()} className={editor.isActive({ textAlign: 'justify' }) ? activeButtonClass : baseButtonClass}>
+        <div className='flex flex-col space-between'>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
+            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
+            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
+            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
+            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
       </button>
     </div>
-            
+
   );
 };
 

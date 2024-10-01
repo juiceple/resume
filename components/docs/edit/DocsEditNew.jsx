@@ -692,8 +692,8 @@ const DynamicResumeEditors = ({
             sectionUp={() => moveSectionUp(sectionIndex)}
             sectionDown={() => moveSectionDown(sectionIndex)}
           />
+          <hr />
         </div>
-        <hr />
         {sectionData.items.map((item) => (
           <div key={item.id} className="sectionContent">
             {sectionData.type === "education" ? (
@@ -916,6 +916,7 @@ const DynamicResumeEditors = ({
                 placeholderText="Name"
               />
             </div>
+            <hr/>
             <div id="BasicInfo-others">
               <EditorComponent
                 content={resumeData.basicInfo.othersInfo}
@@ -923,10 +924,11 @@ const DynamicResumeEditors = ({
                 setActiveEditor={setActiveEditor}
                 className="basicInfo"
                 setShowFormInEditorCompo={setShowFormInDocs}
-                placeholderText="Seoul, South Korea | +82 10-XXXXXXXX | Unknown@gmail.com | linkedin.com/..."
+                placeholderText="City, State | +82 10-XXXXXXXX | email@gmail.com | linkedin.com/..."
               />
             </div>
           </div>
+          
           {resumeData.sections.map((sectionData, index) =>
             renderSection(index, sectionData)
           )}

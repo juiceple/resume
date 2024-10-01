@@ -22,13 +22,11 @@
     background-color: #EDF4FF;
     color: #2871E6;
   }
-/* DocsEditNew.css 또는 해당 CSS 파일에 추가 */
-.sectionbulletPoint.ProseMirror:empty::before {
-    content: '• 첫 번째 항목\n• 두 번째 항목\n• 세 번째 항목';
-    color: #a8a8a8;
-    pointer-events: none;
-    display: block;
-    white-space: pre-wrap;
-    /* 리스트 스타일 적용 */
-    margin-left: 1.5em;
-  }
+
+  .toolBarCompo {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -4,7 +4,6 @@ import TextAlignButtons from './EditorButtons/TextAlignButtons';
 import LinkButtons from './EditorButtons/LinkButtons';
 import IndentButtons from './EditorButtons/IndentButtons';
 import ListButtons from './EditorButtons/ListButtons';
-import ColorButtons from './EditorButtons/ColorButtons';
 import { FontSelector } from './EditorButtons/fontSelector';
 import { FontSizeController } from './EditorButtons/fontSizeUpDown';
 import { SpacingButtons } from './EditorButtons/SpacingButtons';
@@ -36,12 +35,10 @@ const MenuBar = ({ editor, docsId }) => {
   }
 
   return (
-      <div className="Resume-color-0 flex flex-row gap-[6px] justify-center">
-        <div id="roll-back"></div>
+      <div className="Resume-color-0 flex gap-2 justify-center">
         <FontSelector docsId={docsId} />
         <FontSizeController docsId={docsId}/>
         <MarkButtons editor={editor} />
-        <ColorButtons editor={editor} />
         <TextAlignButtons editor={editor} />
         <SpacingButtons docsId={docsId} />
         <ListButtons editor={editor} />

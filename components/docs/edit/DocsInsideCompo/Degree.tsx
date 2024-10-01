@@ -26,6 +26,10 @@ export default function Degree({
         onDateUpdate(selectedDate);
     };
 
+    const dateStyle = (date: string | undefined) => ({
+        color: date ? 'inherit' : '#aaa'
+      });
+
     return (
         <div className="w-full flex items-center justify-between">
             <div className="flex flex-row justify-start">
@@ -36,6 +40,7 @@ export default function Degree({
                     <div 
                         className={`custom-date-picker date-text flex cursor-pointer ${isPopoverOpen ? 'popover-open' : ''}`}
                         onClick={() => setPopoverOpen(true)}
+                        style={dateStyle(date)}
                     >
                         <div className="mr-2">
                             Graduation Date:
