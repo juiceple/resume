@@ -5,8 +5,7 @@ import { useSearchParams } from 'next/navigation';
 //root
 import { useEffect, useState, useRef, FormEvent } from "react";
 import html2canvas from 'html2canvas';
-//cssfile(include icons, ui)
-import './edit.module.css'
+
 import { Send, ArrowUp,CircleX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,7 +15,7 @@ import DocsEditNew from '@/components/docs/edit/DocsEditNew'
 import DocsPreview from '@/components/docs/edit/DocsPreviewCompo';
 //vercel ai
 import { useChat } from "ai/react";
-
+import "./index.css"
 
 // 직무 정보를 위한 인터페이스 정의
 interface JobFormData {
@@ -291,7 +290,7 @@ export default function Edits() {
         </div>
 
         {/* 이력서 편집 영역 */}
-        <div className={`transition-all duration-300 ease-in-out ${showForm && showChat ? 'w-[calc(100%-766px)]' :
+        <div className={`transition-all duration-300 ease-in-out overflow-auto ${showForm && showChat ? 'w-[calc(100%-766px)]' :
           showForm || showChat ? 'w-[calc(100%-300px)]' : 'w-full'
           } overflow-auto bg-zinc-50`}>
           {resume ? (

@@ -1,29 +1,46 @@
 import React from "react";
-import { GripVertical, CirclePlus } from "lucide-react";
+import { GripVertical, Plus, ChevronUp, ChevronDown } from "lucide-react";
 
-const Section = (props: any) => {
-    return (
-        <div className="w-full flex items-center justify-between">
-            <div className="flex flex-row gap-2 items-center justify-start">
-                <div className="min-w-[60px]">
-                    {props.SectionleftContent}
-                </div>
-                <div className="flex items-center tooltip pdf-exclude">
-                <span className="tooltiptext">{props.tooltipText}</span>
-                    <button onClick={props.addCompany} className=" flex items-center justify-between">
-                        <CirclePlus className="w-4 h-4"/>
-                    </button>
-  
-                </div>
-            </div>
-            <div 
-                className="flex flex-row relative items-center pdf-exclude cursor-pointer" 
-                {...props.dragHandleProps}
-            >
-                <GripVertical />
-            </div>
+const Section = (props:any) => {
+  return (
+    <div className="w-full flex items-center justify-between">
+      <div className="flex flex-row gap-2 items-center justify-start">
+        <div className="min-w-[60px]">{props.SectionleftContent}</div>
+        <div className="flex items-center tooltip pdf-exclude">
+          <span className="tooltiptext">{props.tooltipText}</span>
+          <button
+            onClick={props.addCompany}
+            className="flex items-center justify-center w-4 h-4 text-white bg-[#B8B8B8] rounded-full"
+          >
+            <Plus className="w-3 h-3" />
+          </button>
         </div>
-    );
-}
+      </div>
+      <div
+        className="flex gap-1 items-center pdf-exclude cursor-pointer"
+        {...props.dragHandleProps}
+      >
+        <div className="tooltip">
+          <button
+            onClick={props.sectionUp}
+            className="flex items-center justify-center rounded-full bg-[#B8B8B8] w-4 h-4 text-white"
+          >
+            <ChevronUp className="w-3 h-3" />
+          </button>
+          <span className="tooltiptext">Section Up</span>
+        </div>
+        <div className="tooltip">
+          <button
+            onClick={props.sectionDown}
+            className="flex items-center justify-center rounded-full bg-[#B8B8B8] w-4 h-4 text-white"
+          >
+            <ChevronDown className="w-3 h-3" />
+          </button>
+          <span className="tooltiptext">Section Down</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default Section;

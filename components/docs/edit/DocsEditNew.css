@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 .docContainer{
   background-color: #7B8493;
 }
@@ -9,7 +10,7 @@
 .ProseMirror-focused{
   outline: none;
   border-radius: 5px 5px 0px 0px;
-  border-bottom: 2px solid #0944A2;
+  border-bottom: 1px solid #0944A2;
   background: hsl(216, 100%, 89%);
 }
 
@@ -22,7 +23,7 @@
 .custom-date-picker.popover-open {
   outline: none;
   border-radius: 5px 5px 0px 0px;
-  border-bottom: 2px solid #0944A2;
+  border-bottom: 1px solid #0944A2;
   background: #C7DDFF;
 }
 
@@ -37,13 +38,22 @@
 
 
 .doc {
-  width: 595px;
-  min-height: 842px;
+  width: 795px;
+  min-height: 1029px;
   height: auto;
   padding: 48px;
   margin: 3rem;
   box-shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
   background-color: white;
+  position: relative;
+}
+
+.page-break {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed #888;
+  z-index: 1;
 }
 
 .doc hr {
@@ -96,7 +106,6 @@
 
 .tiptap li {
   position: relative;
-  margin-bottom: 6px;
 }
 
 .tiptap li > p {
@@ -185,8 +194,10 @@
 
 .tooltip .tooltiptext {
   visibility: hidden;
-  width: 120px;
-  background-color: #555;
+  width: 80px;
+  height: 22px;
+  font-size: 10px;
+  background-color: #4D545E;
   color: #fff;
   text-align: center;
   padding: 5px 0;
@@ -195,7 +206,7 @@
   z-index: 1;
   bottom: 125%;
   left: 50%;
-  margin-left: -60px;
+  margin-left: -40px;
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -208,10 +219,22 @@
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: #555 transparent transparent transparent;
+  border-color: #4D545E transparent transparent transparent;
 }
 
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
 }
+
+.placeholder-bullet-points ul li {
+  color: #999;  /* 연한 회색으로 설정 */
+  font-style: italic;
+}
+
+.placeholder-bullet-points ul li:hover,
+.placeholder-bullet-points ul li:focus {
+  color: inherit;  /* 호버나 포커스 시 원래 색상으로 변경 */
+  font-style: normal;
+}
+

@@ -1,25 +1,31 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Calendar from "./Calendar";
+import { Trash2 } from "lucide-react";
 
 interface TitleProps {
   leftContent: React.ReactNode;
   onDateUpdate: (dateType: 'entryDate' | 'exitDate', value: string) => void;
   initialEntryDate: string | null;
   initialExitDate: string | null;
+  onDelete: () => void;
 }
 
 export default function Title({ 
   leftContent, 
   onDateUpdate, 
   initialEntryDate, 
-  initialExitDate 
+  initialExitDate,
+  onDelete
 }: TitleProps) {
   const [entryDate, setEntryDate] = useState<string | null>(initialEntryDate);
   const [exitDate, setExitDate] = useState<string | null>(initialExitDate);
   const [isEntryPopoverOpen, setEntryPopoverOpen] = useState(false);
   const [isExitPopoverOpen, setExitPopoverOpen] = useState(false);
+  const [isComponentHovered, setIsComponentHovered] = useState(false);
+  const [isDeleteButtonHovered, setIsDeleteButtonHovered] = useState(false);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setEntryDate(initialEntryDate);
@@ -38,8 +44,36 @@ export default function Title({
     }
   };
 
+  const handleMouseEnter = () => {
+    setIsComponentHovered(true);
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    // 마우스가 삭제 버튼 위에 있지 않을 때만 hover 상태를 해제합니다.
+    if (!deleteButtonRef.current?.contains(e.relatedTarget as Node)) {
+      setIsComponentHovered(false);
+    }
+  };
+
+  const showDeleteButton = isComponentHovered || isDeleteButtonHovered;
+
   return (
-    <div className="w-full flex items-center justify-between">
+    <div 
+      className="w-full flex items-center justify-between relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {showDeleteButton && (
+        <button 
+          ref={deleteButtonRef}
+          onClick={onDelete}
+          onMouseEnter={() => setIsDeleteButtonHovered(true)}
+          onMouseLeave={() => setIsDeleteButtonHovered(false)}
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 p-1 text-red-500 rounded-full hover:text-red-600 transition-colors duration-200 pdf-exclude"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      )}
       <div className="flex flex-row justify-start">
         {leftContent}
       </div>

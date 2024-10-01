@@ -12,7 +12,8 @@ import { v4 as uuidv4 } from "uuid";
 import { createClient } from "@/utils/supabase/client";
 import html2canvas from "html2canvas";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import Placeholder from "@tiptap/extension-placeholder"; // Placeholder 임포트
+import Placeholder from "@tiptap/extension-placeholder";
+
 // 순환 참조를 방지하고 객체를 문자열로 변환하는 함수
 const safeStringify = (obj, indent = 2) => {
   let cache = [];
@@ -54,14 +55,12 @@ const EditorComponent = ({
   setActiveEditor,
   setShowFormInEditorCompo,
   className,
-  placeholderText, // 새로운 prop 추가
+  placeholderText,
 }) => {
   const editorRef = useRef(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [showAiButton, setShowAiButton] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [showButton, setShowButton] = useState(false);
 
-  // Tiptap 에디터 초기화
-  // Tiptap 에디터 초기화
   const editor = useEditor({
     extensions: [
       ...extensions,
@@ -69,104 +68,105 @@ const EditorComponent = ({
         placeholder: placeholderText || "내용을 입력하세요...",
         includeChildren: true,
         shouldShow: ({ editor }) => {
-          // 에디터 내용이 비었거나 빈 태그만 있을 경우
           const html = editor.getHTML();
           return (
-            html === '' ||
-            html === '<p></p>' ||
-            html === '<p><br></p>' ||
-            html === '<p></p><p></p>'
+            html === "" ||
+            html === "<p></p>" ||
+            html === "<p><br></p>" ||
+            html === "<p></p><p></p>"
           );
         },
       }),
     ],
     content,
     onUpdate: ({ editor }) => {
-      // 에디터 내용을 가져와 onUpdate 콜백에 전달
       onUpdate(editor.getHTML());
+    },
+    onFocus: () => {
+      setIsFocused(true);
+      setShowButton(true);
+      if (className === "sectionbulletPoint" && editor.isEmpty) {
+        editor.commands.clearContent();
+        editor.commands.toggleBulletList();
+      }
+    },
+    onBlur: () => {
+      setIsFocused(false);
+      setShowButton(false);
     },
   });
 
-  // content prop이 변경될 때 에디터 내용 업데이트
   useEffect(() => {
     if (editor && editor.getHTML() !== content) {
-      editor.commands.setContent(content || '', false);
+      editor.commands.setContent(content || "", false);
     }
   }, [content, editor]);
 
-  // 에디터 참조 설정
   useEffect(() => {
     if (editor) {
       editorRef.current = editor;
     }
   }, [editor]);
-  // 마우스 진입 핸들러
-  const handleMouseEnter = () => {
-    if (className === "sectionbulletPoint") {
-      setIsHovered(true);
-    }
-  };
 
-  // 마우스 이탈 핸들러
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setShowAiButton(false);
-  };
-
-  // 콘텐츠 클릭 핸들러
-  const handleContentClick = (e) => {
-    e.stopPropagation();
-    if (className === "sectionbulletPoint") {
-      setShowAiButton(true);
-    } else {
-      setShowAiButton(false);
-    }
-    if (editorRef.current) {
-      setActiveEditor(editorRef.current);
-    }
-  };
-
-  // AI 버튼 클릭 핸들러
   const handleAiButtonClick = (e) => {
+    e.preventDefault();
     e.stopPropagation();
     console.log("AI Button Clicked!");
-    setShowFormInEditorCompo();
-    setShowAiButton(false);
+
+    if (typeof setShowFormInEditorCompo === "function") {
+      setShowFormInEditorCompo();
+    } else {
+      console.error(
+        "setShowFormInEditorCompo is not a function",
+        setShowFormInEditorCompo
+      );
+    }
   };
 
-  // 에디터 컴포넌트 UI 렌더링
   return (
-    <div
-      className={`relative group ${className}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      {isHovered && className === "sectionbulletPoint" && !showAiButton && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50 z-10 cursor-pointer"
-          onClick={handleContentClick}
-        >
-          <span className="text-gray-600 font-semibold bg-white px-2 py-1 rounded">
-            AI Generate
-          </span>
+    <div className="relative overflow-visible">
+      {className === "sectionbulletPoint" && showButton && (
+        <div className="button-container">
+          <button
+            className="ai-generate-button flex gap-2 mr-2"
+            onClick={handleAiButtonClick}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            {/* SVG 아이콘 및 버튼 내용 */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="8"
+              height="8"
+              viewBox="0 0 8 8"
+              fill="none"
+            >
+              <path
+                d="M6.88255 5.20503C6.73149 5.20503 6.58662 5.14502 6.4798 5.0382C6.37299 4.93138 6.31298 4.78651 6.31298 4.63545C6.31298 4.55992 6.28297 4.48748 6.22957 4.43407C6.17616 4.38067 6.10372 4.35066 6.02819 4.35066C5.95266 4.35066 5.88022 4.38067 5.82681 4.43407C5.77341 4.48748 5.7434 4.55992 5.7434 4.63545C5.7434 4.78651 5.68339 4.93138 5.57658 5.0382C5.46976 5.14502 5.32489 5.20503 5.17383 5.20503C5.0983 5.20503 5.02586 5.23503 4.97245 5.28844C4.91904 5.34185 4.88904 5.41428 4.88904 5.48981C4.88904 5.56534 4.91904 5.63778 4.97245 5.69119C5.02586 5.7446 5.0983 5.7746 5.17383 5.7746C5.32489 5.7746 5.46976 5.83461 5.57658 5.94143C5.68339 6.04824 5.7434 6.19312 5.7434 6.34418C5.7434 6.41971 5.77341 6.49215 5.82681 6.54555C5.88022 6.59896 5.95266 6.62897 6.02819 6.62897C6.10372 6.62897 6.17616 6.59896 6.22957 6.54555C6.28297 6.49215 6.31298 6.41971 6.31298 6.34418C6.31298 6.19312 6.37299 6.04824 6.4798 5.94143C6.58662 5.83461 6.73149 5.7746 6.88255 5.7746C6.95808 5.7746 7.03052 5.7446 7.08393 5.69119C7.13734 5.63778 7.16734 5.56534 7.16734 5.48981C7.16734 5.41428 7.13734 5.34185 7.08393 5.28844C7.03052 5.23503 6.95808 5.20503 6.88255 5.20503Z"
+                fill="#FFF064"
+              />
+              <path
+                d="M2.89549 1.218C2.74443 1.218 2.59956 1.15799 2.49274 1.05117C2.38593 0.944355 2.32592 0.799481 2.32592 0.64842C2.32592 0.57289 2.29591 0.500453 2.24251 0.447045C2.1891 0.393637 2.11666 0.363632 2.04113 0.363632C1.9656 0.363632 1.89316 0.393637 1.83975 0.447045C1.78635 0.500453 1.75634 0.57289 1.75634 0.64842C1.75634 0.799481 1.69633 0.944355 1.58952 1.05117C1.4827 1.15799 1.33783 1.218 1.18677 1.218C1.11124 1.218 1.0388 1.248 0.98539 1.30141C0.931982 1.35482 0.901978 1.42725 0.901978 1.50278C0.901978 1.57831 0.931982 1.65075 0.98539 1.70416C1.0388 1.75757 1.11124 1.78757 1.18677 1.78757C1.33783 1.78757 1.4827 1.84758 1.58952 1.9544C1.69633 2.06121 1.75634 2.20609 1.75634 2.35715C1.75634 2.43268 1.78635 2.50512 1.83975 2.55852C1.89316 2.61193 1.9656 2.64194 2.04113 2.64194C2.11666 2.64194 2.1891 2.61193 2.24251 2.55852C2.29591 2.50512 2.32592 2.43268 2.32592 2.35715C2.32592 2.20609 2.38593 2.06121 2.49274 1.9544C2.59956 1.84758 2.74443 1.78757 2.89549 1.78757C2.97102 1.78757 3.04346 1.75757 3.09687 1.70416C3.15028 1.65075 3.18028 1.57831 3.18028 1.50278C3.18028 1.42725 3.15028 1.35482 3.09687 1.30141C3.04346 1.248 2.97102 1.218 2.89549 1.218Z"
+                fill="#FFEF64"
+              />
+              <path
+                d="M6.29022 1.73346L5.88866 1.32906C5.72521 1.17423 5.50863 1.08794 5.28349 1.08794C5.05835 1.08794 4.84177 1.17423 4.67831 1.32906L3.25437 2.753L0.249862 5.7746C0.0898673 5.9348 0 6.15195 0 6.37835C0 6.60476 0.0898673 6.82191 0.249862 6.9821L0.651413 7.3865C0.811606 7.5465 1.02876 7.63636 1.25516 7.63636C1.48157 7.63636 1.69872 7.5465 1.85891 7.3865L4.88906 4.35066L6.313 2.94096C6.47001 2.77777 6.5558 2.55891 6.55153 2.3325C6.54726 2.10608 6.45327 1.89061 6.29022 1.73346ZM5.88866 2.53941L4.88906 3.54756L4.08311 2.74161L5.09126 1.73346C5.14462 1.68042 5.2168 1.65065 5.29203 1.65065C5.36727 1.65065 5.43945 1.68042 5.49281 1.73346L5.89721 2.13501C5.92335 2.16205 5.94388 2.19399 5.95761 2.229C5.97134 2.26401 5.978 2.30139 5.9772 2.33899C5.97641 2.37659 5.96817 2.41366 5.95298 2.44806C5.93778 2.48246 5.91592 2.5135 5.88866 2.53941Z"
+                fill="#629EFF"
+              />
+            </svg>
+            <span>생성하기</span>
+          </button>
         </div>
       )}
-      {showAiButton && className === "sectionbulletPoint" && (
-        <button
-          className="absolute left-[-5px] top-0 transform -translate-x-full bg-black text-white px-2 py-1 rounded z-50"
-          onClick={handleAiButtonClick}
-        >
-          AI
-        </button>
-      )}
-      <div
-        className={`editor-content ${
-          isHovered && !showAiButton ? "opacity-50" : ""
-        }`}
-        onClick={handleContentClick}
-      >
-        <EditorContent editor={editor} />
-      </div>
+      <EditorContent
+        editor={editor}
+        className={isFocused ? "ProseMirror-focused" : ""}
+        onClick={() => {
+          if (editorRef.current) {
+            setActiveEditor(editorRef.current);
+            editorRef.current.commands.focus();
+          }
+        }}
+      />
     </div>
   );
 };
@@ -182,7 +182,11 @@ const DynamicResumeEditors = ({
 }) => {
   const docRef = useRef(null);
   const [activeEditor, setActiveEditor] = useState(null);
-  const [resumeData, setResumeData] = useState(resumeinitialData);
+  const [resumeData, setResumeData] = useState({
+    ...resumeinitialData,
+    sectionOrder:
+      resumeinitialData.sectionOrder || Object.keys(resumeinitialData.sections),
+  });
   const [error, setError] = useState(null);
   const supabase = createClient();
   //초기 에디터설정
@@ -193,7 +197,12 @@ const DynamicResumeEditors = ({
   //초기 data를 불러오는 effect
   useEffect(() => {
     if (resumeinitialData) {
-      setResumeData(resumeinitialData);
+      setResumeData({
+        ...resumeinitialData,
+        sectionOrder:
+          resumeinitialData.sectionOrder ||
+          Object.keys(resumeinitialData.sections),
+      });
     }
   }, [resumeinitialData]);
   //현재 resume 문서의 preview 이미지를 생성하는 함수
@@ -263,6 +272,7 @@ const DynamicResumeEditors = ({
         .from("resumes")
         .update({
           content: newData,
+          section_order: newData.sectionOrder,
           docs_preview_url: previewUrl, // 캡처된 이미지의 URL 저장
         })
         .eq("id", docsId)
@@ -317,7 +327,7 @@ const DynamicResumeEditors = ({
         );
       }
     },
-    [debouncedUpdate, docsId]
+    [debouncedUpdate]
   );
 
   // 에디터에 새 내용 추가 함수
@@ -331,14 +341,26 @@ const DynamicResumeEditors = ({
   );
   //date를 업데이트하는 함수
   const handleDateUpdate = useCallback(
-    (sectionIndex, itemId, dateType, value) => {
+    (sectionIndex, itemId, dateType, value, subItemId = null) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = [...prev.sections];
-        const sectionToUpdate = { ...updatedSections[sectionIndex] };
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        const sectionToUpdate = { ...updatedSections[sectionType] };
         sectionToUpdate.items = sectionToUpdate.items.map((item) =>
-          item.id === itemId ? { ...item, [dateType]: value } : item
+          item.id === itemId
+            ? subItemId
+              ? {
+                  ...item,
+                  subItems: item.subItems.map((subItem) =>
+                    subItem.id === subItemId
+                      ? { ...subItem, [dateType]: value }
+                      : subItem
+                  ),
+                }
+              : { ...item, [dateType]: value }
+            : item
         );
-        updatedSections[sectionIndex] = sectionToUpdate;
+        updatedSections[sectionType] = sectionToUpdate;
 
         return { ...prev, sections: updatedSections };
       });
@@ -346,7 +368,7 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload]
   );
   // 현재 content의 editor로 menubar의 editor를 변경
-  React.useEffect(() => {
+  useEffect(() => {
     if (bulletContent && activeEditor) {
       addContentToEditor(bulletContent);
       setActiveEditor(activeEditor);
@@ -369,8 +391,9 @@ const DynamicResumeEditors = ({
   const handleContentUpdate = useCallback(
     (sectionIndex, itemId, field, value, subItemId = null) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = [...prev.sections];
-        const sectionToUpdate = { ...updatedSections[sectionIndex] };
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        const sectionToUpdate = { ...updatedSections[sectionType] };
         sectionToUpdate.items = sectionToUpdate.items.map((item) =>
           item.id === itemId
             ? subItemId
@@ -385,7 +408,7 @@ const DynamicResumeEditors = ({
               : { ...item, [field]: value }
             : item
         );
-        updatedSections[sectionIndex] = sectionToUpdate;
+        updatedSections[sectionType] = sectionToUpdate;
 
         const updatedData = { ...prev, sections: updatedSections };
         return updatedData;
@@ -397,9 +420,10 @@ const DynamicResumeEditors = ({
   const handleSectionTitleUpdate = useCallback(
     (sectionIndex, value) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = [...prev.sections];
-        updatedSections[sectionIndex] = {
-          ...updatedSections[sectionIndex],
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        updatedSections[sectionType] = {
+          ...updatedSections[sectionType],
           title: value,
         };
         return {
@@ -414,10 +438,12 @@ const DynamicResumeEditors = ({
   const addNewItem = useCallback(
     (sectionIndex) => {
       updateDataAndUpload((prev) => {
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        const section = updatedSections[sectionType];
         const newItem = { id: uuidv4() };
-        const sectionType = prev.sections[sectionIndex].type;
 
-        switch (sectionType) {
+        switch (section.type) {
           case "education":
             newItem.title = "<p>University</p>";
             newItem.degree = "<p>Degree</p>";
@@ -449,14 +475,13 @@ const DynamicResumeEditors = ({
             newItem.content = "<p>Untitled</p>";
             break;
           default:
-            console.warn(`Unknown section type: ${sectionType}`);
+            console.warn(`Unknown section type: ${section.type}`);
             return prev;
         }
 
-        const updatedSections = [...prev.sections];
-        updatedSections[sectionIndex] = {
-          ...updatedSections[sectionIndex],
-          items: [...updatedSections[sectionIndex].items, newItem],
+        updatedSections[sectionType] = {
+          ...section,
+          items: [...section.items, newItem],
         };
 
         return {
@@ -471,10 +496,13 @@ const DynamicResumeEditors = ({
   const addSubItem = useCallback(
     (sectionIndex, parentId) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = [...prev.sections];
-        updatedSections[sectionIndex] = {
-          ...updatedSections[sectionIndex],
-          items: updatedSections[sectionIndex].items.map((item) =>
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        const section = updatedSections[sectionType];
+
+        updatedSections[sectionType] = {
+          ...section,
+          items: section.items.map((item) =>
             item.id === parentId
               ? {
                   ...item,
@@ -485,6 +513,8 @@ const DynamicResumeEditors = ({
                       title: "<p>Job Title</p>",
                       bulletPoints:
                         "<ul><li>First point</li><li>Second point</li><li>Third point</li></ul>",
+                      entryDate: null, // 새로운 subItem에 대한 독립적인 날짜 정보
+                      exitDate: null, // 새로운 subItem에 대한 독립적인 날짜 정보
                     },
                   ],
                 }
@@ -501,16 +531,127 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload]
   );
 
+  // 아이템 삭제 함수
+  const deleteItem = useCallback(
+    (sectionIndex, itemId) => {
+      updateDataAndUpload((prev) => {
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        const sectionToUpdate = { ...updatedSections[sectionType] };
+        sectionToUpdate.items = sectionToUpdate.items.filter(
+          (item) => item.id !== itemId
+        );
+        updatedSections[sectionType] = sectionToUpdate;
+
+        const newData = { ...prev, sections: updatedSections };
+        return newData;
+      });
+    },
+    [updateDataAndUpload]
+  );
+
+  // 서브아이템 삭제 함수
+  const deleteSubItem = useCallback(
+    (sectionIndex, itemId, subItemId) => {
+      updateDataAndUpload((prev) => {
+        const updatedSections = { ...prev.sections };
+        const sectionType = prev.sectionOrder[sectionIndex];
+        const sectionToUpdate = { ...updatedSections[sectionType] };
+        sectionToUpdate.items = sectionToUpdate.items.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                subItems: item.subItems.filter(
+                  (subItem) => subItem.id !== subItemId
+                ),
+              }
+            : item
+        );
+        updatedSections[sectionType] = sectionToUpdate;
+
+        const newData = { ...prev, sections: updatedSections };
+        return newData;
+      });
+    },
+    [updateDataAndUpload]
+  );
+
+
+
+  // 섹션을 위로 이동하는 함수
+  const moveSectionUp = useCallback(
+    (sectionIndex) => {
+      if (sectionIndex > 0) {
+        updateDataAndUpload((prev) => {
+          const newSectionOrder = [...prev.sectionOrder];
+          [newSectionOrder[sectionIndex - 1], newSectionOrder[sectionIndex]] = [
+            newSectionOrder[sectionIndex],
+            newSectionOrder[sectionIndex - 1],
+          ];
+          return { ...prev, sectionOrder: newSectionOrder };
+        });
+      }
+    },
+    [updateDataAndUpload]
+  );
+
+  // 섹션을 아래로 이동하는 함수
+  const moveSectionDown = useCallback(
+    (sectionIndex) => {
+      if (sectionIndex < resumeData.sectionOrder.length - 1) {
+        updateDataAndUpload((prev) => {
+          const newSectionOrder = [...prev.sectionOrder];
+          [newSectionOrder[sectionIndex], newSectionOrder[sectionIndex + 1]] = [
+            newSectionOrder[sectionIndex + 1],
+            newSectionOrder[sectionIndex],
+          ];
+          return { ...prev, sectionOrder: newSectionOrder };
+        });
+      }
+    },
+    [updateDataAndUpload, resumeData.sectionOrder.length]
+  );
+
+  const addPageBreaks = useCallback(() => {
+    const docElement = document.querySelector('.doc');
+    if (!docElement) return;
+  
+    // 기존 페이지 나누기 제거
+    docElement.querySelectorAll('.page-break').forEach(el => el.remove());
+  
+    const pageHeight = 842; // A4 페이지 높이 (픽셀)
+    const currentHeight = docElement.scrollHeight;
+    const numberOfPages = Math.floor(currentHeight / pageHeight);
+  
+    for (let i = 1; i <= numberOfPages; i++) {
+      const pageBreak = document.createElement('div');
+      pageBreak.className = 'page-break';
+      pageBreak.style.top = `${i * pageHeight}px`;
+      docElement.appendChild(pageBreak);
+    }
+  }, []);
+  
+  useEffect(() => {
+    addPageBreaks();
+    window.addEventListener('resize', addPageBreaks);
+    return () => window.removeEventListener('resize', addPageBreaks);
+  }, [addPageBreaks]);
+  
+  // resumeData가 변경될 때마다 페이지 나누기 업데이트
+  useEffect(() => {
+    addPageBreaks();
+  }, [resumeData, addPageBreaks]);
+
   // section들을 rendering하는 함수
   const renderSection = useCallback(
-    (sectionIndex, sectionData) => (
+    (sectionIndex, sectionData, sectionType) => (
       <div
-        id={`${sectionData.type}Experience`}
+        id={`${sectionType}Experience`}
         className="section"
         key={sectionIndex}
       >
         <div
-          id={`${sectionData.type}Experience-sectionName`}
+          id={`${sectionType}Experience-sectionName`}
           className="sectionName"
         >
           <Section
@@ -528,6 +669,8 @@ const DynamicResumeEditors = ({
             }
             addCompany={() => addNewItem(sectionIndex)}
             tooltipText={`Add ${sectionData.type}`}
+            sectionUp={() => moveSectionUp(sectionIndex)}
+            sectionDown={() => moveSectionDown(sectionIndex)}
           />
         </div>
         <hr />
@@ -565,6 +708,7 @@ const DynamicResumeEditors = ({
                       />
                     }
                     tooltipText="Add degree"
+                    onDelete={() => deleteItem(sectionIndex, item.id)}
                   />
                 </div>
                 <div className="sectiontitle">
@@ -623,6 +767,7 @@ const DynamicResumeEditors = ({
                         placeholderText="City, State"
                       />
                     }
+                    onDelete={() => deleteItem(sectionIndex, item.id)}
                     addBulletPoint={() => addSubItem(sectionIndex, item.id)}
                     tooltipText={`Add ${sectionData.type} item`}
                   />
@@ -655,11 +800,13 @@ const DynamicResumeEditors = ({
                               sectionIndex,
                               item.id,
                               dateType,
-                              value
+                              value,
+                              subItem.id // subItem의 id를 추가로 전달
                             )
                           }
-                          initialEntryDate={item.entryDate || null}
-                          initialExitDate={item.exitDate || null}
+                          initialEntryDate={subItem.entryDate || null} // subItem의 날짜 정보 사용
+                          initialExitDate={subItem.exitDate || null} // subItem의 날짜 정보 사용
+                          onDelete={() => deleteSubItem(sectionIndex, item.id, subItem.id)}
                         />
                       </div>
                       <div className="sectionbulletPoint">
@@ -677,7 +824,7 @@ const DynamicResumeEditors = ({
                           setShowFormInEditorCompo={setShowFormInDocs}
                           setActiveEditor={setActiveEditor}
                           className="sectionbulletPoint"
-                          class
+                          placeholderText="Click to add bullet points"
                         />
                       </div>
                     </div>
@@ -695,12 +842,15 @@ const DynamicResumeEditors = ({
       addSubItem,
       setActiveEditor,
       setShowFormInDocs,
+      moveSectionUp,
+      moveSectionDown,
+      handleDateUpdate,
     ]
   );
 
   // 전체 UI 렌더링
   return (
-    <div className="relative h-full flex flex-col items-center">
+    <div className="relative flex flex-col items-center">
       <div className="MenuBar">
         <MenuBar docsId={docsId} editor={activeEditor || menuBarEditor} />
       </div>
@@ -726,9 +876,8 @@ const DynamicResumeEditors = ({
               />
             </div>
           </div>
-          {Object.entries(resumeData.sections).map(
-            ([sectionType, sectionData]) =>
-              renderSection(sectionType, sectionData)
+          {resumeData.sectionOrder.map((sectionType, index) =>
+            renderSection(index, resumeData.sections[sectionType], sectionType)
           )}
         </div>
       </div>

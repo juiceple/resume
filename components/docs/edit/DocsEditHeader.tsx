@@ -169,7 +169,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             // PDF에서 제외할 요소들을 제거한 복제본 생성
             const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
             cleanedContent.querySelectorAll('.pdf-exclude').forEach(el => el.remove());
-
+            cleanedContent.querySelectorAll('.page-break').forEach(el => el.remove());
             const htmlContent = cleanedContent.innerHTML;
             const styles = Array.from(document.styleSheets)
                 .map(sheet => {

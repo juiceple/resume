@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Minus, Plus, ALargeSmall } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 
@@ -9,6 +9,40 @@ interface FontSizeControllerProps {
 export function FontSizeController({ docsId }: FontSizeControllerProps) {
   const [fontSizeChange, setFontSizeChange] = useState<number | null>(null);
   const supabase = createClient();
+
+  const applyFontSize = useCallback((change: number) => {
+    const docElement = document.querySelector('.doc') as HTMLElement;
+    const basicInfoName = document.querySelector('#BasicInfo-name .tiptap') as HTMLElement;
+    const otherTiptaps = document.querySelectorAll('.tiptap:not(#BasicInfo-name .tiptap)');
+    const datePickers = document.querySelectorAll('.date-text');
+
+    if (docElement) {
+      if (basicInfoName) {
+        basicInfoName.style.fontSize = `calc(21.3px + ${change}px)`;
+      }
+      
+      otherTiptaps.forEach((element) => {
+        (element as HTMLElement).style.fontSize = `calc(13.3px + ${change}px)`;
+      });
+
+      datePickers.forEach((element) => {
+        (element as HTMLElement).style.fontSize = `calc(13.3px + ${change}px)`;
+      });
+    }
+  }, []);
+
+  const updateFontSize = async (change: number) => {
+    applyFontSize(change);
+
+    const { error } = await supabase
+      .from('resumes')
+      .update({ font_size: change })
+      .eq('id', docsId);
+
+    if (error) {
+      console.error('Error updating font size:', error);
+    }
+  };
 
   useEffect(() => {
     const loadFontSize = async () => {
@@ -30,41 +64,34 @@ export function FontSizeController({ docsId }: FontSizeControllerProps) {
     loadFontSize();
   }, [docsId]);
 
-  const updateFontSize = async (change: number) => {
-    const docElement = document.querySelector('.doc') as HTMLElement;
-    const basicInfoName = document.querySelector('#BasicInfo-name .tiptap') as HTMLElement;
-    const otherTiptaps = document.querySelectorAll('.tiptap:not(#BasicInfo-name .tiptap)');
-    const datePickers = document.querySelectorAll('.date-text');
-
-    if (docElement) {
-      if (basicInfoName) {
-        basicInfoName.style.fontSize = `calc(21.3px + ${change}px)`;
-      }
-      
-      otherTiptaps.forEach((element) => {
-        (element as HTMLElement).style.fontSize = `calc(13.3px + ${change}px)`;
-      });
-
-      datePickers.forEach((element) => {
-        (element as HTMLElement).style.fontSize = `calc(13.3px + ${change}px)`;
-      });
-    }
-
-    const { error } = await supabase
-      .from('resumes')
-      .update({ font_size: change })
-      .eq('id', docsId);
-
-    if (error) {
-      console.error('Error updating font size:', error);
-    }
-  };
-
   useEffect(() => {
     if (fontSizeChange !== null) {
       updateFontSize(fontSizeChange);
     }
   }, [fontSizeChange]);
+
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement) {
+              if (fontSizeChange !== null) {
+                applyFontSize(fontSizeChange);
+              }
+            }
+          });
+        }
+      });
+    });
+
+    const docElement = document.querySelector('.doc');
+    if (docElement) {
+      observer.observe(docElement, { childList: true, subtree: true });
+    }
+
+    return () => observer.disconnect();
+  }, [fontSizeChange, applyFontSize]);
 
   const changeFontSize = (delta: number) => {
     setFontSizeChange(prevChange => {
@@ -76,7 +103,7 @@ export function FontSizeController({ docsId }: FontSizeControllerProps) {
   };
 
   if (fontSizeChange === null) {
-    return <div>Loading...</div>; // 또는 적절한 로딩 상태 표시
+    return <div>Loading...</div>;
   }
 
   return (

@@ -54,7 +54,7 @@ export default function Index() {
           <Link href="/docs">
             <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
           </Link>
-          <AuthButton />
+          {/* <AuthButton /> */}
 
         </div>
       </nav>
@@ -162,8 +162,8 @@ export default function Index() {
                       {feature.icon}
                     </div>
                   </div>
-                  <div className='flex flex-col gap-4'>
-                    <h3 className="text-2xl font-bold mb-2">{feature.title}</h3>
+                  <div className='flex flex-col gap-2'>
+                    <h3 className="text-2xl font-bold">{feature.title}</h3>
                     <p>{feature.description}</p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ export default function Index() {
               </h2>
               <p>어렵고 귀찮게만 느껴졌던 영문 이력서 작성,<br /> 해외, 외국계 합격 이력서 10,000개+를 학습한 AI 전문가 CV메이트가 이젠 대신 해드릴게요!</p>
             </div>
-            <div className='flex justify-end'>
+            <div className='flex justify-start pt-6'>
               <HomeButton variant='blue' text='지금 바로 시작하기' url='https://forms.gle/vFYbvEkf7kAJbtZNA' size='medium'></HomeButton>
             </div>
           </div>
