@@ -327,7 +327,7 @@ const EditableField: React.FC<{
         <div className="mb-4">
             <div className="flex justify-between items-center">
                 <label className="text-xl font-semibold text-black">{label}</label>
-  {isEditing ? (
+                {isEditing ? (
                     <div className="flex gap-2">
                         <Button onClick={() => setIsEditing(false)} className="rounded-xl bg-gray-100 text-black hover:bg-gray-200">
                             취소

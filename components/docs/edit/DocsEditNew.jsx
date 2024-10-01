@@ -11,7 +11,6 @@ import Degree from "@/components/docs/edit/DocsInsideCompo/Degree";
 import { v4 as uuidv4 } from "uuid";
 import { createClient } from "@/utils/supabase/client";
 import html2canvas from "html2canvas";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import Placeholder from "@tiptap/extension-placeholder";
 
 // 순환 참조를 방지하고 객체를 문자열로 변환하는 함수
@@ -182,11 +181,8 @@ const DynamicResumeEditors = ({
 }) => {
   const docRef = useRef(null);
   const [activeEditor, setActiveEditor] = useState(null);
-  const [resumeData, setResumeData] = useState({
-    ...resumeinitialData,
-    sectionOrder:
-      resumeinitialData.sectionOrder || Object.keys(resumeinitialData.sections),
-  });
+  const [resumeData, setResumeData] = useState(resumeinitialData);
+
   const [error, setError] = useState(null);
   const supabase = createClient();
   //초기 에디터설정
@@ -197,14 +193,10 @@ const DynamicResumeEditors = ({
   //초기 data를 불러오는 effect
   useEffect(() => {
     if (resumeinitialData) {
-      setResumeData({
-        ...resumeinitialData,
-        sectionOrder:
-          resumeinitialData.sectionOrder ||
-          Object.keys(resumeinitialData.sections),
-      });
+      setResumeData(resumeinitialData);
     }
   }, [resumeinitialData]);
+
   //현재 resume 문서의 preview 이미지를 생성하는 함수
   async function captureAndUpload(docsID) {
     try {
@@ -272,7 +264,6 @@ const DynamicResumeEditors = ({
         .from("resumes")
         .update({
           content: newData,
-          section_order: newData.sectionOrder,
           docs_preview_url: previewUrl, // 캡처된 이미지의 URL 저장
         })
         .eq("id", docsId)
@@ -294,6 +285,7 @@ const DynamicResumeEditors = ({
       setUpdateStatusFalse();
     }
   };
+
   //supabase 과도한 호출 방지를 위한 debounced
   const debouncedUpdate = useCallback(
     debounce((newData) => {
@@ -343,9 +335,8 @@ const DynamicResumeEditors = ({
   const handleDateUpdate = useCallback(
     (sectionIndex, itemId, dateType, value, subItemId = null) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        const sectionToUpdate = { ...updatedSections[sectionType] };
+        const updatedSections = [...prev.sections];
+        const sectionToUpdate = { ...updatedSections[sectionIndex] };
         sectionToUpdate.items = sectionToUpdate.items.map((item) =>
           item.id === itemId
             ? subItemId
@@ -360,13 +351,14 @@ const DynamicResumeEditors = ({
               : { ...item, [dateType]: value }
             : item
         );
-        updatedSections[sectionType] = sectionToUpdate;
+        updatedSections[sectionIndex] = sectionToUpdate;
 
         return { ...prev, sections: updatedSections };
       });
     },
     [updateDataAndUpload]
   );
+
   // 현재 content의 editor로 menubar의 editor를 변경
   useEffect(() => {
     if (bulletContent && activeEditor) {
@@ -391,9 +383,8 @@ const DynamicResumeEditors = ({
   const handleContentUpdate = useCallback(
     (sectionIndex, itemId, field, value, subItemId = null) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        const sectionToUpdate = { ...updatedSections[sectionType] };
+        const updatedSections = [...prev.sections];
+        const sectionToUpdate = { ...updatedSections[sectionIndex] };
         sectionToUpdate.items = sectionToUpdate.items.map((item) =>
           item.id === itemId
             ? subItemId
@@ -408,7 +399,7 @@ const DynamicResumeEditors = ({
               : { ...item, [field]: value }
             : item
         );
-        updatedSections[sectionType] = sectionToUpdate;
+        updatedSections[sectionIndex] = sectionToUpdate;
 
         const updatedData = { ...prev, sections: updatedSections };
         return updatedData;
@@ -416,14 +407,14 @@ const DynamicResumeEditors = ({
     },
     [updateDataAndUpload]
   );
+
   //section 중 title을 업데이트
   const handleSectionTitleUpdate = useCallback(
     (sectionIndex, value) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        updatedSections[sectionType] = {
-          ...updatedSections[sectionType],
+        const updatedSections = [...prev.sections];
+        updatedSections[sectionIndex] = {
+          ...updatedSections[sectionIndex],
           title: value,
         };
         return {
@@ -434,14 +425,13 @@ const DynamicResumeEditors = ({
     },
     [updateDataAndUpload]
   );
+
   //section 내용중 company + job title + bullet point 추가 함수
   const addNewItem = useCallback(
     (sectionIndex) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        const section = updatedSections[sectionType];
         const newItem = { id: uuidv4() };
+        const section = prev.sections[sectionIndex];
 
         switch (section.type) {
           case "education":
@@ -479,7 +469,8 @@ const DynamicResumeEditors = ({
             return prev;
         }
 
-        updatedSections[sectionType] = {
+        const updatedSections = [...prev.sections];
+        updatedSections[sectionIndex] = {
           ...section,
           items: [...section.items, newItem],
         };
@@ -492,15 +483,15 @@ const DynamicResumeEditors = ({
     },
     [updateDataAndUpload]
   );
+
   //section 내용중 job title + bullet point 추가 함수
   const addSubItem = useCallback(
     (sectionIndex, parentId) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        const section = updatedSections[sectionType];
+        const updatedSections = [...prev.sections];
+        const section = updatedSections[sectionIndex];
 
-        updatedSections[sectionType] = {
+        updatedSections[sectionIndex] = {
           ...section,
           items: section.items.map((item) =>
             item.id === parentId
@@ -513,8 +504,8 @@ const DynamicResumeEditors = ({
                       title: "<p>Job Title</p>",
                       bulletPoints:
                         "<ul><li>First point</li><li>Second point</li><li>Third point</li></ul>",
-                      entryDate: null, // 새로운 subItem에 대한 독립적인 날짜 정보
-                      exitDate: null, // 새로운 subItem에 대한 독립적인 날짜 정보
+                      entryDate: null,
+                      exitDate: null,
                     },
                   ],
                 }
@@ -535,28 +526,26 @@ const DynamicResumeEditors = ({
   const deleteItem = useCallback(
     (sectionIndex, itemId) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        const sectionToUpdate = { ...updatedSections[sectionType] };
+        const updatedSections = [...prev.sections];
+        const sectionToUpdate = { ...updatedSections[sectionIndex] };
         sectionToUpdate.items = sectionToUpdate.items.filter(
           (item) => item.id !== itemId
         );
-        updatedSections[sectionType] = sectionToUpdate;
-
+        updatedSections[sectionIndex] = sectionToUpdate;
+  
         const newData = { ...prev, sections: updatedSections };
         return newData;
       });
     },
     [updateDataAndUpload]
   );
-
+  
   // 서브아이템 삭제 함수
   const deleteSubItem = useCallback(
     (sectionIndex, itemId, subItemId) => {
       updateDataAndUpload((prev) => {
-        const updatedSections = { ...prev.sections };
-        const sectionType = prev.sectionOrder[sectionIndex];
-        const sectionToUpdate = { ...updatedSections[sectionType] };
+        const updatedSections = [...prev.sections];
+        const sectionToUpdate = { ...updatedSections[sectionIndex] };
         sectionToUpdate.items = sectionToUpdate.items.map((item) =>
           item.id === itemId
             ? {
@@ -567,28 +556,28 @@ const DynamicResumeEditors = ({
               }
             : item
         );
-        updatedSections[sectionType] = sectionToUpdate;
-
+        updatedSections[sectionIndex] = sectionToUpdate;
+  
         const newData = { ...prev, sections: updatedSections };
         return newData;
       });
     },
     [updateDataAndUpload]
   );
+  
 
-
-
+  // 섹션을 위로 이동하는 함수
   // 섹션을 위로 이동하는 함수
   const moveSectionUp = useCallback(
     (sectionIndex) => {
       if (sectionIndex > 0) {
         updateDataAndUpload((prev) => {
-          const newSectionOrder = [...prev.sectionOrder];
-          [newSectionOrder[sectionIndex - 1], newSectionOrder[sectionIndex]] = [
-            newSectionOrder[sectionIndex],
-            newSectionOrder[sectionIndex - 1],
+          const newSections = [...prev.sections];
+          [newSections[sectionIndex - 1], newSections[sectionIndex]] = [
+            newSections[sectionIndex],
+            newSections[sectionIndex - 1],
           ];
-          return { ...prev, sectionOrder: newSectionOrder };
+          return { ...prev, sections: newSections };
         });
       }
     },
@@ -598,45 +587,45 @@ const DynamicResumeEditors = ({
   // 섹션을 아래로 이동하는 함수
   const moveSectionDown = useCallback(
     (sectionIndex) => {
-      if (sectionIndex < resumeData.sectionOrder.length - 1) {
+      if (sectionIndex < resumeData.sections.length - 1) {
         updateDataAndUpload((prev) => {
-          const newSectionOrder = [...prev.sectionOrder];
-          [newSectionOrder[sectionIndex], newSectionOrder[sectionIndex + 1]] = [
-            newSectionOrder[sectionIndex + 1],
-            newSectionOrder[sectionIndex],
+          const newSections = [...prev.sections];
+          [newSections[sectionIndex], newSections[sectionIndex + 1]] = [
+            newSections[sectionIndex + 1],
+            newSections[sectionIndex],
           ];
-          return { ...prev, sectionOrder: newSectionOrder };
+          return { ...prev, sections: newSections };
         });
       }
     },
-    [updateDataAndUpload, resumeData.sectionOrder.length]
+    [updateDataAndUpload, resumeData.sections.length]
   );
 
   const addPageBreaks = useCallback(() => {
-    const docElement = document.querySelector('.doc');
+    const docElement = document.querySelector(".doc");
     if (!docElement) return;
-  
+
     // 기존 페이지 나누기 제거
-    docElement.querySelectorAll('.page-break').forEach(el => el.remove());
-  
+    docElement.querySelectorAll(".page-break").forEach((el) => el.remove());
+
     const pageHeight = 842; // A4 페이지 높이 (픽셀)
     const currentHeight = docElement.scrollHeight;
     const numberOfPages = Math.floor(currentHeight / pageHeight);
-  
+
     for (let i = 1; i <= numberOfPages; i++) {
-      const pageBreak = document.createElement('div');
-      pageBreak.className = 'page-break';
+      const pageBreak = document.createElement("div");
+      pageBreak.className = "page-break";
       pageBreak.style.top = `${i * pageHeight}px`;
       docElement.appendChild(pageBreak);
     }
   }, []);
-  
+
   useEffect(() => {
     addPageBreaks();
-    window.addEventListener('resize', addPageBreaks);
-    return () => window.removeEventListener('resize', addPageBreaks);
+    window.addEventListener("resize", addPageBreaks);
+    return () => window.removeEventListener("resize", addPageBreaks);
   }, [addPageBreaks]);
-  
+
   // resumeData가 변경될 때마다 페이지 나누기 업데이트
   useEffect(() => {
     addPageBreaks();
@@ -644,14 +633,14 @@ const DynamicResumeEditors = ({
 
   // section들을 rendering하는 함수
   const renderSection = useCallback(
-    (sectionIndex, sectionData, sectionType) => (
+    (sectionIndex, sectionData) => (
       <div
-        id={`${sectionType}Experience`}
+        id={`${sectionData.type}Experience`}
         className="section"
         key={sectionIndex}
       >
         <div
-          id={`${sectionType}Experience-sectionName`}
+          id={`${sectionData.type}Experience-sectionName`}
           className="sectionName"
         >
           <Section
@@ -695,6 +684,7 @@ const DynamicResumeEditors = ({
                         className="contentTitle"
                         setShowFormInEditorCompo={setShowFormInDocs}
                         placeholderText="University"
+                        
                       />
                     }
                     rightContent={
@@ -755,6 +745,7 @@ const DynamicResumeEditors = ({
                         setActiveEditor={setActiveEditor}
                         className="contentTitle"
                         setShowFormInEditorCompo={setShowFormInDocs}
+                      
                       />
                     }
                     rightContent={
@@ -767,9 +758,9 @@ const DynamicResumeEditors = ({
                         placeholderText="City, State"
                       />
                     }
-                    onDelete={() => deleteItem(sectionIndex, item.id)}
                     addBulletPoint={() => addSubItem(sectionIndex, item.id)}
                     tooltipText={`Add ${sectionData.type} item`}
+                    onDelete={() => deleteItem(sectionIndex, item.id)}
                   />
                 </div>
                 {item.subItems &&
@@ -793,6 +784,7 @@ const DynamicResumeEditors = ({
                               setActiveEditor={setActiveEditor}
                               className="sectionTitle"
                               placeholderText="Company"
+                        
                             />
                           }
                           onDateUpdate={(dateType, value) =>
@@ -848,6 +840,8 @@ const DynamicResumeEditors = ({
     ]
   );
 
+  console.log(resumeData);
+
   // 전체 UI 렌더링
   return (
     <div className="relative flex flex-col items-center">
@@ -864,6 +858,7 @@ const DynamicResumeEditors = ({
                 setActiveEditor={setActiveEditor}
                 className="basicInfo"
                 setShowFormInEditorCompo={setShowFormInDocs}
+                placeholderText="Name"
               />
             </div>
             <div id="BasicInfo-others">
@@ -873,11 +868,12 @@ const DynamicResumeEditors = ({
                 setActiveEditor={setActiveEditor}
                 className="basicInfo"
                 setShowFormInEditorCompo={setShowFormInDocs}
+                placeholderText="Seoul, South Korea | +82 10-XXXXXXXX | Unknown@gmail.com | linkedin.com/..."
               />
             </div>
           </div>
-          {resumeData.sectionOrder.map((sectionType, index) =>
-            renderSection(index, resumeData.sections[sectionType], sectionType)
+          {resumeData.sections.map((sectionData, index) =>
+            renderSection(index, sectionData)
           )}
         </div>
       </div>
