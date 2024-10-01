@@ -57,12 +57,22 @@
   right: 0;
   border-top: 2px dashed #888;
   z-index: 1;
+  border: 0;
 }
 
 .doc hr {
   width: 100%;
-  height: 3px;
-  background-color: black;
+  height: 1px;
+  background-color: black !important;
+  color: black;
+  border: 0;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  background-color: black !important;
+  color: black;
 }
 
 .MenuBar{
@@ -198,11 +208,6 @@
   padding-left: 1rem;
 }
 
-.tiptap hr {
-  border: none;
-  border-top: 1px solid var(--gray-2);
-  margin: 2rem 0;
-}
 
 @layer base {
   ul, ol {
@@ -266,3 +271,11 @@
   font-style: normal;
 }
 
+.tiptap ul {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.tiptap ul li:last-child {
+  margin-bottom: 0 !important;
+}

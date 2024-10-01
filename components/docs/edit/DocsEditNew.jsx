@@ -503,29 +503,46 @@ const DynamicResumeEditors = ({
       updateDataAndUpload((prev) => {
         const updatedSections = [...prev.sections];
         const section = updatedSections[sectionIndex];
-
+  
         updatedSections[sectionIndex] = {
           ...section,
-          items: section.items.map((item) =>
-            item.id === parentId
-              ? {
+          items: section.items.map((item) => {
+            if (item.id === parentId) {
+              if (section.type === "education") {
+                // For education section, add a new degree
+                return {
+                  ...item,
+                  degrees: [
+                    ...(item.degrees || []),
+                    {
+                      id: uuidv4(),
+                      degree: "",
+                      entryDate: null,
+                      exitDate: null,
+                    },
+                  ],
+                };
+              } else {
+                // For other sections, add a new subItem
+                return {
                   ...item,
                   subItems: [
                     ...(item.subItems || []),
                     {
                       id: uuidv4(),
                       title: "",
-                      bulletPoints:
-                        "",
+                      bulletPoints: "",
                       entryDate: null,
                       exitDate: null,
                     },
                   ],
-                }
-              : item
-          ),
+                };
+              }
+            }
+            return item;
+          }),
         };
-
+  
         return {
           ...prev,
           sections: updatedSections,
@@ -621,7 +638,7 @@ const DynamicResumeEditors = ({
     // 기존 페이지 나누기 제거
     docElement.querySelectorAll(".page-break").forEach((el) => el.remove());
 
-    const pageHeight = 842; // A4 페이지 높이 (픽셀)
+    const pageHeight = 1029; // A4 페이지 높이 (픽셀)
     const currentHeight = docElement.scrollHeight;
     const numberOfPages = Math.floor(currentHeight / pageHeight);
 
@@ -681,75 +698,81 @@ const DynamicResumeEditors = ({
           <div key={item.id} className="sectionContent">
             {sectionData.type === "education" ? (
               <>
-                <div className="contentTitle">
-                  <Company
-                    leftContent={
-                      <EditorComponent
-                        content={item.title}
-                        onUpdate={(value) =>
-                          handleContentUpdate(
-                            sectionIndex,
-                            item.id,
-                            "title",
-                            value
-                          )
-                        }
-                        setActiveEditor={setActiveEditor}
-                        className="contentTitle"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        placeholderText="University"
-                        defaultStyle="bold"
-                      />
-                    }
-                    rightContent={
-                      <EditorComponent
-                        content={item.cityState || ""}
-                        onUpdate={(value) =>
-                          handleContentUpdate(
-                            sectionIndex,
-                            item.id,
-                            "cityState",
-                            value
-                          )
-                        }
-                        setActiveEditor={setActiveEditor}
-                        className="cityState"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        placeholderText="City, State"
-                        defaultStyle="bold"
-                      />
-                    }
-                    tooltipText="Add degree"
-                    onDelete={() => deleteItem(sectionIndex, item.id)}
-                  />
-                </div>
-                <div className="sectiontitle">
+              <div className="contentTitle">
+                <Company
+                  leftContent={
+                    <EditorComponent
+                      content={item.title}
+                      onUpdate={(value) =>
+                        handleContentUpdate(
+                          sectionIndex,
+                          item.id,
+                          "title",
+                          value
+                        )
+                      }
+                      setActiveEditor={setActiveEditor}
+                      className="contentTitle"
+                      setShowFormInEditorCompo={setShowFormInDocs}
+                      placeholderText="University"
+                      defaultStyle="bold"
+                    />
+                  }
+                  rightContent={
+                    <EditorComponent
+                      content={item.cityState || ""}
+                      onUpdate={(value) =>
+                        handleContentUpdate(
+                          sectionIndex,
+                          item.id,
+                          "cityState",
+                          value
+                        )
+                      }
+                      setActiveEditor={setActiveEditor}
+                      className="cityState"
+                      setShowFormInEditorCompo={setShowFormInDocs}
+                      placeholderText="City, State"
+                      defaultStyle="bold"
+                    />
+                  }
+                  tooltipText="Add degree"
+                  addBulletPoint={() => addSubItem(sectionIndex, item.id)}
+                  onDelete={() => deleteItem(sectionIndex, item.id)}
+                />
+              </div>
+              {item.degrees && item.degrees.map((degreeItem, index) => (
+                <div key={degreeItem.id} className="sectiontitle">
                   <Degree
                     leftContent={
                       <EditorComponent
-                        content={item.degree}
+                        content={degreeItem.degree}
                         onUpdate={(value) =>
                           handleContentUpdate(
                             sectionIndex,
                             item.id,
                             "degree",
-                            value
+                            value,
+                            degreeItem.id
                           )
                         }
                         setActiveEditor={setActiveEditor}
                         className="Degree"
                         setShowFormInEditorCompo={setShowFormInDocs}
-                        initialDate={item.entryDate || null}
                         placeholderText="Degree"
                         defaultStyle="italic"
                       />
                     }
                     onDateUpdate={(dateType, value) =>
-                      handleDateUpdate(sectionIndex, item.id, dateType, value)
+                      handleDateUpdate(sectionIndex, item.id, dateType, value, degreeItem.id)
                     }
+                    initialEntryDate={degreeItem.entryDate || null}
+                    initialExitDate={degreeItem.exitDate || null}
+                    onDelete={() => index > 0 && deleteSubItem(sectionIndex, item.id, degreeItem.id)}
                   />
                 </div>
-              </>
+              ))}
+            </>
             ) : (
               <>
                 <div className="contentTitle">

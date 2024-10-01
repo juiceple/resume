@@ -41,7 +41,7 @@ export default function Degree({
                             Graduation Date:
                         </div>
                         <div>
-                            {date || '날짜 선택'}
+                            {date || ''}
                         </div>
                     </div>
                 </PopoverTrigger>
