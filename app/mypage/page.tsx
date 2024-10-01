@@ -44,7 +44,7 @@ interface ProfileData {
 }
 
 interface UserInfo {
-    username: string;
+    name: string;
     email: string;
 }
 
@@ -63,12 +63,13 @@ const useMyPageData = () => {
             country: ''
         },
         userInfo: {
-            username: '',
+            name: '',
             email: ''
         }
     });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    console.log(myPageData);
 
     const fetchMyPageData = async () => {
         const supabase = createClient();
@@ -80,8 +81,8 @@ const useMyPageData = () => {
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('username, career, job, desired_job, country')
-                .eq('id', user.id)
+                .select('name, career, job, desired_job, country')
+                .eq('user_id', user.id)
                 .single();
 
             if (error) throw error;
@@ -95,7 +96,7 @@ const useMyPageData = () => {
                         country: data.country || ''
                     },
                     userInfo: {
-                        username: data.username || '',
+                        name: data.name || '',
                         email: user.email || ''
                     }
                 });
@@ -130,13 +131,13 @@ const useMyPageData = () => {
             }
 
             if (updatedData.userInfo) {
-                if (updatedData.userInfo.username) {
-                    const { error: usernameError } = await supabase
+                if (updatedData.userInfo.name) {
+                    const { error: nameError } = await supabase
                         .from('profiles')
-                        .update({ username: updatedData.userInfo.username })
-                        .eq('id', user.id);
+                        .update({ name: updatedData.userInfo.name })
+                        .eq('user_id', user.id);
 
-                    if (usernameError) throw usernameError;
+                    if (nameError) throw nameError;
                 }
 
                 if (updatedData.userInfo.email) {
@@ -464,8 +465,8 @@ const InfoContent: React.FC<{
                 <h2 className="text-xl font-semibold mb-4">회원정보</h2>
                 <EditableField
                     label="이름"
-                    value={userInfo.username}
-                    onSave={(value) => saveUserInfo({ username: value })}
+                    value={userInfo.name}
+                    onSave={(value) => saveUserInfo({ name: value })}
                 />
                 <EditableField
                     label="이메일 주소"
