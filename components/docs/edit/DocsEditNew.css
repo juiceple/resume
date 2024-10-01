@@ -14,6 +14,9 @@
   background: hsl(216, 100%, 89%);
 }
 
+.custom-date-picker{
+  font-style: italic;
+}
 
 .custom-date-picker:hover {
   background-color: hsl(216, 100%, 89%);
@@ -86,6 +89,32 @@
   float: left;
   height: 0;
   pointer-events: none;
+}
+/* Section Title (Bold) */
+.ProseMirror p[data-placeholder="Section Title"].is-empty.is-editor-empty::before {
+  font-weight: bold;
+}
+
+.ProseMirror p[data-placeholder="City, State"].is-empty.is-editor-empty::before {
+  font-weight: bold;
+}
+
+
+/* Job Title (Italic) */
+.ProseMirror p[data-placeholder="Job Title"].is-empty.is-editor-empty::before {
+  font-style: italic;
+}
+
+.ProseMirror p[data-placeholder="Degree"].is-empty.is-editor-empty::before {
+  font-style: italic;
+}
+
+
+/* Company/Organization (Bold) */
+.ProseMirror p[data-placeholder="University"].is-empty.is-editor-empty::before,
+.ProseMirror p[data-placeholder="Company"].is-empty.is-editor-empty::before,
+.ProseMirror p[data-placeholder="Organization"].is-empty.is-editor-empty::before {
+  font-weight: bold;
 }
 
 /* Basic editor styles */
@@ -183,7 +212,6 @@
 
 #BasicInfo-name .tiptap{
   font-size: 21.3px;
-  font-weight: bold;
 }
 
 /* Tooltip styles remain the same */

@@ -49,13 +49,22 @@ export default function Title({
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
-    // 마우스가 삭제 버튼 위에 있지 않을 때만 hover 상태를 해제합니다.
     if (!deleteButtonRef.current?.contains(e.relatedTarget as Node)) {
       setIsComponentHovered(false);
     }
   };
 
   const showDeleteButton = isComponentHovered || isDeleteButtonHovered;
+
+  // 날짜가 입력되지 않았을 때의 스타일
+  const dateStyle = (date: string | null) => ({
+    color: date ? 'inherit' : '#aaa'
+  });
+
+  // 구분자 스타일
+  const separatorStyle = {
+    color: (entryDate || exitDate) ? 'inherit' : '#aaa'
+  };
 
   return (
     <div 
@@ -80,19 +89,27 @@ export default function Title({
       <div contentEditable={false} className="flex flex-row relative items-center">
         <Popover open={isEntryPopoverOpen} onOpenChange={setEntryPopoverOpen}>
           <PopoverTrigger asChild>
-            <div className={`custom-date-picker date-text flex cursor-pointer ${isEntryPopoverOpen ? 'popover-open' : ''}`} onClick={() => setEntryPopoverOpen(true)}>
-              {entryDate || '입사일'}
+            <div 
+              className={`custom-date-picker date-text flex cursor-pointer ${isEntryPopoverOpen ? 'popover-open' : ''}`} 
+              onClick={() => setEntryPopoverOpen(true)}
+              style={dateStyle(entryDate)}
+            >
+              {entryDate || 'Start Date'}
             </div>
           </PopoverTrigger>
           <PopoverContent>
             <Calendar sendDateInfo={handleDateSelect('입사일')} showPresentButton={false} />
           </PopoverContent>
         </Popover>
-        <span>&nbsp;-&nbsp;</span>
+        <span style={separatorStyle}>&nbsp;-&nbsp;</span>
         <Popover open={isExitPopoverOpen} onOpenChange={setExitPopoverOpen}>
           <PopoverTrigger asChild>
-            <div className={`custom-date-picker date-text flex cursor-pointer ${isExitPopoverOpen ? 'popover-open' : ''}`} onClick={() => setExitPopoverOpen(true)}>
-              {exitDate || '퇴사일'}
+            <div 
+              className={`custom-date-picker date-text flex cursor-pointer ${isExitPopoverOpen ? 'popover-open' : ''}`} 
+              onClick={() => setExitPopoverOpen(true)}
+              style={dateStyle(exitDate)}
+            >
+              {exitDate || 'End Date'}
             </div>
           </PopoverTrigger>
           <PopoverContent>

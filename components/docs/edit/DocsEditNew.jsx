@@ -55,6 +55,7 @@ const EditorComponent = ({
   setShowFormInEditorCompo,
   className,
   placeholderText,
+  defaultStyle // 새로운 prop 추가
 }) => {
   const editorRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -79,7 +80,14 @@ const EditorComponent = ({
     ],
     content,
     onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML());
+      let newContent = editor.getHTML();
+      // 기본 스타일 적용
+      if (defaultStyle === 'bold') {
+        newContent = `<strong>${newContent}</strong>`;
+      } else if (defaultStyle === 'italic') {
+        newContent = `<em>${newContent}</em>`;
+      }
+      onUpdate(newContent);
     },
     onFocus: () => {
       setIsFocused(true);
@@ -385,20 +393,24 @@ const DynamicResumeEditors = ({
       updateDataAndUpload((prev) => {
         const updatedSections = [...prev.sections];
         const sectionToUpdate = { ...updatedSections[sectionIndex] };
-        sectionToUpdate.items = sectionToUpdate.items.map((item) =>
-          item.id === itemId
-            ? subItemId
-              ? {
-                  ...item,
-                  subItems: item.subItems.map((subItem) =>
-                    subItem.id === subItemId
-                      ? { ...subItem, [field]: value }
-                      : subItem
-                  ),
-                }
-              : { ...item, [field]: value }
-            : item
-        );
+        sectionToUpdate.items = sectionToUpdate.items.map((item) => {
+          if (item.id === itemId) {
+            if (subItemId) {
+              return {
+                ...item,
+                subItems: item.subItems.map((subItem) =>
+                  subItem.id === subItemId
+                    ? { ...subItem, [field]: value }
+                    : subItem
+                ),
+              };
+            } else {
+              // Add new fields directly to the item object
+              return { ...item, [field]: value };
+            }
+          }
+          return item;
+        });
         updatedSections[sectionIndex] = sectionToUpdate;
 
         const updatedData = { ...prev, sections: updatedSections };
@@ -407,6 +419,7 @@ const DynamicResumeEditors = ({
     },
     [updateDataAndUpload]
   );
+
 
   //section 중 title을 업데이트
   const handleSectionTitleUpdate = useCallback(
@@ -435,34 +448,34 @@ const DynamicResumeEditors = ({
 
         switch (section.type) {
           case "education":
-            newItem.title = "<p>University</p>";
-            newItem.degree = "<p>Degree</p>";
+            newItem.title = "";
+            newItem.degree = "";
             break;
           case "work":
-            newItem.organization = "<p>Company</p>";
+            newItem.organization = "";
             newItem.subItems = [
               {
                 id: uuidv4(),
-                title: "<p>Job title</p>",
+                title: "",
                 bulletPoints:
-                  "<ul><li>First point</li><li>Second point</li><li>Third point</li></ul>",
+                  "",
               },
             ];
             break;
           case "project":
           case "leadership":
-            newItem.organization = "<p>Organization</p>";
+            newItem.organization = "";
             newItem.subItems = [
               {
                 id: uuidv4(),
-                title: "<p>title</p>",
+                title: "",
                 bulletPoints:
-                  "<ul><li>Experience 1</li><li>Experience 2</li><li>Experience 3</li></ul>",
+                  "",
               },
             ];
             break;
           case "custom":
-            newItem.content = "<p>Untitled</p>";
+            newItem.content = "";
             break;
           default:
             console.warn(`Unknown section type: ${section.type}`);
@@ -501,9 +514,9 @@ const DynamicResumeEditors = ({
                     ...(item.subItems || []),
                     {
                       id: uuidv4(),
-                      title: "<p>Job Title</p>",
+                      title: "",
                       bulletPoints:
-                        "<ul><li>First point</li><li>Second point</li><li>Third point</li></ul>",
+                        "",
                       entryDate: null,
                       exitDate: null,
                     },
@@ -654,6 +667,7 @@ const DynamicResumeEditors = ({
                 className="sectionTitle"
                 setShowFormInEditorCompo={setShowFormInDocs}
                 placeholderText="Section Title"
+                defaultStyle="bold"
               />
             }
             addCompany={() => addNewItem(sectionIndex)}
@@ -684,17 +698,25 @@ const DynamicResumeEditors = ({
                         className="contentTitle"
                         setShowFormInEditorCompo={setShowFormInDocs}
                         placeholderText="University"
-                        
+                        defaultStyle="bold"
                       />
                     }
                     rightContent={
                       <EditorComponent
-                        content=""
-                        onUpdate={() => {}}
+                        content={item.cityState || ""}
+                        onUpdate={(value) =>
+                          handleContentUpdate(
+                            sectionIndex,
+                            item.id,
+                            "cityState",
+                            value
+                          )
+                        }
                         setActiveEditor={setActiveEditor}
                         className="cityState"
                         setShowFormInEditorCompo={setShowFormInDocs}
                         placeholderText="City, State"
+                        defaultStyle="bold"
                       />
                     }
                     tooltipText="Add degree"
@@ -715,10 +737,11 @@ const DynamicResumeEditors = ({
                           )
                         }
                         setActiveEditor={setActiveEditor}
-                        className="sectionTitle"
+                        className="Degree"
                         setShowFormInEditorCompo={setShowFormInDocs}
                         initialDate={item.entryDate || null}
                         placeholderText="Degree"
+                        defaultStyle="italic"
                       />
                     }
                     onDateUpdate={(dateType, value) =>
@@ -745,17 +768,26 @@ const DynamicResumeEditors = ({
                         setActiveEditor={setActiveEditor}
                         className="contentTitle"
                         setShowFormInEditorCompo={setShowFormInDocs}
-                      
+                        defaultStyle="bold"
+                        placeholderText="Organization"
                       />
                     }
                     rightContent={
                       <EditorComponent
-                        content=""
-                        onUpdate={() => {}}
+                        content={item.cityState || ""}
+                        onUpdate={(value) =>
+                          handleContentUpdate(
+                            sectionIndex,
+                            item.id,
+                            "cityState",
+                            value
+                          )
+                        }
                         setActiveEditor={setActiveEditor}
                         className="cityState"
                         setShowFormInEditorCompo={setShowFormInDocs}
                         placeholderText="City, State"
+                        defaultStyle="bold"
                       />
                     }
                     addBulletPoint={() => addSubItem(sectionIndex, item.id)}
@@ -766,7 +798,7 @@ const DynamicResumeEditors = ({
                 {item.subItems &&
                   item.subItems.map((subItem) => (
                     <div key={subItem.id}>
-                      <div className="sectiontitle">
+                      <div className="jobtitle">
                         <Title
                           leftContent={
                             <EditorComponent
@@ -782,9 +814,9 @@ const DynamicResumeEditors = ({
                               }
                               setShowFormInEditorCompo={setShowFormInDocs}
                               setActiveEditor={setActiveEditor}
-                              className="sectionTitle"
-                              placeholderText="Company"
-                        
+                              className="jobTitle"
+                              placeholderText="Job Title"
+                              defaultStyle="italic"
                             />
                           }
                           onDateUpdate={(dateType, value) =>
