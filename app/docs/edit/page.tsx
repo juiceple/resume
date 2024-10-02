@@ -327,6 +327,7 @@ export default function Edits() {
               docsId={docsId}
               setUpdateStatusTrue={setUpdateStatusTrue}
               setUpdateStatusFalse={setUpdateStatusFalse}
+              isAiEditing= {showForm}
             />
           ) : (
             <div className='docContainer'><DocsPreview /></div>

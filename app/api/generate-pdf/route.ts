@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Generating PDF');
     const pdf = await page.pdf({
-      format: 'A4',
+      format: 'Letter',
       printBackground: true,
       margin: { top: '48px', right: '48px', bottom: '48px', left: '48px' },
       preferCSSPageSize: true,

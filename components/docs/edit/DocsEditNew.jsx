@@ -50,7 +50,6 @@ const debounce = (func, delay) => {
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 
-
 // 에디터 컴포넌트 정의(각 에디터들은 컴포넌트 내의 수정 부분을 담당함)
 const EditorComponent = ({
   content,
@@ -59,11 +58,13 @@ const EditorComponent = ({
   setShowFormInEditorCompo,
   className,
   placeholderText,
-  defaultStyle, // 새로운 prop 추가
+  defaultStyle,
+  isAiEditing = false,
+  isActive,
+  setActiveEditorId,
+  editorId,
 }) => {
   const editorRef = useRef(null);
-  const [isFocused, setIsFocused] = useState(false);
-  const [showButton, setShowButton] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -85,7 +86,6 @@ const EditorComponent = ({
     content,
     onUpdate: ({ editor }) => {
       let newContent = editor.getHTML();
-      // 기본 스타일 적용
       if (defaultStyle === "bold") {
         newContent = `<strong>${newContent}</strong>`;
       } else if (defaultStyle === "italic") {
@@ -94,16 +94,11 @@ const EditorComponent = ({
       onUpdate(newContent);
     },
     onFocus: () => {
-      setIsFocused(true);
-      setShowButton(true);
+      setActiveEditorId(editorId);
       if (className === "sectionbulletPoint" && editor.isEmpty) {
         editor.commands.clearContent();
         editor.commands.toggleBulletList();
       }
-    },
-    onBlur: () => {
-      setIsFocused(false);
-      setShowButton(false);
     },
   });
 
@@ -119,11 +114,15 @@ const EditorComponent = ({
     }
   }, [editor]);
 
+  useEffect(() => {
+    if (!isActive && !isAiEditing && editor) {
+      editor.commands.blur();
+    }
+  }, [isActive, isAiEditing, editor]);
+
   const handleAiButtonClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("AI Button Clicked!");
-
     if (typeof setShowFormInEditorCompo === "function") {
       setShowFormInEditorCompo();
     } else {
@@ -134,12 +133,13 @@ const EditorComponent = ({
     }
   };
 
+  
   return (
     <div className="relative overflow-visible">
-      {className === "sectionbulletPoint" && showButton && (
+      {className === "sectionbulletPoint" && isActive && (
         <div className="button-container">
           <button
-            className="ai-generate-button flex gap-2 mr-2"
+            className={`ai-generate-button flex gap-2 mr-2 ${isAiEditing ? 'ai-generate-button-edit' : ''}`}
             onClick={handleAiButtonClick}
             onMouseDown={(e) => e.preventDefault()}
           >
@@ -170,11 +170,11 @@ const EditorComponent = ({
       )}
       <EditorContent
         editor={editor}
-        className={isFocused ? "ProseMirror-focused" : ""}
+        className={isActive ? "ProseMirror-focused" : ""}
         onClick={() => {
           if (editorRef.current) {
             setActiveEditor(editorRef.current);
-            editorRef.current.commands.focus();
+            setActiveEditorId(editorId);
           }
         }}
       />
@@ -191,12 +191,15 @@ const DynamicResumeEditors = ({
   docsId,
   setUpdateStatusTrue,
   setUpdateStatusFalse,
+  isAiEditing,
 }) => {
   const docRef = useRef(null);
   const [activeEditor, setActiveEditor] = useState(null);
+  const [memoryEditor, setMemorEditor] = useState(null);
   const [resumeData, setResumeData] = useState(resumeinitialData);
   const [pendingBulletContent, setPendingBulletContent] = useState(null);
   const [error, setError] = useState(null);
+  const [activeEditorId, setActiveEditorId] = useState(null);
   const supabase = createClient();
   const menuBarEditor = useEditor({
     extensions,
@@ -210,6 +213,23 @@ const DynamicResumeEditors = ({
     }
   }, [resumeinitialData]);
 
+
+  // EditorComponent를 렌더링하는 함수
+  const renderEditorComponent = useCallback((content, onUpdate, className, placeholderText, defaultStyle, editorId) => (
+    <EditorComponent
+      content={content}
+      onUpdate={onUpdate}
+      setActiveEditor={setActiveEditor}
+      setShowFormInEditorCompo={setShowFormInDocs}
+      className={className}
+      placeholderText={placeholderText}
+      defaultStyle={defaultStyle}
+      isAiEditing={isAiEditing}
+      isActive={activeEditorId === editorId}
+      setActiveEditorId={setActiveEditorId}
+      editorId={editorId}
+    />
+  ), [setActiveEditor, setShowFormInDocs, isAiEditing, activeEditorId, setActiveEditorId]);
 //////////////////////////////////////////////////////////////////
 //                   업로드 관련 로직                            //
 //////////////////////////////////////////////////////////////////
@@ -264,7 +284,6 @@ const DynamicResumeEditors = ({
       throw error;
     }
   }
-
   //supabase에 Data를 업로드하는 함수
   const updateSupabase = async (newData) => {
     setUpdateStatusTrue();
@@ -274,10 +293,6 @@ const DynamicResumeEditors = ({
         throw new Error("Invalid data for update");
       }
 
-      console.log(
-        "Uploading data to Supabase:",
-        JSON.stringify(newData, null, 2)
-      );
 
       // Supabase 업데이트
       const { data, error } = await supabase
@@ -293,7 +308,6 @@ const DynamicResumeEditors = ({
       if (data && data.length > 0) {
         console.log(
           "Update successful, updated data:",
-          JSON.stringify(data[0], null, 2)
         );
       } else {
         console.warn(
@@ -343,33 +357,12 @@ const DynamicResumeEditors = ({
     [debouncedUpdate]
   );
 
-//////////////////////////////////////////////////////////////////
-//                    bulletPoint Ai 관련 로직 부분              //
-//////////////////////////////////////////////////////////////////
-
-  // 에디터에 새 내용 추가 함수
-  const addContentToEditor = useCallback(
-    (newContent) => {
-      if (activeEditor) {
-        activeEditor.commands.insertContent(newContent);
-      }
-    },
-    [activeEditor]
-  );
-
-  useEffect(() => {
-    if (bulletContent && !pendingBulletContent) {
-      setPendingBulletContent(bulletContent);
-    }
-  }, [bulletContent]);
-
-  useEffect(() => {
-    if (pendingBulletContent && activeEditor) {
-      activeEditor.commands.focus();
-      activeEditor.commands.insertContent(pendingBulletContent);
-      setPendingBulletContent(null); // Reset after insertion
-    }
-  }, [pendingBulletContent, activeEditor]);
+/////////////////////////////////////////////////////////////////////////////////
+//   bulletPoint Ai 관련 로직 부분 (EditorCompo랑 같이)(focus 유지도 같이)        //
+/////////////////////////////////////////////////////////////////////////////////
+  //1. Editor를 따로 기억해서 AiEditing 중일 때는 focus 유지하게
+  //2. AiEditing이 true일 떄는 focus memory로 계속 유지하기
+  //3. 
 
 //////////////////////////////////////////////////////////////////
 //              웹사이트 내에서 resume data 저장 부분             //
@@ -568,7 +561,6 @@ const DynamicResumeEditors = ({
       updateDataAndUpload((prev) => {
         const updatedSections = [...prev.sections];
         const section = updatedSections[sectionIndex];
-
         updatedSections[sectionIndex] = {
           ...section,
           items: section.items.map((item) => {
@@ -739,244 +731,141 @@ const DynamicResumeEditors = ({
 //          resume data 기반해서 실제 랜더링을 담당하는 부분       //
 //////////////////////////////////////////////////////////////////
   // section들을 rendering하는 함수
-  const renderSection = useCallback(
-    (sectionIndex, sectionData) => (
-      <div
-        id={`${sectionData.type}Experience`}
-        className="section"
-        key={sectionIndex}
-      >
-        <div
-          id={`${sectionData.type}Experience-sectionName`}
-          className="sectionName"
-        >
-          <Section
-            SectionleftContent={
-              <EditorComponent
-                content={sectionData.title}
-                onUpdate={(value) =>
-                  handleSectionTitleUpdate(sectionIndex, value)
-                }
-                setActiveEditor={setActiveEditor}
-                className="sectionTitle"
-                setShowFormInEditorCompo={setShowFormInDocs}
-                placeholderText="Section Title"
-                defaultStyle="bold"
-              />
-            }
-            addCompany={() => addNewItem(sectionIndex)}
-            tooltipText={`Add ${sectionData.type}`}
-            sectionUp={() => moveSectionUp(sectionIndex)}
-            sectionDown={() => moveSectionDown(sectionIndex)}
-          />
-          <hr />
-        </div>
-        {sectionData.items.map((item) => (
-          <div key={item.id} className="sectionContent">
-            {sectionData.type === "education" ? (
-              <>
-                <div className="contentTitle">
-                  <Company
-                    leftContent={
-                      <EditorComponent
-                        content={item.title}
-                        onUpdate={(value) =>
-                          handleContentUpdate(
-                            sectionIndex,
-                            item.id,
-                            "title",
-                            value
-                          )
-                        }
-                        setActiveEditor={setActiveEditor}
-                        className="contentTitle"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        placeholderText="University"
-                        defaultStyle="bold"
-                      />
-                    }
-                    rightContent={
-                      <EditorComponent
-                        content={item.cityState || ""}
-                        onUpdate={(value) =>
-                          handleContentUpdate(
-                            sectionIndex,
-                            item.id,
-                            "cityState",
-                            value
-                          )
-                        }
-                        setActiveEditor={setActiveEditor}
-                        className="cityState"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        placeholderText="City, State"
-                        defaultStyle="bold"
-                      />
-                    }
-                    tooltipText="Add degree"
-                    addBulletPoint={() => addSubItem(sectionIndex, item.id)}
-                    onDelete={() => deleteItem(sectionIndex, item.id)}
-                  />
-                </div>
-                {item.degrees &&
-                  item.degrees.map((degreeItem) => (
-                    <div key={degreeItem.id} className="sectiontitle">
-                      <Degree
-                        leftContent={
-                          <EditorComponent
-                            content={degreeItem.degree}
-                            onUpdate={(value) =>
-                              handleContentUpdate(
-                                sectionIndex,
-                                item.id,
-                                "degree",
-                                value,
-                                degreeItem.id
-                              )
-                            }
-                            setActiveEditor={setActiveEditor}
-                            className="Degree"
-                            setShowFormInEditorCompo={setShowFormInDocs}
-                            placeholderText="Degree"
-                            defaultStyle="italic"
-                          />
-                        }
-                        onDateUpdate={(value) =>
-                          handleDateUpdate(
-                            sectionIndex,
-                            item.id,
-                            value,
-                            degreeItem.id
-                          )
-                        }
-                        initialDate={degreeItem.graduationDate}
-                      />
-                    </div>
-                  ))}
-              </>
-            ) : (
-              <>
-                <div className="contentTitle">
-                  <Company
-                    leftContent={
-                      <EditorComponent
-                        content={item.organization}
-                        onUpdate={(value) =>
-                          handleContentUpdate(
-                            sectionIndex,
-                            item.id,
-                            "organization",
-                            value
-                          )
-                        }
-                        setActiveEditor={setActiveEditor}
-                        className="contentTitle"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        defaultStyle="bold"
-                        placeholderText="Organization"
-                      />
-                    }
-                    rightContent={
-                      <EditorComponent
-                        content={item.cityState || ""}
-                        onUpdate={(value) =>
-                          handleContentUpdate(
-                            sectionIndex,
-                            item.id,
-                            "cityState",
-                            value
-                          )
-                        }
-                        setActiveEditor={setActiveEditor}
-                        className="cityState"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        placeholderText="City, State"
-                        defaultStyle="bold"
-                      />
-                    }
-                    addBulletPoint={() => addSubItem(sectionIndex, item.id)}
-                    tooltipText={`Add ${sectionData.type} item`}
-                    onDelete={() => deleteItem(sectionIndex, item.id)}
-                  />
-                </div>
-                {item.subItems &&
-                  item.subItems.map((subItem) => (
-                    <div key={subItem.id}>
-                      <div className="jobtitle">
-                        <Title
-                          leftContent={
-                            <EditorComponent
-                              content={subItem.title}
-                              onUpdate={(value) =>
-                                handleContentUpdate(
-                                  sectionIndex,
-                                  item.id,
-                                  "title",
-                                  value,
-                                  subItem.id
-                                )
-                              }
-                              setShowFormInEditorCompo={setShowFormInDocs}
-                              setActiveEditor={setActiveEditor}
-                              className="jobTitle"
-                              placeholderText="Job Title"
-                              defaultStyle="italic"
-                            />
-                          }
-                          onDateUpdate={(dateType, value) =>
-                            handleDateUpdate(
-                              sectionIndex,
-                              item.id,
-                              dateType,
-                              value,
-                              subItem.id // subItem의 id를 추가로 전달
-                            )
-                          }
-                          initialEntryDate={subItem.entryDate || null} // subItem의 날짜 정보 사용
-                          initialExitDate={subItem.exitDate || null} // subItem의 날짜 정보 사용
-                          onDelete={() =>
-                            deleteSubItem(sectionIndex, item.id, subItem.id)
-                          }
-                        />
-                      </div>
-                      <div className="sectionbulletPoint">
-                        <EditorComponent
-                          content={subItem.bulletPoints}
-                          onUpdate={(value) =>
-                            handleContentUpdate(
-                              sectionIndex,
-                              item.id,
-                              "bulletPoints",
-                              value,
-                              subItem.id
-                            )
-                          }
-                          setShowFormInEditorCompo={setShowFormInDocs}
-                          setActiveEditor={setActiveEditor}
-                          className="sectionbulletPoint"
-                          placeholderText="Click to add bullet points"
-                        />
-                      </div>
-                    </div>
-                  ))}
-              </>
-            )}
-          </div>
-        ))}
+  const renderSection = useCallback((sectionIndex, sectionData) => (
+    <div id={`${sectionData.type}Experience`} className="section" key={sectionIndex}>
+      <div id={`${sectionData.type}Experience-sectionName`} className="sectionName">
+        <Section
+          SectionleftContent={renderEditorComponent(
+            sectionData.title,
+            (value) => handleSectionTitleUpdate(sectionIndex, value),
+            "sectionTitle",
+            "Section Title",
+            "bold",
+            `section-title-${sectionIndex}`
+          )}
+          addCompany={() => addNewItem(sectionIndex)}
+          tooltipText={`Add ${sectionData.type}`}
+          sectionUp={() => moveSectionUp(sectionIndex)}
+          sectionDown={() => moveSectionDown(sectionIndex)}
+        />
+        <hr />
       </div>
-    ),
-    [
-      handleSectionTitleUpdate,
-      addNewItem,
-      handleContentUpdate,
-      addSubItem,
-      setActiveEditor,
-      setShowFormInDocs,
-      moveSectionUp,
-      moveSectionDown,
-      handleDateUpdate,
-    ]
-  );
+      {sectionData.items.map((item) => (
+        <div key={item.id} className="sectionContent">
+          {sectionData.type === "education" ? (
+            <>
+              <div className="contentTitle">
+                <Company
+                  leftContent={renderEditorComponent(
+                    item.title,
+                    (value) => handleContentUpdate(sectionIndex, item.id, "title", value),
+                    "contentTitle",
+                    "University",
+                    "bold",
+                    `edu-title-${item.id}`
+                  )}
+                  rightContent={renderEditorComponent(
+                    item.cityState || "",
+                    (value) => handleContentUpdate(sectionIndex, item.id, "cityState", value),
+                    "cityState",
+                    "City, State",
+                    "bold",
+                    `edu-citystate-${item.id}`
+                  )}
+                  tooltipText="Add degree"
+                  addBulletPoint={() => addSubItem(sectionIndex, item.id)}
+                  onDelete={() => deleteItem(sectionIndex, item.id)}
+                />
+              </div>
+              {item.degrees && item.degrees.map((degreeItem) => (
+                <div key={degreeItem.id} className="sectiontitle">
+                  <Degree
+                    leftContent={renderEditorComponent(
+                      degreeItem.degree,
+                      (value) => handleContentUpdate(sectionIndex, item.id, "degree", value, degreeItem.id),
+                      "Degree",
+                      "Degree",
+                      "italic",
+                      `degree-${degreeItem.id}`
+                    )}
+                    onDateUpdate={(value) => handleDateUpdate(sectionIndex, item.id, value, degreeItem.id)}
+                    initialDate={degreeItem.graduationDate}
+                  />
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="contentTitle">
+                <Company
+                  leftContent={renderEditorComponent(
+                    item.organization,
+                    (value) => handleContentUpdate(sectionIndex, item.id, "organization", value),
+                    "contentTitle",
+                    "Organization",
+                    "bold",
+                    `org-${item.id}`
+                  )}
+                  rightContent={renderEditorComponent(
+                    item.cityState || "",
+                    (value) => handleContentUpdate(sectionIndex, item.id, "cityState", value),
+                    "cityState",
+                    "City, State",
+                    "bold",
+                    `citystate-${item.id}`
+                  )}
+                  addBulletPoint={() => addSubItem(sectionIndex, item.id)}
+                  tooltipText={`Add ${sectionData.type} item`}
+                  onDelete={() => deleteItem(sectionIndex, item.id)}
+                />
+              </div>
+              {item.subItems && item.subItems.map((subItem) => (
+                <div key={subItem.id}>
+                  <div className="jobtitle">
+                    <Title
+                      leftContent={renderEditorComponent(
+                        subItem.title,
+                        (value) => handleContentUpdate(sectionIndex, item.id, "title", value, subItem.id),
+                        "jobTitle",
+                        "Job Title",
+                        "italic",
+                        `job-title-${subItem.id}`
+                      )}
+                      onDateUpdate={(dateType, value) => handleDateUpdate(sectionIndex, item.id, dateType, value, subItem.id)}
+                      initialEntryDate={subItem.entryDate || null}
+                      initialExitDate={subItem.exitDate || null}
+                      onDelete={() => deleteSubItem(sectionIndex, item.id, subItem.id)}
+                    />
+                  </div>
+                  <div className="sectionbulletPoint">
+                    {renderEditorComponent(
+                      subItem.bulletPoints,
+                      (value) => handleContentUpdate(sectionIndex, item.id, "bulletPoints", value, subItem.id),
+                      "sectionbulletPoint",
+                      "Click to add bullet points",
+                      null,
+                      `bullet-points-${subItem.id}`
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  ), [
+    handleSectionTitleUpdate,
+    addNewItem,
+    handleContentUpdate,
+    addSubItem,
+    moveSectionUp,
+    moveSectionDown,
+    handleDateUpdate,
+    deleteItem,
+    deleteSubItem,
+    renderEditorComponent
+  ]);
 
   // 전체 UI 렌더링
   return (
@@ -985,28 +874,28 @@ const DynamicResumeEditors = ({
         <MenuBar docsId={docsId} editor={activeEditor || menuBarEditor} />
       </div>
       <div className="docContainer flex flex-col flex-1 items-center w-full overflow-auto scrollbar scrollbar-thumb-zinc-400 scrollbar-track-zinc-200">
-        <div className="doc max-w-3xl mx-auto">
+        <div className="doc">
           <div id="BasicInfo" className="text-center">
-            <div id="BasicInfo-name">
-              <EditorComponent
-                content={resumeData.basicInfo.personName}
-                onUpdate={(value) => handleBasicInfoUpdate("personName", value)}
-                setActiveEditor={setActiveEditor}
-                className="basicInfo"
-                setShowFormInEditorCompo={setShowFormInDocs}
-                placeholderText="Name"
-              />
+          <div id="BasicInfo-name">
+              {renderEditorComponent(
+                resumeData.basicInfo.personName,
+                (value) => handleBasicInfoUpdate("personName", value),
+                "basicInfo",
+                "Name",
+                null,
+                "basic-info-name"
+              )}
             </div>
             <hr />
             <div id="BasicInfo-others">
-              <EditorComponent
-                content={resumeData.basicInfo.othersInfo}
-                onUpdate={(value) => handleBasicInfoUpdate("othersInfo", value)}
-                setActiveEditor={setActiveEditor}
-                className="basicInfo"
-                setShowFormInEditorCompo={setShowFormInDocs}
-                placeholderText="City, State | +82 10-XXXXXXXX | email@gmail.com | linkedin.com/..."
-              />
+              {renderEditorComponent(
+                resumeData.basicInfo.othersInfo,
+                (value) => handleBasicInfoUpdate("othersInfo", value),
+                "basicInfo",
+                "City, State | +82 10-XXXXXXXX | email@gmail.com | linkedin.com/...",
+                null,
+                "basic-info-others"
+              )}
             </div>
           </div>
 
