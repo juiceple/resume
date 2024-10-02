@@ -42,12 +42,12 @@ export default function Degree({
                         onClick={() => setPopoverOpen(true)}
                         style={dateStyle(date)}
                     >
-                        <div className="mr-2">
+                        <div className="mr-1">
                             Graduation Date:
                         </div>
-                        <div>
+                        <span>
                             {date || ''}
-                        </div>
+                            </span>
                     </div>
                 </PopoverTrigger>
                 <PopoverContent>

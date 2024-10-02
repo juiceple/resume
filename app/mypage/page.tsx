@@ -120,7 +120,7 @@ const useMyPageData = () => {
                 const { error: profileError } = await supabase
                     .from('profiles')
                     .upsert({
-                        id: user.id,
+                        user_id: user.id,
                         career: updatedData.profile.career,
                         job: updatedData.profile.job,
                         desired_job: updatedData.profile.desiredJob,

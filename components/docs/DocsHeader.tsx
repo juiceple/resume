@@ -15,14 +15,36 @@ const signOut = async () => {
 const DocsHeader = () => {
     const [loading, setLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
+    const [availablePoints, setAvailablePoints] = useState<number | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
+    const supabase = createClient();
+
+    const fetchUserPoints = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('BulletPoint')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (error) throw error;
+                setAvailablePoints(data?.BulletPoint || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching user points:', error);
+        }
+    }, [supabase]);
+
+    useEffect(() => {
+        fetchUserPoints();
+    }, [fetchUserPoints]);
 
     const handleNavigation = useCallback((path: string, message: string) => {
-        // 현재 페이지와 이동하려는 페이지가 같으면 아무 작업도 하지 않음
         if (pathname === path) return;
-
         setLoading(true);
         setLoadingMessage(message);
         router.push(path);
@@ -77,7 +99,7 @@ const DocsHeader = () => {
                                 </svg>
                             </div>
                             <div>
-                                사용 가능한 포인트: <span></span>
+                                사용 가능한 포인트: <span>{availablePoints !== null ? availablePoints : '로딩 중...'}</span>
                             </div>
                         </div>
                     </div>
@@ -146,6 +168,3 @@ const DocsHeader = () => {
 };
 
 export default DocsHeader;
-
-
-

@@ -16,7 +16,7 @@ import DocsPreview from '@/components/docs/edit/DocsPreviewCompo';
 //vercel ai
 import { useChat } from "ai/react";
 import "./index.css"
-
+import { createClient } from "@/utils/supabase/client"
 // 직무 정보를 위한 인터페이스 정의
 interface JobFormData {
   job: string;
@@ -24,7 +24,7 @@ interface JobFormData {
   announcement: string;
 }
 
-
+const supabase = createClient();
 
 export default function Edits() {
   //
@@ -52,7 +52,70 @@ export default function Edits() {
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [resumeTitle, setResumeTitle] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [bulletPoints, setBulletPoints] = useState<number>(0);
+  const [bulletPointsGenerated, setBulletPointsGenerated] = useState<number>(0);
 
+  useEffect(() => {
+    // 사용자 ID 가져오기 (로그인 상태에 따라 구현 필요)
+    const fetchUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUserId(user.id)
+        fetchUserProfile(user.id)
+      }
+    }
+    fetchUserId()
+  }, [])
+
+  const fetchUserProfile = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('BulletPoint, BulletPoint_generated')
+      .eq('user_id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching user profile:', error)
+    } else if (data) {
+      setBulletPoints(data.BulletPoint)
+      setBulletPointsGenerated(data.BulletPoint_generated)
+    }
+  }
+
+  const updateBulletPoints = async () => {
+    if (!userId) return
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        BulletPoint: bulletPoints - 1,
+        BulletPoint_generated: bulletPointsGenerated + 1
+      })
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error updating bullet points:', error)
+    } else {
+      setBulletPoints(prev => prev - 1)
+      setBulletPointsGenerated(prev => prev + 1)
+    }
+  }
+
+  const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (bulletPoints > 0) {
+      await updateBulletPoints();
+      formOfInfo();
+      setJobFormData(prev => ({
+        ...prev,
+        job: "",
+        workOnJob: ""
+      }));
+    } else {
+      alert("사용 가능한 Bullet Point가 없습니다.");
+    }
+  };
 
   const fetchResume = async (id: string) => {
     try {
@@ -111,18 +174,7 @@ export default function Edits() {
     setBulletContent(content);
   };
 
-  // 폼 제출 핸들러
-  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    formOfInfo();
-    setJobFormData(prev => {
-      return {
-        ...prev,
-        job: "",
-        workOnJob: ""
-      }
-    })
-  };
+
   const refreshResumes = async () => {
     if (docsId) {
       await fetchResume(docsId);

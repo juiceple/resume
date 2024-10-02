@@ -55,7 +55,7 @@ const EditorComponent = ({
   setShowFormInEditorCompo,
   className,
   placeholderText,
-  defaultStyle // 새로운 prop 추가
+  defaultStyle, // 새로운 prop 추가
 }) => {
   const editorRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -82,9 +82,9 @@ const EditorComponent = ({
     onUpdate: ({ editor }) => {
       let newContent = editor.getHTML();
       // 기본 스타일 적용
-      if (defaultStyle === 'bold') {
+      if (defaultStyle === "bold") {
         newContent = `<strong>${newContent}</strong>`;
-      } else if (defaultStyle === 'italic') {
+      } else if (defaultStyle === "italic") {
         newContent = `<em>${newContent}</em>`;
       }
       onUpdate(newContent);
@@ -264,15 +264,16 @@ const DynamicResumeEditors = ({
         throw new Error("Invalid data for update");
       }
 
-      // 이미지 캡처 및 업로드
-      const previewUrl = await captureAndUpload(docsId);
+      console.log(
+        "Uploading data to Supabase:",
+        JSON.stringify(newData, null, 2)
+      );
 
       // Supabase 업데이트
       const { data, error } = await supabase
         .from("resumes")
         .update({
           content: newData,
-          docs_preview_url: previewUrl, // 캡처된 이미지의 URL 저장
         })
         .eq("id", docsId)
         .select();
@@ -280,7 +281,10 @@ const DynamicResumeEditors = ({
       if (error) throw error;
 
       if (data && data.length > 0) {
-        console.log("Update successful, preview URL saved:", previewUrl);
+        console.log(
+          "Update successful, updated data:",
+          JSON.stringify(data[0], null, 2)
+        );
       } else {
         console.warn(
           "No data returned after update. Verify if the row exists and changes were made."
@@ -293,7 +297,6 @@ const DynamicResumeEditors = ({
       setUpdateStatusFalse();
     }
   };
-
   //supabase 과도한 호출 방지를 위한 debounced
   const debouncedUpdate = useCallback(
     debounce((newData) => {
@@ -345,22 +348,37 @@ const DynamicResumeEditors = ({
       updateDataAndUpload((prev) => {
         const updatedSections = [...prev.sections];
         const sectionToUpdate = { ...updatedSections[sectionIndex] };
-        sectionToUpdate.items = sectionToUpdate.items.map((item) =>
-          item.id === itemId
-            ? subItemId
-              ? {
+        sectionToUpdate.items = sectionToUpdate.items.map((item) => {
+          if (item.id === itemId) {
+            if (sectionToUpdate.type === "education") {
+              return {
+                ...item,
+                degrees: (item.degrees || []).map((degree) =>
+                  degree.id === subItemId
+                    ? { ...degree, graduationDate: value }
+                    : degree
+                ),
+              };
+            } else {
+              if (subItemId) {
+                return {
                   ...item,
                   subItems: item.subItems.map((subItem) =>
                     subItem.id === subItemId
                       ? { ...subItem, [dateType]: value }
                       : subItem
                   ),
-                }
-              : { ...item, [dateType]: value }
-            : item
-        );
+                };
+              } else {
+                // This case is for backwards compatibility, but shouldn't be used in new code
+                return { ...item, [dateType]: value };
+              }
+            }
+          }
+          return item;
+        });
         updatedSections[sectionIndex] = sectionToUpdate;
-
+  
         return { ...prev, sections: updatedSections };
       });
     },
@@ -395,17 +413,35 @@ const DynamicResumeEditors = ({
         const sectionToUpdate = { ...updatedSections[sectionIndex] };
         sectionToUpdate.items = sectionToUpdate.items.map((item) => {
           if (item.id === itemId) {
-            if (subItemId) {
-              return {
-                ...item,
-                subItems: item.subItems.map((subItem) =>
-                  subItem.id === subItemId
-                    ? { ...subItem, [field]: value }
-                    : subItem
-                ),
-              };
+            if (sectionToUpdate.type === "education") {
+              if (field === "degree" && subItemId) {
+                return {
+                  ...item,
+                  degrees: (item.degrees || []).map((degree) =>
+                    degree.id === subItemId
+                      ? { ...degree, degree: value }
+                      : degree
+                  ),
+                };
+              } else {
+                return { ...item, [field]: value };
+              }
+            } else if (
+              ["work", "project", "leadership"].includes(sectionToUpdate.type)
+            ) {
+              if (subItemId) {
+                return {
+                  ...item,
+                  subItems: item.subItems.map((subItem) =>
+                    subItem.id === subItemId
+                      ? { ...subItem, [field]: value }
+                      : subItem
+                  ),
+                };
+              } else {
+                return { ...item, [field]: value };
+              }
             } else {
-              // Add new fields directly to the item object
               return { ...item, [field]: value };
             }
           }
@@ -413,13 +449,11 @@ const DynamicResumeEditors = ({
         });
         updatedSections[sectionIndex] = sectionToUpdate;
 
-        const updatedData = { ...prev, sections: updatedSections };
-        return updatedData;
+        return { ...prev, sections: updatedSections };
       });
     },
     [updateDataAndUpload]
   );
-
 
   //section 중 title을 업데이트
   const handleSectionTitleUpdate = useCallback(
@@ -449,28 +483,27 @@ const DynamicResumeEditors = ({
         switch (section.type) {
           case "education":
             newItem.title = "";
-            newItem.degree = "";
-            break;
-          case "work":
-            newItem.organization = "";
-            newItem.subItems = [
+            newItem.cityState = "";
+            newItem.degrees = [
               {
                 id: uuidv4(),
-                title: "",
-                bulletPoints:
-                  "",
+                degree: "",
+                graduationDate: undefined,
               },
             ];
             break;
+          case "work":
           case "project":
           case "leadership":
             newItem.organization = "";
+            newItem.cityState = "";
             newItem.subItems = [
               {
                 id: uuidv4(),
                 title: "",
-                bulletPoints:
-                  "",
+                bulletPoints: "",
+                entryDate: null,
+                exitDate: null,
               },
             ];
             break;
@@ -503,7 +536,7 @@ const DynamicResumeEditors = ({
       updateDataAndUpload((prev) => {
         const updatedSections = [...prev.sections];
         const section = updatedSections[sectionIndex];
-  
+
         updatedSections[sectionIndex] = {
           ...section,
           items: section.items.map((item) => {
@@ -542,7 +575,7 @@ const DynamicResumeEditors = ({
             return item;
           }),
         };
-  
+
         return {
           ...prev,
           sections: updatedSections,
@@ -562,14 +595,14 @@ const DynamicResumeEditors = ({
           (item) => item.id !== itemId
         );
         updatedSections[sectionIndex] = sectionToUpdate;
-  
+
         const newData = { ...prev, sections: updatedSections };
         return newData;
       });
     },
     [updateDataAndUpload]
   );
-  
+
   // 서브아이템 삭제 함수
   const deleteSubItem = useCallback(
     (sectionIndex, itemId, subItemId) => {
@@ -587,14 +620,13 @@ const DynamicResumeEditors = ({
             : item
         );
         updatedSections[sectionIndex] = sectionToUpdate;
-  
+
         const newData = { ...prev, sections: updatedSections };
         return newData;
       });
     },
     [updateDataAndUpload]
   );
-  
 
   // 섹션을 위로 이동하는 함수
   // 섹션을 위로 이동하는 함수
@@ -698,81 +730,85 @@ const DynamicResumeEditors = ({
           <div key={item.id} className="sectionContent">
             {sectionData.type === "education" ? (
               <>
-              <div className="contentTitle">
-                <Company
-                  leftContent={
-                    <EditorComponent
-                      content={item.title}
-                      onUpdate={(value) =>
-                        handleContentUpdate(
-                          sectionIndex,
-                          item.id,
-                          "title",
-                          value
-                        )
-                      }
-                      setActiveEditor={setActiveEditor}
-                      className="contentTitle"
-                      setShowFormInEditorCompo={setShowFormInDocs}
-                      placeholderText="University"
-                      defaultStyle="bold"
-                    />
-                  }
-                  rightContent={
-                    <EditorComponent
-                      content={item.cityState || ""}
-                      onUpdate={(value) =>
-                        handleContentUpdate(
-                          sectionIndex,
-                          item.id,
-                          "cityState",
-                          value
-                        )
-                      }
-                      setActiveEditor={setActiveEditor}
-                      className="cityState"
-                      setShowFormInEditorCompo={setShowFormInDocs}
-                      placeholderText="City, State"
-                      defaultStyle="bold"
-                    />
-                  }
-                  tooltipText="Add degree"
-                  addBulletPoint={() => addSubItem(sectionIndex, item.id)}
-                  onDelete={() => deleteItem(sectionIndex, item.id)}
-                />
-              </div>
-              {item.degrees && item.degrees.map((degreeItem, index) => (
-                <div key={degreeItem.id} className="sectiontitle">
-                  <Degree
+                <div className="contentTitle">
+                  <Company
                     leftContent={
                       <EditorComponent
-                        content={degreeItem.degree}
+                        content={item.title}
                         onUpdate={(value) =>
                           handleContentUpdate(
                             sectionIndex,
                             item.id,
-                            "degree",
+                            "title",
+                            value
+                          )
+                        }
+                        setActiveEditor={setActiveEditor}
+                        className="contentTitle"
+                        setShowFormInEditorCompo={setShowFormInDocs}
+                        placeholderText="University"
+                        defaultStyle="bold"
+                      />
+                    }
+                    rightContent={
+                      <EditorComponent
+                        content={item.cityState || ""}
+                        onUpdate={(value) =>
+                          handleContentUpdate(
+                            sectionIndex,
+                            item.id,
+                            "cityState",
+                            value
+                          )
+                        }
+                        setActiveEditor={setActiveEditor}
+                        className="cityState"
+                        setShowFormInEditorCompo={setShowFormInDocs}
+                        placeholderText="City, State"
+                        defaultStyle="bold"
+                      />
+                    }
+                    tooltipText="Add degree"
+                    addBulletPoint={() => addSubItem(sectionIndex, item.id)}
+                    onDelete={() => deleteItem(sectionIndex, item.id)}
+                  />
+                </div>
+                {item.degrees &&
+                  item.degrees.map((degreeItem) => (
+                    <div key={degreeItem.id} className="sectiontitle">
+                      <Degree
+                        leftContent={
+                          <EditorComponent
+                            content={degreeItem.degree}
+                            onUpdate={(value) =>
+                              handleContentUpdate(
+                                sectionIndex,
+                                item.id,
+                                "degree",
+                                value,
+                                degreeItem.id
+                              )
+                            }
+                            setActiveEditor={setActiveEditor}
+                            className="Degree"
+                            setShowFormInEditorCompo={setShowFormInDocs}
+                            placeholderText="Degree"
+                            defaultStyle="italic"
+                          />
+                        }
+                        onDateUpdate={(value) =>
+                          handleDateUpdate(
+                            sectionIndex,
+                            item.id,
                             value,
                             degreeItem.id
                           )
                         }
-                        setActiveEditor={setActiveEditor}
-                        className="Degree"
-                        setShowFormInEditorCompo={setShowFormInDocs}
-                        placeholderText="Degree"
-                        defaultStyle="italic"
+                        initialDate={degreeItem.graduationDate}
                       />
-                    }
-                    onDateUpdate={(dateType, value) =>
-                      handleDateUpdate(sectionIndex, item.id, dateType, value, degreeItem.id)
-                    }
-                    initialEntryDate={degreeItem.entryDate || null}
-                    initialExitDate={degreeItem.exitDate || null}
-                    onDelete={() => index > 0 && deleteSubItem(sectionIndex, item.id, degreeItem.id)}
-                  />
-                </div>
-              ))}
-            </>
+                    </div>
+                  ))}
+              </>
             ) : (
               <>
                 <div className="contentTitle">
@@ -853,7 +889,9 @@ const DynamicResumeEditors = ({
                           }
                           initialEntryDate={subItem.entryDate || null} // subItem의 날짜 정보 사용
                           initialExitDate={subItem.exitDate || null} // subItem의 날짜 정보 사용
-                          onDelete={() => deleteSubItem(sectionIndex, item.id, subItem.id)}
+                          onDelete={() =>
+                            deleteSubItem(sectionIndex, item.id, subItem.id)
+                          }
                         />
                       </div>
                       <div className="sectionbulletPoint">
@@ -872,6 +910,7 @@ const DynamicResumeEditors = ({
                           setActiveEditor={setActiveEditor}
                           className="sectionbulletPoint"
                           placeholderText="Click to add bullet points"
+                          
                         />
                       </div>
                     </div>
@@ -916,7 +955,7 @@ const DynamicResumeEditors = ({
                 placeholderText="Name"
               />
             </div>
-            <hr/>
+            <hr />
             <div id="BasicInfo-others">
               <EditorComponent
                 content={resumeData.basicInfo.othersInfo}
@@ -928,7 +967,7 @@ const DynamicResumeEditors = ({
               />
             </div>
           </div>
-          
+
           {resumeData.sections.map((sectionData, index) =>
             renderSection(index, sectionData)
           )}
