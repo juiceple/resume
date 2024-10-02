@@ -157,9 +157,9 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
   return (
     <>
       {loading && <FullScreenLoader message={loadingMessage} />}
-      <div className="grid grid-cols-7 gap-6">
+      <div className="grid grid-cols-7 gap-[10px]">
         <div className="relative group">
-          <div className="w-full h-[300px] transition-all duration-300 ease-in-out transform group-hover:scale-105 group-hover:z-10">
+          <div className="w-[200px] h-[300px] transition-all duration-300 ease-in-out transform group-hover:scale-105 group-hover:z-10">
             <button
               onClick={handleCreateNewResume}
               className="w-full h-full text-left focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg"
@@ -174,7 +174,7 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
         </div>
         {resumes.map((resume) => (
           <div key={resume.id} className="relative group">
-            <div className="w-full h-[300px] transition-all duration-300 ease-in-out transform group-hover:scale-105 group-hover:z-10">
+            <div className="w-[200px] h-[300px] transition-all duration-300 ease-in-out transform group-hover:scale-105 group-hover:z-10">
               <button
                 onClick={() => handleResumeClick(resume.id)}
                 className="w-full h-full text-left focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-lg"

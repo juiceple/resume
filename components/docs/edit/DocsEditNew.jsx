@@ -29,8 +29,7 @@ const safeStringify = (obj, indent = 2) => {
   cache = null;
   return retVal;
 };
-
-//너무 많은 DB 호출 방지
+//debounce  함수
 const debounce = (func, delay) => {
   const timeoutRef = useRef(null);
 
@@ -47,7 +46,12 @@ const debounce = (func, delay) => {
   );
 };
 
-// 에디터 컴포넌트 정의
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
+
+// 에디터 컴포넌트 정의(각 에디터들은 컴포넌트 내의 수정 부분을 담당함)
 const EditorComponent = ({
   content,
   onUpdate,
@@ -178,7 +182,8 @@ const EditorComponent = ({
   );
 };
 
-// 동적 이력서 에디터 컴포넌트
+
+// 동적 이력서 에디터 컴포넌트(실제 Component 역할)
 const DynamicResumeEditors = ({
   resumeinitialData,
   bulletContent,
@@ -190,20 +195,24 @@ const DynamicResumeEditors = ({
   const docRef = useRef(null);
   const [activeEditor, setActiveEditor] = useState(null);
   const [resumeData, setResumeData] = useState(resumeinitialData);
-
+  const [pendingBulletContent, setPendingBulletContent] = useState(null);
   const [error, setError] = useState(null);
   const supabase = createClient();
-  //초기 에디터설정
   const menuBarEditor = useEditor({
     extensions,
     content: "",
   });
-  //초기 data를 불러오는 effect
+
+  //초기 data를 새로운 resumeData에 저장하기. effect
   useEffect(() => {
     if (resumeinitialData) {
       setResumeData(resumeinitialData);
     }
   }, [resumeinitialData]);
+
+//////////////////////////////////////////////////////////////////
+//                   업로드 관련 로직                            //
+//////////////////////////////////////////////////////////////////
 
   //현재 resume 문서의 preview 이미지를 생성하는 함수
   async function captureAndUpload(docsID) {
@@ -255,7 +264,8 @@ const DynamicResumeEditors = ({
       throw error;
     }
   }
-  //supabase에 DocsimgPreView을 업로드하는 함수
+
+  //supabase에 Data를 업로드하는 함수
   const updateSupabase = async (newData) => {
     setUpdateStatusTrue();
     setError(null);
@@ -311,7 +321,7 @@ const DynamicResumeEditors = ({
     }, 1000),
     [docsId]
   );
-  //supabase에 content data를 업로드 하는 함수
+  //debounced + supabase업로드
   const updateDataAndUpload = useCallback(
     (newData) => {
       if (typeof newData === "function") {
@@ -333,6 +343,10 @@ const DynamicResumeEditors = ({
     [debouncedUpdate]
   );
 
+//////////////////////////////////////////////////////////////////
+//                    bulletPoint Ai 관련 로직 부분              //
+//////////////////////////////////////////////////////////////////
+
   // 에디터에 새 내용 추가 함수
   const addContentToEditor = useCallback(
     (newContent) => {
@@ -342,6 +356,25 @@ const DynamicResumeEditors = ({
     },
     [activeEditor]
   );
+
+  useEffect(() => {
+    if (bulletContent && !pendingBulletContent) {
+      setPendingBulletContent(bulletContent);
+    }
+  }, [bulletContent]);
+
+  useEffect(() => {
+    if (pendingBulletContent && activeEditor) {
+      activeEditor.commands.focus();
+      activeEditor.commands.insertContent(pendingBulletContent);
+      setPendingBulletContent(null); // Reset after insertion
+    }
+  }, [pendingBulletContent, activeEditor]);
+
+//////////////////////////////////////////////////////////////////
+//              웹사이트 내에서 resume data 저장 부분             //
+//////////////////////////////////////////////////////////////////
+
   //date를 업데이트하는 함수
   const handleDateUpdate = useCallback(
     (sectionIndex, itemId, dateType, value, subItemId = null) => {
@@ -378,20 +411,13 @@ const DynamicResumeEditors = ({
           return item;
         });
         updatedSections[sectionIndex] = sectionToUpdate;
-  
+
         return { ...prev, sections: updatedSections };
       });
     },
     [updateDataAndUpload]
   );
 
-  // 현재 content의 editor로 menubar의 editor를 변경
-  useEffect(() => {
-    if (bulletContent && activeEditor) {
-      addContentToEditor(bulletContent);
-      setActiveEditor(activeEditor);
-    }
-  }, [bulletContent, activeEditor, addContentToEditor]);
   //최상위 basic info를 update하는 내용
   const handleBasicInfoUpdate = useCallback(
     (field, value) => {
@@ -405,6 +431,7 @@ const DynamicResumeEditors = ({
     },
     [updateDataAndUpload]
   );
+
   //content 업데이트(section들)
   const handleContentUpdate = useCallback(
     (sectionIndex, itemId, field, value, subItemId = null) => {
@@ -473,6 +500,11 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload]
   );
 
+//////////////////////////////////////////////////////////////////
+//              웹사이트 내에서 +버튼 기능 구현 부분               //
+//////////////////////////////////////////////////////////////////
+
+  
   //section 내용중 company + job title + bullet point 추가 함수
   const addNewItem = useCallback(
     (sectionIndex) => {
@@ -585,6 +617,9 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload]
   );
 
+//////////////////////////////////////////////////////////////////
+//              웹사이트 내에서 삭제 버튼 기능 구현 부분           //
+//////////////////////////////////////////////////////////////////
   // 아이템 삭제 함수
   const deleteItem = useCallback(
     (sectionIndex, itemId) => {
@@ -628,7 +663,9 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload]
   );
 
-  // 섹션을 위로 이동하는 함수
+//////////////////////////////////////////////////////////////////
+//          웹사이트 내에서 섹션 위치 변경 기능 구현 부분          //
+//////////////////////////////////////////////////////////////////
   // 섹션을 위로 이동하는 함수
   const moveSectionUp = useCallback(
     (sectionIndex) => {
@@ -663,6 +700,10 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload, resumeData.sections.length]
   );
 
+//////////////////////////////////////////////////////////////////
+//          웹사이트 내에서 페이지 구분 기능 구현 부분             //
+//////////////////////////////////////////////////////////////////
+  //Page 나누는 기준자
   const addPageBreaks = useCallback(() => {
     const docElement = document.querySelector(".doc");
     if (!docElement) return;
@@ -693,6 +734,10 @@ const DynamicResumeEditors = ({
     addPageBreaks();
   }, [resumeData, addPageBreaks]);
 
+
+//////////////////////////////////////////////////////////////////
+//          resume data 기반해서 실제 랜더링을 담당하는 부분       //
+//////////////////////////////////////////////////////////////////
   // section들을 rendering하는 함수
   const renderSection = useCallback(
     (sectionIndex, sectionData) => (
@@ -910,7 +955,6 @@ const DynamicResumeEditors = ({
                           setActiveEditor={setActiveEditor}
                           className="sectionbulletPoint"
                           placeholderText="Click to add bullet points"
-                          
                         />
                       </div>
                     </div>
@@ -933,8 +977,6 @@ const DynamicResumeEditors = ({
       handleDateUpdate,
     ]
   );
-
-  console.log(resumeData);
 
   // 전체 UI 렌더링
   return (

@@ -1,7 +1,6 @@
 import { Card, CardHeader } from "@/components/ui/card";
 import { Message as MessageType } from "ai";
 import { Bot, User, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function Message({ 
   message, 
