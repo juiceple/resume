@@ -21,16 +21,12 @@ interface JobFormData {
 
 const supabase = createClient();
 
-//////////////////////////////////////////////////////////////////
-//                    기본적인 상태 관리 부분                   //
-//////////////////////////////////////////////////////////////////
-
 export default function Edits() {
   const searchParams = useSearchParams();
 
   // 기본 상태 값 설정
   const [resume, setResume] = useState('');
-  const { messages, handleSubmit, input, handleInputChange, isLoading, append } = useChat();
+  const { messages, handleSubmit, input, handleInputChange, isLoading, append, setMessages } = useChat();
   const [docsId, setDocsId] = useState<string | null>('');
   const [URL, setURL] = useState('');
   const [updateStatus, setUpdateStatus] = useState(false);
@@ -50,10 +46,7 @@ export default function Edits() {
   const [userId, setUserId] = useState<string | null>(null);
   const [bulletPoints, setBulletPoints] = useState<number>(0);
   const [bulletPointsGenerated, setBulletPointsGenerated] = useState<number>(0);
-
-  //////////////////////////////////////////////////////////////////
-  //                사용자 프로필 정보 및 초기화 부분               //
-  //////////////////////////////////////////////////////////////////
+  const [bulletPointModified, setBulletPointModified] = useState<number>(0);
 
   useEffect(() => {
     // 사용자 ID 가져오기 (로그인 상태에 따라 구현 필요)
@@ -70,7 +63,7 @@ export default function Edits() {
   const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('BulletPoint, BulletPoint_generated')
+      .select('BulletPoint, BulletPoint_generated, BulletPoint_modified')
       .eq('user_id', userId)
       .single();
 
@@ -79,12 +72,9 @@ export default function Edits() {
     } else if (data) {
       setBulletPoints(data.BulletPoint);
       setBulletPointsGenerated(data.BulletPoint_generated);
+      setBulletPointModified(data.BulletPoint_modified);
     }
   };
-
-  //////////////////////////////////////////////////////////////////
-  //                  이력서 정보 불러오기 및 업데이트             //
-  //////////////////////////////////////////////////////////////////
 
   const fetchResume = async (id: string) => {
     try {
@@ -109,11 +99,7 @@ export default function Edits() {
     }
   }, [searchParams]);
 
-  //////////////////////////////////////////////////////////////////
-  //                Bullet Point 업데이트 및 폼 제출 처리           //
-  //////////////////////////////////////////////////////////////////
-
-  const updateBulletPoints = async () => {
+  const updateBulletPointsGenerated = async () => {
     if (!userId) return;
 
     const { data, error } = await supabase
@@ -132,38 +118,44 @@ export default function Edits() {
     }
   };
 
+  const updateBulletPointsModified = async () => {
+    if (!userId) return;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        BulletPoint: bulletPoints - 1,
+        BulletPoint_modified: bulletPointModified + 1,
+      })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error updating bullet points:', error);
+    } else {
+      setBulletPoints((prev) => prev - 1);
+      setBulletPointModified((prev) => prev + 1);
+    }
+  };
+
   const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (bulletPoints > 0) {
-      await updateBulletPoints();
-      formOfInfo();
-      setJobFormData((prev) => ({
-        ...prev,
-        job: "",
-        workOnJob: "",
-      }));
+      await updateBulletPointsGenerated();
+      // 기존 메시지 초기화
+      setMessages([]);
+      // 새 메시지 추가
+      const textOfJSON = `My job title is ${jobformData.job}, and what I did in the job is ${jobformData.workOnJob}. Generate only one bullet points in English no matter what.`;
+      append({ content: textOfJSON, role: "user" });
+      setShowChat(true);
     } else {
       alert("사용 가능한 Bullet Point가 없습니다.");
     }
   };
-
-  //////////////////////////////////////////////////////////////////
-  //                  직무 정보 및 AI 메시지 생성 부분             //
-  //////////////////////////////////////////////////////////////////
-
-  function formOfInfo() {
-    const textOfJSON = `My job title is ${jobformData.job}, and what I did in the job is ${jobformData.workOnJob}. Generate only one bullet points in English no matter what.`;
-    append({ content: textOfJSON, role: "user" });
-    setShowChat(true);
-  }
+  
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  //////////////////////////////////////////////////////////////////
-  //                      이력서 편집 및 추가 기능                 //
-  //////////////////////////////////////////////////////////////////
 
   const addToResume = (content: string) => {
     setBulletContent(content);
@@ -175,10 +167,6 @@ export default function Edits() {
     }
   };
 
-  //////////////////////////////////////////////////////////////////
-  //                  업데이트 상태 관련 핸들링 함수들             //
-  //////////////////////////////////////////////////////////////////
-
   const setUpdateStatusTrue = () => {
     setUpdateStatus(true);
   };
@@ -186,14 +174,28 @@ export default function Edits() {
   const setUpdateStatusFalse = () => {
     setUpdateStatus(false);
   };
+
   const toggleFormVisibility = () => {
     setShowForm((prev) => !prev);
     console.log('함수실행됨')
   };
 
-  //////////////////////////////////////////////////////////////////
-  //                      JSX 요소 렌더링                          //
-  //////////////////////////////////////////////////////////////////
+  // 새로운 함수: 모든 상태 초기화
+  const resetAllStates = () => {
+    setJobFormData({
+      job: "",
+      workOnJob: "",
+      announcement: "",
+    });
+    setMessages([]);
+    setShowForm(false);
+    setShowChat(false);
+  };
+
+  // X 버튼 클릭 핸들러
+  const handleCloseButton = () => {
+    resetAllStates();
+  };
 
   return (
     <div className="flex flex-col h-screen w-full">
@@ -214,7 +216,7 @@ export default function Edits() {
               className="h-full relative flex flex-col overflow-auto bg-[#E0E2E5] shadow-lg p-4 items-center justify-between"
             >
               {!showChat && (
-                <button className="absolute right-4" onClick={() => setShowForm(false)}>
+                <button className="absolute right-4" onClick={handleCloseButton}>
                   <CircleX />
                 </button>
               )}
@@ -275,10 +277,7 @@ export default function Edits() {
         <div className={`transition-all duration-300 ease-in-out h-full ${showChat ? 'w-[466px]' : 'w-0'}`}>
           {showChat && (
             <div className="relative h-full flex flex-col bg-white p-4">
-              <button className="absolute right-4" onClick={() => {
-                setShowForm(false);
-                setShowChat(false);
-              }}>
+              <button className="absolute right-4" onClick={handleCloseButton}>
                 <CircleX />
               </button>
               <div className="flex-grow overflow-y-auto mb-4 mt-[30px]">
@@ -309,6 +308,7 @@ export default function Edits() {
                   disabled={!input}
                   className={`ml-2 rounded-full z-20 w-[40px] h-[40px] flex justify-center items-center transition-colors duration-200 ${input ? 'text-white' : 'bg-[#E0E2E5] text-gray-400'}`}
                   style={{ backgroundColor: input ? '#000' : '#E0E2E5' }}
+                  onClick={updateBulletPointsModified}
                 >
                   <ArrowUp />
                 </button>
@@ -327,7 +327,7 @@ export default function Edits() {
               docsId={docsId}
               setUpdateStatusTrue={setUpdateStatusTrue}
               setUpdateStatusFalse={setUpdateStatusFalse}
-              isAiEditing= {showForm}
+              isAiEditing={showForm}
             />
           ) : (
             <div className='docContainer'><DocsPreview /></div>
