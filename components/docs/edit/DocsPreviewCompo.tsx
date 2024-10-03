@@ -16,7 +16,7 @@ export default function DocsPreview() {
                 <Skeleton className="h-10 w-[1000px]" />
             </div>
             <div className="flex flex-col flex-1 items-center w-full overflow-auto scrollbar scrollbar-thumb-zinc-400 scrollbar-track-zinc-100">
-                <div className="doc max-w-3xl w-full mx-auto p-8">
+                <div className="doc w-full mx-auto p-8">
                     <div className="flex flex-col space-y-8">
                         {/* 이름 및 직함 */}
                         <div className="flex flex-col items-center space-y-2">

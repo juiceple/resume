@@ -1,24 +1,28 @@
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Message as MessageType } from "ai";
-import { Bot, User, Plus } from "lucide-react";
+import {  Plus } from "lucide-react";
 
 export default function Message({ 
-  message, 
-  onAddToResume, 
-  isLast 
+  message,  
+  isLast,
+  onAddToResume
 }: { 
   message: MessageType, 
-  onAddToResume: (content: string) => void,
-  isLast?: boolean 
+  isLast?: boolean,
+  onAddToResume: (content: string) => void
 }) {
   const { role, content } = message;
+
+  const handleAddToResume = () => {
+    onAddToResume(content);
+  };
 
   if (role === "assistant") {
     return (
       <div className="flex flex-col gap-3 p-4 bg-white rounded-lg shadow-md" style={{backgroundColor : "#EDEDED"}}>
         <div className="flex items-center justify-between mb-2">
           <button 
-            onClick={() => onAddToResume(content)}
+            onClick={handleAddToResume}
             className="flex items-center gap-2 text-blue-500 hover:text-blue-700"
           >
             <Plus size={20} />

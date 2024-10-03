@@ -63,6 +63,7 @@ const EditorComponent = ({
   isActive,
   setActiveEditorId,
   editorId,
+  setActiveEditorForAI
 }) => {
   const editorRef = useRef(null);
 
@@ -123,6 +124,9 @@ const EditorComponent = ({
   const handleAiButtonClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("handleAiButtonClick: setting activeEditorForAI");
+    console.log("editor:", editor);
+    setActiveEditorForAI(editor); // Pass the editor instance directly
     if (typeof setShowFormInEditorCompo === "function") {
       setShowFormInEditorCompo();
     } else {
@@ -132,6 +136,7 @@ const EditorComponent = ({
       );
     }
   };
+  
 
   
   return (
@@ -187,6 +192,7 @@ const EditorComponent = ({
 const DynamicResumeEditors = ({
   resumeinitialData,
   bulletContent,
+  onBulletContentUsed,
   setShowFormInDocs,
   docsId,
   setUpdateStatusTrue,
@@ -197,9 +203,9 @@ const DynamicResumeEditors = ({
   const [activeEditor, setActiveEditor] = useState(null);
   const [memoryEditor, setMemorEditor] = useState(null);
   const [resumeData, setResumeData] = useState(resumeinitialData);
-  const [pendingBulletContent, setPendingBulletContent] = useState(null);
   const [error, setError] = useState(null);
   const [activeEditorId, setActiveEditorId] = useState(null);
+  const [activeEditorForAI, setActiveEditorForAI] = useState(null);
   const supabase = createClient();
   const menuBarEditor = useEditor({
     extensions,
@@ -214,22 +220,51 @@ const DynamicResumeEditors = ({
   }, [resumeinitialData]);
 
 
-  // EditorComponent를 렌더링하는 함수
-  const renderEditorComponent = useCallback((content, onUpdate, className, placeholderText, defaultStyle, editorId) => (
-    <EditorComponent
-      content={content}
-      onUpdate={onUpdate}
-      setActiveEditor={setActiveEditor}
-      setShowFormInEditorCompo={setShowFormInDocs}
-      className={className}
-      placeholderText={placeholderText}
-      defaultStyle={defaultStyle}
-      isAiEditing={isAiEditing}
-      isActive={activeEditorId === editorId}
-      setActiveEditorId={setActiveEditorId}
-      editorId={editorId}
-    />
-  ), [setActiveEditor, setShowFormInDocs, isAiEditing, activeEditorId, setActiveEditorId]);
+  // activeEditor가 변경될 때마다 상위 컴포넌트에 알림
+  useEffect(() => {
+    setActiveEditorForAI(activeEditor);
+  }, [activeEditor, setActiveEditorForAI]);
+
+  useEffect(() => {
+    if (bulletContent){
+      console.log(bulletContent);
+    }
+    
+    if (activeEditorForAI) {
+      console.log(activeEditorForAI);
+    }
+  }, [bulletContent, activeEditor, onBulletContentUsed]);
+
+
+
+
+  // EditorComponent를 렌더링하는 함수 수정
+  const renderEditorComponent = useCallback(
+    (content, onUpdate, className, placeholderText, defaultStyle, editorId) => (
+      <EditorComponent
+        content={content}
+        onUpdate={onUpdate}
+        setActiveEditor={setActiveEditor}
+        setShowFormInEditorCompo={setShowFormInDocs}
+        className={className}
+        placeholderText={placeholderText}
+        defaultStyle={defaultStyle}
+        isAiEditing={isAiEditing}
+        isActive={activeEditorId === editorId}
+        setActiveEditorId={setActiveEditorId}
+        editorId={editorId}
+        setActiveEditorForAI={setActiveEditorForAI} // Use uppercase 'I' consistently
+      />
+    ),
+    [
+      setActiveEditor,
+      setShowFormInDocs,
+      isAiEditing,
+      activeEditorId,
+      setActiveEditorId,
+      setActiveEditorForAI,
+    ]
+  );
 //////////////////////////////////////////////////////////////////
 //                   업로드 관련 로직                            //
 //////////////////////////////////////////////////////////////////
@@ -492,6 +527,21 @@ const DynamicResumeEditors = ({
     },
     [updateDataAndUpload]
   );
+
+  useEffect(() => {
+    if (bulletContent && activeEditorForAI) {
+      console.log("Inserting bulletContent into editor");
+      try {
+        activeEditorForAI.chain().focus().insertContent(bulletContent).run();
+        onBulletContentUsed(); // Reset bulletContent after insertion
+      } catch (error) {
+        console.error("Error inserting content:", error);
+      }
+    }
+  }, [bulletContent, activeEditorForAI, onBulletContentUsed]);
+  
+  
+  
 
 //////////////////////////////////////////////////////////////////
 //              웹사이트 내에서 +버튼 기능 구현 부분               //

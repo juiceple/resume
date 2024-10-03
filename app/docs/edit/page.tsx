@@ -1,9 +1,8 @@
 "use client"
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, useRef, FormEvent } from "react";
+import { useEffect, useState, useRef, FormEvent, useCallback } from "react";
 import { Send, ArrowUp, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import EditHeader from "@/components/docs/edit/DocsEditHeader";
 import Message from "@/components/docs/edit/chat/Message";
 import DocsEditNew from '@/components/docs/edit/DocsEditNew';
@@ -21,10 +20,9 @@ interface JobFormData {
 
 const supabase = createClient();
 
+
 export default function Edits() {
   const searchParams = useSearchParams();
-
-  // 기본 상태 값 설정
   const [resume, setResume] = useState('');
   const { messages, handleSubmit, input, handleInputChange, isLoading, append, setMessages } = useChat();
   const [docsId, setDocsId] = useState<string | null>('');
@@ -32,7 +30,6 @@ export default function Edits() {
   const [updateStatus, setUpdateStatus] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const [jobformData, setJobFormData] = useState<JobFormData>({
     job: "",
     workOnJob: "",
@@ -44,9 +41,11 @@ export default function Edits() {
   const [showChat, setShowChat] = useState<boolean>(false);
   const [resumeTitle, setResumeTitle] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+
   const [bulletPoints, setBulletPoints] = useState<number>(0);
   const [bulletPointsGenerated, setBulletPointsGenerated] = useState<number>(0);
   const [bulletPointModified, setBulletPointModified] = useState<number>(0);
+
 
   useEffect(() => {
     // 사용자 ID 가져오기 (로그인 상태에 따라 구현 필요)
@@ -151,15 +150,10 @@ export default function Edits() {
       alert("사용 가능한 Bullet Point가 없습니다.");
     }
   };
-  
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  const addToResume = (content: string) => {
-    setBulletContent(content);
-  };
 
   const refreshResumes = async () => {
     if (docsId) {
@@ -196,6 +190,17 @@ export default function Edits() {
   const handleCloseButton = () => {
     resetAllStates();
   };
+
+  // 새로운 함수: Message 컴포넌트에서 호출될 함수
+  const handleAddToResume = useCallback((content: string) => {
+    setBulletContent(content);
+    console.log("handleAddToResume 실행")
+  }, []);
+
+  // DocsEditNew에 전달할 함수: bulletContent를 사용한 후 초기화
+  const handleBulletContentUsed = useCallback(() => {
+    setBulletContent(null);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen w-full">
@@ -283,10 +288,10 @@ export default function Edits() {
               <div className="flex-grow overflow-y-auto mb-4 mt-[30px]">
                 {messages.slice(1).map((message) => (
                   <Message
-                    key={message.id}
-                    message={message}
-                    onAddToResume={addToResume}
-                  />
+                  key={message.id}
+                  message={message}
+                  onAddToResume={handleAddToResume}
+                />
                 ))}
                 <div ref={messagesEndRef} />
               </div>
@@ -321,14 +326,15 @@ export default function Edits() {
           showForm || showChat ? 'w-[calc(100%-300px)]' : 'w-full'} overflow-auto bg-zinc-50`}>
           {resume ? (
             <DocsEditNew
-              resumeinitialData={resume}
-              bulletContent={bulletContent}
-              setShowFormInDocs={toggleFormVisibility}
-              docsId={docsId}
-              setUpdateStatusTrue={setUpdateStatusTrue}
-              setUpdateStatusFalse={setUpdateStatusFalse}
-              isAiEditing={showForm}
-            />
+            resumeinitialData={resume}
+            bulletContent={bulletContent}
+            onBulletContentUsed={handleBulletContentUsed}
+            setShowFormInDocs={toggleFormVisibility}
+            docsId={docsId}
+            setUpdateStatusTrue={setUpdateStatusTrue}
+            setUpdateStatusFalse={setUpdateStatusFalse}
+            isAiEditing={showForm}
+          />
           ) : (
             <div className='docContainer'><DocsPreview /></div>
           )}
