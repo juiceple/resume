@@ -7,6 +7,7 @@ import MenuBar from "./DocsToolBarCompo/MenuBar";
 import Section from "@/components/docs/edit/DocsInsideCompo/Section";
 import Company from "@/components/docs/edit/DocsInsideCompo/Company";
 import Title from "@/components/docs/edit/DocsInsideCompo/Title";
+import CustomSectionItem from '@/components/docs/edit/DocsInsideCompo/Custom'
 import Degree from "@/components/docs/edit/DocsInsideCompo/Degree";
 import { v4 as uuidv4 } from "uuid";
 import { createClient } from "@/utils/supabase/client";
@@ -800,109 +801,121 @@ const DynamicResumeEditors = ({
         />
         <hr />
       </div>
-      {sectionData.items.map((item) => (
-        <div key={item.id} className="sectionContent">
-          {sectionData.type === "education" ? (
-            <>
-              <div className="contentTitle">
-                <Company
-                  leftContent={renderEditorComponent(
-                    item.title,
-                    (value) => handleContentUpdate(sectionIndex, item.id, "title", value),
-                    "contentTitle",
-                    "University",
-                    "bold",
-                    `edu-title-${item.id}`
-                  )}
-                  rightContent={renderEditorComponent(
-                    item.cityState || "",
-                    (value) => handleContentUpdate(sectionIndex, item.id, "cityState", value),
-                    "cityState",
-                    "City, State",
-                    "bold",
-                    `edu-citystate-${item.id}`
-                  )}
-                  tooltipText="Add degree"
-                  addBulletPoint={() => addSubItem(sectionIndex, item.id)}
-                  onDelete={() => deleteItem(sectionIndex, item.id)}
-                />
-              </div>
-              {item.degrees && item.degrees.map((degreeItem) => (
-                <div key={degreeItem.id} className="sectiontitle">
-                  <Degree
+      {sectionData.type === "custom" ? (
+      sectionData.items.map((item) => (
+        <CustomSectionItem
+          key={item.id}
+          item={item}
+          onContentUpdate={(value) => handleContentUpdate(sectionIndex, item.id, "content", value)}
+          onDelete={() => deleteItem(sectionIndex, item.id)}
+          renderEditorComponent={renderEditorComponent}
+        />
+      ))
+    ) : (
+        sectionData.items.map((item) => (
+          <div key={item.id} className="sectionContent">
+            {sectionData.type === "education" ? (
+              <>
+                <div className="contentTitle">
+                  <Company
                     leftContent={renderEditorComponent(
-                      degreeItem.degree,
-                      (value) => handleContentUpdate(sectionIndex, item.id, "degree", value, degreeItem.id),
-                      "Degree",
-                      "Degree",
-                      "italic",
-                      `degree-${degreeItem.id}`
+                      item.title,
+                      (value) => handleContentUpdate(sectionIndex, item.id, "title", value),
+                      "contentTitle",
+                      "University",
+                      "bold",
+                      `edu-title-${item.id}`
                     )}
-                    onDateUpdate={(value) => handleDateUpdate(sectionIndex, item.id, value, degreeItem.id)}
-                    initialDate={degreeItem.graduationDate}
+                    rightContent={renderEditorComponent(
+                      item.cityState || "",
+                      (value) => handleContentUpdate(sectionIndex, item.id, "cityState", value),
+                      "cityState",
+                      "City, State",
+                      "bold",
+                      `edu-citystate-${item.id}`
+                    )}
+                    tooltipText="Add degree"
+                    addBulletPoint={() => addSubItem(sectionIndex, item.id)}
+                    onDelete={() => deleteItem(sectionIndex, item.id)}
                   />
                 </div>
-              ))}
-            </>
-          ) : (
-            <>
-              <div className="contentTitle">
-                <Company
-                  leftContent={renderEditorComponent(
-                    item.organization,
-                    (value) => handleContentUpdate(sectionIndex, item.id, "organization", value),
-                    "contentTitle",
-                    "Organization",
-                    "bold",
-                    `org-${item.id}`
-                  )}
-                  rightContent={renderEditorComponent(
-                    item.cityState || "",
-                    (value) => handleContentUpdate(sectionIndex, item.id, "cityState", value),
-                    "cityState",
-                    "City, State",
-                    "bold",
-                    `citystate-${item.id}`
-                  )}
-                  addBulletPoint={() => addSubItem(sectionIndex, item.id)}
-                  tooltipText={`Add ${sectionData.type} item`}
-                  onDelete={() => deleteItem(sectionIndex, item.id)}
-                />
-              </div>
-              {item.subItems && item.subItems.map((subItem) => (
-                <div key={subItem.id}>
-                  <div className="jobtitle">
-                    <Title
+                {item.degrees && item.degrees.map((degreeItem) => (
+                  <div key={degreeItem.id} className="sectiontitle">
+                    <Degree
                       leftContent={renderEditorComponent(
-                        subItem.title,
-                        (value) => handleContentUpdate(sectionIndex, item.id, "title", value, subItem.id),
-                        "jobTitle",
-                        "Job Title",
+                        degreeItem.degree,
+                        (value) => handleContentUpdate(sectionIndex, item.id, "degree", value, degreeItem.id),
+                        "Degree",
+                        "Degree",
                         "italic",
-                        `job-title-${subItem.id}`
+                        `degree-${degreeItem.id}`
                       )}
-                      onDateUpdate={(dateType, value) => handleDateUpdate(sectionIndex, item.id, dateType, value, subItem.id)}
-                      initialEntryDate={subItem.entryDate || null}
-                      initialExitDate={subItem.exitDate || null}
-                      onDelete={() => deleteSubItem(sectionIndex, item.id, subItem.id)}
+                      onDateUpdate={(value) => handleDateUpdate(sectionIndex, item.id, value, degreeItem.id)}
+                      initialDate={degreeItem.graduationDate}
                     />
                   </div>
-                  <div className="sectionbulletPoint">
-                    {renderEditorComponent(
-                      subItem.bulletPoints,
-                      (value) => handleContentUpdate(sectionIndex, item.id, "bulletPoints", value, subItem.id),
-                      "sectionbulletPoint",
-                      "Click to add bullet points",
-                      null,
-                      `bullet-points-${subItem.id}`
+                ))}
+              </>
+            ) : (
+              <>
+                <div className="contentTitle">
+                  <Company
+                    leftContent={renderEditorComponent(
+                      item.organization,
+                      (value) => handleContentUpdate(sectionIndex, item.id, "organization", value),
+                      "contentTitle",
+                      "Organization",
+                      "bold",
+                      `org-${item.id}`
                     )}
-                  </div>
+                    rightContent={renderEditorComponent(
+                      item.cityState || "",
+                      (value) => handleContentUpdate(sectionIndex, item.id, "cityState", value),
+                      "cityState",
+                      "City, State",
+                      "bold",
+                      `citystate-${item.id}`
+                    )}
+                    addBulletPoint={() => addSubItem(sectionIndex, item.id)}
+                    tooltipText={`Add ${sectionData.type} item`}
+                    onDelete={() => deleteItem(sectionIndex, item.id)}
+                  />
                 </div>
-              ))}
-            </>
-          )}
-        </div>
-      ))}
+                {item.subItems && item.subItems.map((subItem) => (
+                  <div key={subItem.id}>
+                    <div className="jobtitle">
+                      <Title
+                        leftContent={renderEditorComponent(
+                          subItem.title,
+                          (value) => handleContentUpdate(sectionIndex, item.id, "title", value, subItem.id),
+                          "jobTitle",
+                          "Job Title",
+                          "italic",
+                          `job-title-${subItem.id}`
+                        )}
+                        onDateUpdate={(dateType, value) => handleDateUpdate(sectionIndex, item.id, dateType, value, subItem.id)}
+                        initialEntryDate={subItem.entryDate || null}
+                        initialExitDate={subItem.exitDate || null}
+                        onDelete={() => deleteSubItem(sectionIndex, item.id, subItem.id)}
+                      />
+                    </div>
+                    <div className="sectionbulletPoint">
+                      {renderEditorComponent(
+                        subItem.bulletPoints,
+                        (value) => handleContentUpdate(sectionIndex, item.id, "bulletPoints", value, subItem.id),
+                        "sectionbulletPoint",
+                        "Click to add bullet points",
+                        null,
+                        `bullet-points-${subItem.id}`
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        ))
+      )}
     </div>
   ), [
     handleSectionTitleUpdate,
