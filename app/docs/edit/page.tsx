@@ -24,7 +24,15 @@ const supabase = createClient();
 export default function Edits() {
   const searchParams = useSearchParams();
   const [resume, setResume] = useState('');
-  const { messages, handleSubmit, input, handleInputChange, isLoading, append, setMessages } = useChat();
+
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const { messages, append, setMessages, isLoading, handleSubmit, handleInputChange, input } = useChat({
+    onFinish: () => setIsGenerating(false),
+  });
+
+
   const [docsId, setDocsId] = useState<string | null>('');
   const [URL, setURL] = useState('');
   const [updateStatus, setUpdateStatus] = useState(false);
@@ -140,9 +148,8 @@ export default function Edits() {
     e.preventDefault();
     if (bulletPoints > 0) {
       await updateBulletPointsGenerated();
-      // 기존 메시지 초기화
-      setMessages([]);
-      // 새 메시지 추가
+      setMessages([]); // 기존 메시지 초기화
+      setIsGenerating(true);
       const textOfJSON = `My job title is ${jobformData.job}, and what I did in the job is ${jobformData.workOnJob}. Generate only one bullet points in English no matter what.`;
       append({ content: textOfJSON, role: "user" });
       setShowChat(true);
@@ -150,6 +157,15 @@ export default function Edits() {
       alert("사용 가능한 Bullet Point가 없습니다.");
     }
   };
+
+  const handleChatSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    setIsGenerating(true);
+    handleSubmit(e);
+  }, [input, handleSubmit]);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -201,6 +217,20 @@ export default function Edits() {
   const handleBulletContentUsed = useCallback(() => {
     setBulletContent(null);
   }, []);
+
+  // 메시지 렌더링 로직
+  const renderMessages = useCallback(() => {
+    return messages.slice(1).map((message, index) => (
+      <Message
+        key={message.id}
+        message={message}
+        onAddToResume={handleAddToResume}
+        isLast={index === messages.length - 1}
+        isLoading={isGenerating && index === messages.length - 1 && message.role === "assistant"}
+      />
+    ));
+  }, [messages, isGenerating, handleAddToResume]);
+
 
   return (
     <div className="flex flex-col h-screen w-full">
@@ -286,14 +316,15 @@ export default function Edits() {
                 <CircleX />
               </button>
               <div className="flex-grow overflow-y-auto mb-4 mt-[30px]">
-                {messages.slice(1).map((message) => (
+                {renderMessages()}
+                {isGenerating && messages[messages.length - 1]?.role !== "assistant" && (
                   <Message
-                  key={message.id}
-                  message={message}
-                  onAddToResume={handleAddToResume}
-                />
-                ))}
-                <div ref={messagesEndRef} />
+                    message={{ id: "loading", role: "assistant", content: "" }}
+                    onAddToResume={handleAddToResume}
+                    isLast={true}
+                    isLoading={true}
+                  />
+                )}
               </div>
               <form
                 ref={formRef}
@@ -326,15 +357,15 @@ export default function Edits() {
           showForm || showChat ? 'w-[calc(100%-300px)]' : 'w-full'} overflow-auto bg-zinc-50`}>
           {resume ? (
             <DocsEditNew
-            resumeinitialData={resume}
-            bulletContent={bulletContent}
-            onBulletContentUsed={handleBulletContentUsed}
-            setShowFormInDocs={toggleFormVisibility}
-            docsId={docsId}
-            setUpdateStatusTrue={setUpdateStatusTrue}
-            setUpdateStatusFalse={setUpdateStatusFalse}
-            isAiEditing={showForm}
-          />
+              resumeinitialData={resume}
+              bulletContent={bulletContent}
+              onBulletContentUsed={handleBulletContentUsed}
+              setShowFormInDocs={toggleFormVisibility}
+              docsId={docsId}
+              setUpdateStatusTrue={setUpdateStatusTrue}
+              setUpdateStatusFalse={setUpdateStatusFalse}
+              isAiEditing={showForm}
+            />
           ) : (
             <div className='docContainer'><DocsPreview /></div>
           )}
