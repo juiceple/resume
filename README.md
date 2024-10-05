@@ -1,6 +1,5 @@
 # <a href="https://www.cvmate.site/">
   <img alt="CVMATE LOGO" src="./public/images/resume.png">
-  <h1 align="center">CVMATE</h1>
 </a>
 <br/>
 
@@ -25,9 +24,9 @@
 - **[SOLAR LLM](https://ko.upstage.ai/)**: 자연어 처리 및 텍스트 임베딩을 위한 LLM을 활용하여, CHAT 및 EMBEDDING 기능을 구현.
 
 ## 프로젝트 구조도
--**[프로젝트 구조도](https://www.tldraw.com/s/v2_c_6OIL_xyhLqdY8hOVt9tLB?d=v-3717.-2261.10707.5631.owtTHk2bAUkSlG696SNMj)**
--**AI 활용부분**
-<img alt="CVMATE LOGO" src="./public/images/AISTRUCTURE.png">
+- **[프로젝트 구조도 보러가기](https://www.tldraw.com/s/v2_c_6OIL_xyhLqdY8hOVt9tLB?d=v-3717.-2261.10707.5631.owtTHk2bAUkSlG696SNMj)**
+- **AI 활용부분**
+<img alt="AI 구조도" src="./public/images/AISTRUCTURE.png">
 
 ## DEMO
 
@@ -41,13 +40,13 @@
 git clone https://github.com/juiceple/resume.git
 ```
 
-2. DIRECTORY 이동
+2. **DIRECTORY 이동**
 
 ```bash
    cd name-of-new-app
 ```
 
-3. 환경설정(API키 삽입)
+3. **환경설정(API키 삽입)**
    .env.local root directiory에 생성하기
    NEXT_PUBLIC_SUPABASE_URL= 
    NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -55,17 +54,17 @@ git clone https://github.com/juiceple/resume.git
    SOLAR_API_KEY=""
    PINECONE_API_KEY=""
 
-4. 필수 패키지 설치
+4. **필수 패키지 설치**
    ```bash
    npm install
    ```
 
-5. 개발 서버 실행
+5. **로컬 서버 실행**
    ```bash
    npm run dev
    ```
 
->CVMATE를 [localhost:3000](http://localhost:3000/) 에서 실행됩니다.
+>CVMATE는 [localhost:3000](http://localhost:3000/) 에서 접근가능합니다.
 
 ## 사용 방법
 1. 회원가입
@@ -78,4 +77,4 @@ git clone https://github.com/juiceple/resume.git
 
 5. 버튼을 누른 후 FORM 제출
 
-6. 완성된 BULLETPOINT에서 수정사항 요청
+6. 완성된 BULLETPOINT에서 수정사항 요청(MESSAGE)
