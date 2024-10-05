@@ -49,7 +49,8 @@ export default function Title({
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
-    if (!deleteButtonRef.current?.contains(e.relatedTarget as Node)) {
+    // Check if relatedTarget is a Node and if it's not contained within the delete button
+    if (e.relatedTarget instanceof Node && deleteButtonRef.current && !deleteButtonRef.current.contains(e.relatedTarget)) {
       setIsComponentHovered(false);
     }
   };

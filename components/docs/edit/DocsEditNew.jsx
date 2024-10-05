@@ -1228,7 +1228,7 @@ const DynamicResumeEditors = ({
               <SectionSelector onSelect={addNewSection} />
             )}
             <button
-              className={`add-section-button${
+              className={`add-section-button ${
                 showSectionSelector ? "active" : ""
               }`}
               onClick={() => setShowSectionSelector(!showSectionSelector)}

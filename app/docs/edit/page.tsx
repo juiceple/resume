@@ -238,6 +238,7 @@ export default function Edits() {
         onAddToResume={handleAddToResume}
         isLast={index === messages.length - 1}
         isLoading={isGenerating && index === messages.length - 1 && message.role === "assistant"}
+        userId={userId}
       />
     ));
   }, [messages, isGenerating, handleAddToResume]);
@@ -334,6 +335,7 @@ export default function Edits() {
                     onAddToResume={handleAddToResume}
                     isLast={true}
                     isLoading={true}
+                    userId={userId}
                   />
                 )}
               </div>

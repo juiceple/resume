@@ -1,26 +1,20 @@
-// //  OPEN AI 테스트용
-// import { openai } from "@ai-sdk/openai";
-// import { StreamingTextResponse, streamText } from "ai";
-
-// export async function POST(req: Request) {
-//   const { messages } = await req.json();
-
-//   const result = await streamText({
-//     model: openai("gpt-4o"),
-//     messages,
-//     system:
-// "YOU ARE AN EXPERT CV BUILDER TRAINED TO REWRITE AND OPTIMIZE WORK EXPERIENCE BULLET POINTS BASED ON USER-PROVIDED INFORMATION USERS WILL INPUT THEIR WORK EXPERIENCE AS A SENTENCE, INCLUDING THEIR POSITION NAME, AND WILL SOMETIMES PROVIDE A JOB DESCRIPTION THEY WANT TO APPLY FOR THE WORK EXPERIENCE WILL BE IN EITHER KOREAN OR ENGLISH, AND THE JOB DESCRIPTION WILL ALWAYS BE IN ENGLISH IF PROVIDED IF NO JOB DESCRIPTION IS PROVIDED, YOU MUST STILL ADD RELEVANT DETAILS BASED ON COMMON INDUSTRY EXPECTATIONS FOR THE POSITION TITLE AND THE USER'S INPUT### INSTRUCTIONS ### 1 ANALYZE the user-provided work experience and position title - If a job description is provided, EXTRACT RELEVANT KEYWORDS from the job description, focusing on job responsibilities and qualifications to enrich the bullet point - If no job description is provided, use industry-standard expectations based on the position title to add relevant details 2 REWRITE THE EXPERIENCE into ONE clear, fact-based, action-oriented bullet point using active verbs and quantified achievements - If the user's input lacks quantified results, you MUST ADD THEM based on reasonable assumptions from the context (eg, improved efficiency by 20%, enhanced experience for 1 million+ users) - If the user's input is missing key details, ADD RELEVANT INFORMATION based on either the job description or common industry expectations for that position title 3 ENSURE the bullet point is concise, professional, and aligned with either the job description (if provided) or the position title, fitting within 1-2 lines### CHAIN OF THOUGHTS ### 1 Review the user input, including the position title and work experience - If a job description is provided, extract relevant keywords to enhance the bullet point (eg, skills, tools, achievements) - If no job description is provided, draw from industry standards for the position title to infer relevant details and expectations 2 Rewrite the user input into one concise bullet point using active verbs and quantified results 3 Ensure the bullet point is no longer than 1-2 lines, while adding any relevant details missing from the user's input based on the job description or industry expectations### WHAT NOT TO DO ### - DO NOT exceed 1-2 lines in the bullet point - DO NOT leave the bullet point without quantifiable results if they can be inferred or added - DO NOT use passive language or personal pronouns - DO NOT include irrelevant information not connected to the job description or position title### EXAMPLES ####### Scenario 1 User Provides a Job Description User Input Position E-commerce Marketing Manager Work Experience Led traffic and marketing strategies to enhance campaign efficiency and user experience Job Description Product Marketing Manager at TikTok LLM Output - Developed and executed traffic and marketing strategies, improving campaign efficiency by 20% and enhancing user experience for over 1 million customers and sellers---#### Scenario 2 User Does Not Provide a Job Description User Input Position Private Equity Analyst Work Experience I supported investment planning and portfolio management for Japanese clients, collaborating with teams on private equity strategies Job Description Not provided LLM Output - Led investment planning for Japanese clients, driving $250M+ in private equity allocations and achieving 15% portfolio growth in 12 months---#### Scenario 3 User Provides Korean Input Without Job Description User Input Korean Position 소프트웨어 엔지니어 Software Engineer Work Experience 주요 프로젝트에서 서버 속도를 향상시키고 유지 보수 작업을 간소화했습니다 Job Description Not provided LLM Output English - Improved server speed by 20% and streamlined maintenance processes, reducing downtime by 15% for large-scale software projects"
-//   });
-//   return new StreamingTextResponse(result.toAIStream());
-// }
-
-
-
 import { createOpenAI } from "@ai-sdk/openai";
-import { StreamingTextResponse, streamText, generateText } from "ai";
+import { streamText, generateText } from "ai";
 import { generateEmbedding } from './embedding';
 import { queryPinecone } from './pinecone';
 import actionVerbs from './actionVerbs.json';
+
+interface UsageInfo {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+let totalUsage: UsageInfo = {
+  promptTokens: 0,
+  completionTokens: 0,
+  totalTokens: 0
+};
 
 type ActionVerbCategories = keyof typeof actionVerbs;
 
@@ -100,7 +94,7 @@ IMPROVING: Making systems, processes, or products better through enhancements.
 ### OUTPUT FORMAT:
 SUPERVISE
 `
-const Choose_KeyWord_Of_Job_Description=`
+const Choose_KeyWord_Of_Job_Description = `
 YOU ARE THE WORLD'S MOST ACCURATE AND EFFICIENT EXPERT IN JOB DESCRIPTION ANALYSIS. YOU SPECIALIZE IN EXTRACTING KEYWORDS THAT CANDIDATES MUST INCLUDE IN THEIR CVS AND BULLET POINTS TO MAXIMIZE THEIR RELEVANCE TO SPECIFIC JOB POSTINGS. YOUR ROLE IS TO IDENTIFY AND EXTRACT THE MOST IMPORTANT TERMS, CONCEPTS, AND SKILLS FROM A PROVIDED JOB DESCRIPTION.
 
 ###INSTRUCTIONS###
@@ -158,8 +152,9 @@ FOLLOW these steps to ACCURATELY EXTRACT KEYWORDS:
 - "Leadership"
 
 `
-function FIRST_SYSTEM_PROMPT(bulletPointExample:string[], actionVerb: string[], keyWordOfJobDescription:string) { 
-  return `
+
+function FIRST_SYSTEM_PROMPT(bulletPointExample: string[], actionVerb: string[], keyWordOfJobDescription?: string) {
+  let promptText = `
 YOU ARE A PROFESSIONAL RESUME BULLET POINT GENERATOR, RECOGNIZED FOR YOUR EXPERTISE IN CRAFTING HIGH-IMPACT, RESULT-ORIENTED ONLY ONE BULLET POINT THAT ALIGNS WITH INDUSTRY STANDARDS AND MAXIMIZE THE USER'S CHANCE OF SUCCESS IN THEIR TARGET ROLES, QUANTIFYING THE USER'S EXPERIENCE WITH NUMBERS.
 
 ### INSTRUCTIONS ###
@@ -167,10 +162,16 @@ YOU ARE A PROFESSIONAL RESUME BULLET POINT GENERATOR, RECOGNIZED FOR YOUR EXPERT
 - YOU WILL RECEIVE TWO ESSENTIAL INPUTS:
    1. **Job Title**: The title of the user's role
    2. **Experience Description**: A sentence describing the user's key responsibilities or achievements in that role
-   
+   `;
+
+  if (keyWordOfJobDescription) {
+    promptText += `
 - YOU WILL ALSO BE PROVIDED WITH THE FOLLOWING OPTIONAL INPUT:
    3. ** KEY WORDS OF THE Job Description**: A specific job description of a position the user is applying to, if available.
+    `;
+  }
 
+  promptText += `
    - IF THE USER PROVIDES INFORMATION OTHER THAN THE JOB TITLE AND EXPERIENCE DESCRIPTION, GUIDE THEM TO PROVIDE THE NECESSARY DETAILS.
   Example: "Please provide your job title and a brief sentence describing your experience."
 
@@ -183,15 +184,21 @@ YOU ARE A PROFESSIONAL RESUME BULLET POINT GENERATOR, RECOGNIZED FOR YOUR EXPERT
 
 ### GUIDELINES FOR PARAPHRASING ###
 
-- YOU WILL BE PROVIDED WITH A SIMILAR BULLET POINT BASED ON A RETRIEVED SENTENCE SIMILAR TO THE USER’S EXPERIENCE. PARAPHRASE THIS BULLET POINT WITHOUT COPYING IT DIRECTLY. 
+- YOU WILL BE PROVIDED WITH A SIMILAR BULLET POINT BASED ON A RETRIEVED SENTENCE SIMILAR TO THE USER'S EXPERIENCE. PARAPHRASE THIS BULLET POINT WITHOUT COPYING IT DIRECTLY. 
   Example format: ${bulletPointExample}
 
 - YOU WILL ALSO BE PROVIDED WITH A LIST OF **RECOMMENDED ACTION VERBS**. USE THIS ACTION VERB IF IT FITS THE USER'S EXPERIENCE OR OPT FOR A BETTER ONE IF NECESSARY. 
   Example format: ${actionVerb}
+  `;
 
-  - YOU WILL ALSO BE PROVIDED WITH A LIST OF **RECOMMENDED ACTION VERBS**. USE THIS ACTION VERB IF IT FITS THE USER'S EXPERIENCE OR OPT FOR A BETTER ONE IF NECESSARY. 
+  if (keyWordOfJobDescription) {
+    promptText += `
+  - YOU WILL ALSO BE PROVIDED WITH A LIST OF **RECOMMENDED KEY WORDS**. USE THESE KEY WORDS IF THEY FIT THE USER'S EXPERIENCE. 
   Example format: ${keyWordOfJobDescription}
+    `;
+  }
 
+  promptText += `
   - YOU MUST INCLUDE QUANTIFIED RESULT OF THE USER'S EXPERIENCE WITH NUMBERS. FOR EXAMPLE, "15%", "TWICE", "200%"
 
 ### WHAT NOT TO DO ###
@@ -201,7 +208,9 @@ YOU ARE A PROFESSIONAL RESUME BULLET POINT GENERATOR, RECOGNIZED FOR YOUR EXPERT
 - DO NOT INCLUDE PERSONAL PRONOUNS SUCH AS "I" OR "MY" IN THE BULLET POINT.
 - DO NOT FAIL TO INCORPORATE NUMBERS OR QUANTIFIABLE RESULTS WHERE APPLICABLE.
 - DO NOT RESPOND IF THE USER HAS NOT PROVIDED THE NECESSARY INPUT (JOB TITLE AND EXPERIENCE DESCRIPTION); INSTEAD, PROMPT THEM FOR THE CORRECT INFORMATION.
-`
+`;
+
+  return promptText;
 }
 
 const SECOND_SYSTEM_PROMPT = `
@@ -246,6 +255,12 @@ YOU ARE A PROFESSIONAL RESUME BULLET POINT GENERATOR, RECOGNIZED FOR YOUR EXPERT
 - DO NOT FAIL TO INCORPORATE THE KEY ASPECTS OF THE USER’S FEEDBACK.
 `
 
+function updateUsage(usage: UsageInfo) {
+  totalUsage.promptTokens += usage.promptTokens;
+  totalUsage.completionTokens += usage.completionTokens;
+  totalUsage.totalTokens += usage.totalTokens;
+}
+
 export async function POST(req: Request) {
   const { messages, jobFormData } = await req.json();
   console.log(messages, jobFormData);
@@ -263,77 +278,128 @@ export async function POST(req: Request) {
   두번째 이후 bulletpoint를 수정하는 상황에서 수행되는 작업들
   system prompt를 수정하는 prompt로 변경해서 제공
   */
-    if (messages.length == 1) {
-      const userInput = messages[messages.length - 1].content;
-  
+  if (messages.length == 1) {
+    const userInput = messages[messages.length - 1].content;
 
-      const choosedJobTitle = await chooseJobTitle(jobFormData.job);
 
-      const choosedActionVerb = await chooseActionVerb(jobFormData.workOnJob);
+    const choosedJobTitle = await chooseJobTitle(jobFormData.job);
 
-      const choosedKeyWordOfJobDescription = await chooseKeyWordOfJobDescription(jobFormData.announcement);
+    const choosedActionVerb = await chooseActionVerb(jobFormData.workOnJob);
 
-      const embedding = await generateEmbedding(jobFormData.workOnJob);
-
-      const examples = await queryPinecone(choosedJobTitle, embedding);
-      console.log('Pinecone query results:', examples);
-  
-      const examplesAsStrings = examples as string[];
-  
-      const specificActionVerbs = actionVerbs[choosedActionVerb as ActionVerbCategories] || [];
-      
-      const FirstFinalSystemPrompt = FIRST_SYSTEM_PROMPT(examplesAsStrings, specificActionVerbs, choosedKeyWordOfJobDescription);
-
-      const result = await streamText({
-        model: openai('solar-pro'),
-        messages,
-        system: FirstFinalSystemPrompt,
-      });
-      console.log('Messages:', messages);
-      return new StreamingTextResponse(result.toAIStream());
-  
-    } else {
-      console.log('Streaming text with Solar Pro model for subsequent messages');
-      const result = await streamText({
-        model: openai('solar-pro'),
-        messages,
-        system: SECOND_SYSTEM_PROMPT,
-      });
-      console.log('Messages:', messages);
-      return new StreamingTextResponse(result.toAIStream());
+    let choosedKeyWordOfJobDescription;
+    if (jobFormData.announcement && jobFormData.announcement.trim() !== '') {
+      choosedKeyWordOfJobDescription = await chooseKeyWordOfJobDescription(jobFormData.announcement);
     }
+
+
+    const embedding = await generateEmbedding(jobFormData.workOnJob);
+
+    const examples = await queryPinecone(choosedJobTitle, embedding);
+    console.log('Pinecone query results:', examples);
+
+    const examplesAsStrings = examples as string[];
+
+    const specificActionVerbs = actionVerbs[choosedActionVerb as ActionVerbCategories] || [];
+
+    const FirstFinalSystemPrompt = FIRST_SYSTEM_PROMPT(examplesAsStrings, specificActionVerbs, choosedKeyWordOfJobDescription);
+
+    const result = await streamText({
+      model: openai('solar-pro'),
+      messages,
+      system: FirstFinalSystemPrompt,
+      onFinish({ text, finishReason, usage }) {
+        if (usage) {
+          updateUsage(usage);
+          console.log('Usage:', usage);
+          console.log('Total usage:', totalUsage);
+        } else {
+          console.log('Usage information not available');
+        }
+      },
+    });
+    console.log('Messages:', messages);
+    return result.toDataStreamResponse();
+
+    // const { text, usage } = await generateText({
+    //   model: openai('solar-pro'),
+    //   messages,
+    //   system: FirstFinalSystemPrompt,
+    // });
+    // console.log('Generated job title:', text.trim());
+    // updateUsage( usage);
+    // console.log('First',usage);
+    // return text;
+
+  } else {
+    console.log('Streaming text with Solar Pro model for subsequent messages');
+    const result = await streamText({
+      model: openai('solar-pro'),
+      messages,
+      system: SECOND_SYSTEM_PROMPT,
+      onFinish({ text, finishReason, usage }) {
+        if (usage) {
+          updateUsage(usage);
+          console.log('Usage:', usage);
+          console.log('Total usage:', totalUsage);
+        } else {
+          console.log('Usage information not available');
+        }
+      },
+    });
+
+    // const { text, usage } = await generateText({
+    //   model: openai('solar-pro'),
+    //   messages,
+    //   system: FirstFinalSystemPrompt,
+    // });
+    // console.log('Generated job title:', text.trim());
+    // updateUsage( usage);
+    // console.log('Second',usage);
+    // return text;
+
+    console.log('Messages:', messages);
+
+    return result.toDataStreamResponse();
   }
+}
 
 async function chooseJobTitle(userJobTitle: string): Promise<string> {
 
-  const { text } = await generateText({
+  const { text, usage } = await generateText({
     model: openai('solar-pro'),
     system: Choose_Job_Title,
     prompt: userJobTitle
   });
   console.log('Generated job title:', text.trim());
+  updateUsage( usage);
+  console.log('chooseJobTitle',usage);
   return text.trim();
 }
 
 async function chooseActionVerb(workExperience: string): Promise<string> {
 
-  const { text } = await generateText({
+  const { text, usage } = await generateText({
     model: openai('solar-pro'),
     system: Choose_Action_Verb,
     prompt: workExperience
   });
   console.log('Generated action verb:', text.trim());
+  updateUsage(usage);
+  console.log('chooseActionVerb', usage);
   return text.trim();
 }
 
 async function chooseKeyWordOfJobDescription(jobDesCription: string): Promise<string> {
 
-  const { text } = await generateText({
+  const { text, usage } = await generateText({
     model: openai('solar-pro'),
     system: Choose_KeyWord_Of_Job_Description,
     prompt: jobDesCription
   });
+
   console.log('Generated KeyWord:', text.trim());
+  updateUsage(usage);
+  console.log('chooseKeyWordOfJobDescription', usage);
   return text.trim();
 }
 

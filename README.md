@@ -36,15 +36,15 @@
 
 1. **프로젝트 클론**
 
-```bash
-git clone https://github.com/juiceple/resume.git
-```
+  ```bash
+  git clone https://github.com/juiceple/resume.git
+  ```
 
 2. **DIRECTORY 이동**
 
-```bash
-   cd name-of-new-app
-```
+  ```bash
+    cd name-of-new-app
+  ```
 
 3. **환경설정(API키 삽입)**
    .env.local root directiory에 생성하기

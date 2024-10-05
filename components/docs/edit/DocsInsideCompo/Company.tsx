@@ -25,8 +25,8 @@ export default function Company({
   };
 
   const handleMouseLeave = (e: React.MouseEvent) => {
-    // 마우스가 삭제 버튼 위에 있지 않을 때만 hover 상태를 해제합니다.
-    if (!deleteButtonRef.current?.contains(e.relatedTarget as Node)) {
+    // Check if relatedTarget is a Node and if it's not contained within the delete button
+    if (e.relatedTarget instanceof Node && deleteButtonRef.current && !deleteButtonRef.current.contains(e.relatedTarget)) {
       setIsComponentHovered(false);
     }
   };

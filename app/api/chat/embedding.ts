@@ -12,7 +12,6 @@ export async function generateEmbedding(input: string) {
     input: input,
   });
 
-  console.log(embeddings.data[0].embedding)
 
   return embeddings.data[0].embedding;
 }
