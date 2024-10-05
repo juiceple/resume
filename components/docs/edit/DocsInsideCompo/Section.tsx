@@ -1,9 +1,15 @@
-import React from "react";
-import { GripVertical, Plus, ChevronUp, ChevronDown } from "lucide-react";
+import React, { useState } from "react";
+import { GripVertical, Plus, ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 
-const Section = (props:any) => {
+const Section = (props: any) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="w-full flex items-center justify-between">
+    <div 
+      className="w-full flex items-center justify-between relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="flex flex-row gap-2 items-center justify-start">
         <div className="min-w-[60px]">{props.SectionleftContent}</div>
         <div className="flex items-center tooltip pdf-exclude">
@@ -39,6 +45,14 @@ const Section = (props:any) => {
           <span className="tooltiptext">Section Down</span>
         </div>
       </div>
+      {isHovered && (
+        <button 
+          onClick={props.onDeleteSection}
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 p-1 text-red-500 rounded-full hover:text-red-600 transition-colors duration-200 pdf-exclude"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      )}
     </div>
   );
 };

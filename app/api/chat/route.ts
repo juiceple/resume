@@ -21,7 +21,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { StreamingTextResponse, streamText } from "ai";
 import { generateEmbedding } from './embedding';
 import { queryPinecone } from './pinecone';
-
+import { translateText } from './translation';
 
 const openai = createOpenAI({
   // custom settings, e.g.
@@ -37,80 +37,79 @@ YOU ARE AN EXPERT CV BUILDER TRAINED TO REWRITE AND OPTIMIZE WORK EXPERIENCE BUL
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
-  console.log(messages.length);
-  console.log(messages);
-  if (messages.length == 1){
-  
-  // Get the user's input from the last message
-  const userInput = messages[messages.length - 1].content;
-  
-  // Generate embeddings for the user's input
-  const embedding = await generateEmbedding(userInput);
+  if (messages.length == 1) {
 
-  // Query Pinecone for relevant examples
-  const examples = await queryPinecone("Designer", embedding);
+    // Get the user's input from the last message
+    const userInput = messages[messages.length - 1].content;
 
-  // // Create few-shot examples
-  // const fewShotExamples = examples.flatMap((example, index) => [
-  //   {  content: `Example input ${userInput}`,role: 'user', id: `${index}user`},
-  //   { content: example, role: 'assistant', id: `${index}assis` }
-  // ]);
-  // // Construct the new messages array with few-shot examples
-  // const newMessages = [
-  //   ...fewShotExamples,
-  //   ...messages
-  // ];
+    // Generate embeddings for the user's input
+    const embedding = await generateEmbedding(userInput);
 
-  // const result = await streamText({
-  //   model: openai('solar-1-mini-chat'),
-  //   messages: newMessages,
-  // });
+    // Query Pinecone for relevant examples
+    const examples = await queryPinecone("Designer", embedding);
 
-  // console.log(newMessages)
+    // // Create few-shot examples
+    // const fewShotExamples = examples.flatMap((example, index) => [
+    //   {  content: `Example input ${userInput}`,role: 'user', id: `${index}user`},
+    //   { content: example, role: 'assistant', id: `${index}assis` }
+    // ]);
+    // // Construct the new messages array with few-shot examples
+    // const newMessages = [
+    //   ...fewShotExamples,
+    //   ...messages
+    // ];
 
-  // return new StreamingTextResponse(result.toAIStream());  
-  const enhancedSystemPrompt = `
+    // const result = await streamText({
+    //   model: openai('solar-1-mini-chat'),
+    //   messages: newMessages,
+    // });
+
+    // console.log(newMessages)
+
+    // return new StreamingTextResponse(result.toAIStream());  
+    const enhancedSystemPrompt = `
   ${BASE_SYSTEM_PROMPT}
   
   ### EXAMPLES ###
   ${examples.join('\n\n')}
 `;
 
-const result = await streamText({
-  model: openai('solar-1-mini-chat'),
-  messages,
-  system: enhancedSystemPrompt,
-});
+    const result = await streamText({
+      model: openai('solar-1-mini-chat'),
+      messages,
+      system: enhancedSystemPrompt,
+    });
     console.log(messages);
     return new StreamingTextResponse(result.toAIStream());
 
   } else {
-  // Get the user's input from the last message
-  const userInput = messages[messages.length - 1].content;
-  
-  // Generate embeddings for the user's input
-  const embedding = await generateEmbedding(userInput);
+    // Get the user's input from the last message
+    const userInput = messages[messages.length - 1].content;
 
-  // Query Pinecone for relevant examples
-  const examples = await queryPinecone("Designer", embedding);
-    
-  const enhancedSystemPrompt = `
+    // Generate embeddings for the user's input
+    const embedding = await generateEmbedding(userInput);
+
+    // Query Pinecone for relevant examples
+    const examples = await queryPinecone("Designer", embedding);
+
+    const enhancedSystemPrompt = `
   ${BASE_SYSTEM_PROMPT}
   
   ### EXAMPLES ###
   ${examples.join('\n\n')}
 `;
 
-const result = await streamText({
-  model: openai('solar-1-mini-chat'),
-  messages,
-  system: enhancedSystemPrompt,
-});
+
+    const result = await streamText({
+      model: openai('solar-pro'),
+      messages,
+      system: enhancedSystemPrompt,
+    });
     console.log(messages);
     return new StreamingTextResponse(result.toAIStream());
-    
+
   }
-  }
+}
 
 
 

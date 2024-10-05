@@ -161,60 +161,91 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     const generatePDF = useCallback(async () => {
         setLoading(true);
         setLoadingMessage('PDF를 생성 중입니다...');
-
+      
         try {
-            const resumeContent = document.querySelector('.doc');
-            if (!resumeContent) throw new Error('이력서 내용을 찾을 수 없습니다.');
-
-            // PDF에서 제외할 요소들을 제거한 복제본 생성
-            const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
-            cleanedContent.querySelectorAll('.pdf-exclude').forEach(el => el.remove());
-            cleanedContent.querySelectorAll('.page-break').forEach(el => el.remove());
-            const htmlContent = cleanedContent.innerHTML;
-            const styles = Array.from(document.styleSheets)
-                .map(sheet => {
-                    try {
-                        return Array.from(sheet.cssRules)
-                            .map(rule => rule.cssText)
-                            .join('\n');
-                    } catch (e) {
-                        console.warn('Unable to access stylesheet rules', e);
-                        return '';
-                    }
-                })
-                .join('\n');
-
-            const response = await fetch('/api/generate-pdf', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ html: htmlContent, css: styles }),
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                
-                // 새 창을 열지 않고 직접 다운로드
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `${title || 'resume'}.pdf`;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                // Blob URL 해제
-                window.URL.revokeObjectURL(url);
-            } else {
-                throw new Error('PDF 생성에 실패했습니다.');
+          const resumeContent = document.querySelector('.doc');
+          if (!resumeContent || !(resumeContent instanceof HTMLElement)) {
+            throw new Error('이력서 내용을 찾을 수 없습니다.');
+          }
+      
+          // 모든 스타일시트의 CSS 규칙 수집
+          const cssRules: string[] = [];
+          for (let i = 0; i < document.styleSheets.length; i++) {
+            const sheet = document.styleSheets[i];
+            try {
+              const rules = sheet.cssRules || sheet.rules;
+              for (let j = 0; j < rules.length; j++) {
+                // .ProseMirror-focused 클래스와 관련된 CSS 규칙을 제외
+                if (!rules[j].cssText.includes('.ProseMirror-focused')) {
+                  cssRules.push(rules[j].cssText);
+                }
+              }
+            } catch (e) {
+              console.warn('스타일시트 접근 오류:', e);
             }
+          }
+      
+          // 인라인 스타일 수집
+          const inlineStyles = resumeContent.getAttribute('style') || '';
+      
+          // 계산된 스타일 수집 (옵션)
+          const computedStyles = window.getComputedStyle(resumeContent);
+          const importantStyles = {
+            fontFamily: computedStyles.fontFamily,
+            fontSize: computedStyles.fontSize,
+            lineHeight: computedStyles.lineHeight,
+            color: computedStyles.color,
+            backgroundColor: computedStyles.backgroundColor,
+            // 필요한 다른 스타일 속성 추가
+          };
+      
+          const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
+          cleanedContent.querySelectorAll('.pdf-exclude').forEach(el => el.remove());
+          cleanedContent.querySelectorAll('.page-break').forEach(el => el.remove());
+          cleanedContent.querySelectorAll('.button-container').forEach(el => el.remove());
+          cleanedContent.querySelectorAll('.ai-generate-button').forEach(el => el.remove());
+          cleanedContent.querySelectorAll('.is-empty').forEach(el => el.remove());
+          
+          cleanedContent.querySelectorAll('.add-section-button-container').forEach(el => el.remove());
+          // .ProseMirror-focused 클래스 제거 대신 클래스를 가진 요소의 스타일만 초기화
+          cleanedContent.querySelectorAll('.ProseMirror-focused').forEach(el => {
+            (el as HTMLElement).style.cssText = '';
+          });
+          cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
+    
+          const htmlContent = cleanedContent.innerHTML;
+      
+          const response = await fetch('/api/generate-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              html: htmlContent, 
+              cssRules: cssRules.join('\n'),
+              inlineStyles,
+              computedStyles: importantStyles
+            }),
+          });
+      
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`서버 응답 오류: ${response.status} ${errorText}`);
+          }
+      
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${title || 'resume'}.pdf`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+      
         } catch (error) {
-            console.error('PDF 생성 오류:', error);
-            alert('PDF 생성에 실패했습니다. 다시 시도해 주세요.');
+          console.error('PDF 생성 오류:', error);
+          alert(`PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
-    }, [title]);
+      }, [title]);
 
     return (
         <>
@@ -240,7 +271,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                         ) : (
                             <div className='flex items-center'>
                                 <FolderCheck className="text-black mr-1" size={25} />
-                                <p className='text-[15px] text-black'>Saved!</p>
+                                <p className='text-[15px] text-black'>저장!</p>
                             </div>
                         )}
                     </div>
@@ -326,6 +357,6 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
-            
+
         </>);
 }

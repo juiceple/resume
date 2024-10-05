@@ -8,7 +8,6 @@ import Message from "@/components/docs/edit/chat/Message";
 import DocsEditNew from '@/components/docs/edit/DocsEditNew';
 import DocsPreview from '@/components/docs/edit/DocsPreviewCompo';
 import { useChat } from "ai/react";
-import "./index.css";
 import { createClient } from "@/utils/supabase/client";
 
 // 직무 정보를 위한 인터페이스 정의

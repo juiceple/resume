@@ -47,6 +47,53 @@ const debounce = (func, delay) => {
   );
 };
 
+const SectionSelector = ({ onSelect, position }) => {
+  const sectionTypes = [
+    { type: "education", label: "Education" },
+    { type: "work", label: "Work Experience" },
+    { type: "project", label: "Project Experience" },
+    { type: "leadership", label: "Leadership Experience" },
+    { type: "custom", label: "Custom Section" },
+  ];
+
+  return (
+    <div
+      className="section-selector"
+      style={{
+        position: "absolute",
+        bottom: "100%",
+        left: "50%",
+        transform: "translateX(-50%)",
+        backgroundColor: "white",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        padding: "10px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+        zIndex: 1000,
+      }}
+    >
+      {sectionTypes.map(({ type, label }) => (
+        <button
+          key={type}
+          onClick={() => onSelect(type)}
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "5px 10px",
+            margin: "5px 0",
+            border: "none",
+            backgroundColor: "#f0f0f0",
+            cursor: "pointer",
+            borderRadius: "3px",
+          }}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 
@@ -205,6 +252,7 @@ const DynamicResumeEditors = ({
   const [error, setError] = useState(null);
   const [activeEditorId, setActiveEditorId] = useState(null);
   const [activeEditorForAI, setActiveEditorForAI] = useState(null);
+  const [showSectionSelector, setShowSectionSelector] = useState(false);
   const supabase = createClient();
   const menuBarEditor = useEditor({
     extensions,
@@ -534,6 +582,9 @@ const DynamicResumeEditors = ({
   //              웹사이트 내에서 +버튼 기능 구현 부분               //
   //////////////////////////////////////////////////////////////////
 
+  //
+
+
   //section 내용중 company + job title + bullet point 추가 함수
   const addNewItem = useCallback(
     (sectionIndex) => {
@@ -691,6 +742,18 @@ const DynamicResumeEditors = ({
     [updateDataAndUpload]
   );
 
+  const deleteSection = useCallback(
+    (sectionIndex) => {
+      updateDataAndUpload((prev) => {
+        const updatedSections = prev.sections.filter(
+          (_, index) => index !== sectionIndex
+        );
+        return { ...prev, sections: updatedSections };
+      });
+    },
+    [updateDataAndUpload]
+  );
+
   //////////////////////////////////////////////////////////////////
   //          웹사이트 내에서 섹션 위치 변경 기능 구현 부분          //
   //////////////////////////////////////////////////////////////////
@@ -734,20 +797,33 @@ const DynamicResumeEditors = ({
   //Page 나누는 기준자
   const addPageBreaks = useCallback(() => {
     const docElement = document.querySelector(".doc");
-    if (!docElement) return;
+    if (!docElement) {
+      console.error("Could not find .doc element");
+      return;
+    }
 
-    // 기존 페이지 나누기 제거
+    // Remove existing page breaks
     docElement.querySelectorAll(".page-break").forEach((el) => el.remove());
 
-    const pageHeight = 1029; // A4 페이지 높이 (픽셀)
-    const currentHeight = docElement.scrollHeight;
-    const numberOfPages = Math.floor(currentHeight / pageHeight);
+    const dpi = 96; // Assuming 96 DPI (standard for most screens)
+    const pageHeightInches = 11; // A4 page height in inches
+    const pageHeightPixels = pageHeightInches * dpi;
+    const paddingPixels = 48; // 48px padding
 
-    for (let i = 1; i <= numberOfPages; i++) {
+    const contentHeight = docElement.scrollHeight - (paddingPixels * 2); // Subtract top and bottom padding
+    const numberOfPages = Math.ceil(contentHeight / (pageHeightPixels - (paddingPixels * 2)));
+
+    console.log("Content height:", contentHeight);
+    console.log("Number of pages:", numberOfPages);
+
+    for (let i = 1; i < numberOfPages; i++) {
       const pageBreak = document.createElement("div");
       pageBreak.className = "page-break";
-      pageBreak.style.top = `${i * pageHeight}px`;
+      // Calculate break position considering the top padding
+      const breakPosition = (i * (pageHeightPixels - (paddingPixels * 2))) + paddingPixels;
+      pageBreak.style.top = `${breakPosition}px`;
       docElement.appendChild(pageBreak);
+      console.log(`Added page break at ${breakPosition}px`);
     }
   }, []);
 
@@ -757,7 +833,7 @@ const DynamicResumeEditors = ({
     return () => window.removeEventListener("resize", addPageBreaks);
   }, [addPageBreaks]);
 
-  // resumeData가 변경될 때마다 페이지 나누기 업데이트
+  // Effect to update page breaks when resumeData changes
   useEffect(() => {
     addPageBreaks();
   }, [resumeData, addPageBreaks]);
@@ -789,6 +865,7 @@ const DynamicResumeEditors = ({
             tooltipText={`Add ${sectionData.type}`}
             sectionUp={() => moveSectionUp(sectionIndex)}
             sectionDown={() => moveSectionDown(sectionIndex)}
+            onDeleteSection={() => deleteSection(sectionIndex)}
           />
           <hr />
         </div>
@@ -890,7 +967,7 @@ const DynamicResumeEditors = ({
                               value
                             ),
                           "contentTitle",
-                          "Organization",
+                          sectionData.type === "work" ? "Company" : "Organization",
                           "bold",
                           `org-${item.id}`
                         )}
@@ -987,6 +1064,90 @@ const DynamicResumeEditors = ({
       renderEditorComponent,
     ]
   );
+  const addNewSection = useCallback(
+    (sectionType) => {
+      updateDataAndUpload((prev) => {
+        const newSectionIndex = prev.sections.length;
+        
+        // Function to generate the section title
+        const generateSectionTitle = (type) => {
+          switch(type) {
+            case 'education':
+              return 'EDUCATION';
+            case 'work':
+              return 'WORK EXPERIENCE';
+            case 'project':
+              return 'PROJECT EXPERIENCE';
+            case 'leadership':
+              return 'LEADERSHIP EXPERIENCE';
+            case 'custom':
+              return 'CUSTOM SECTION';
+            default:
+              return type.toUpperCase();
+          }
+        };
+  
+        const newSection = {
+          id: uuidv4(),
+          type: sectionType,
+          title: `<strong>${generateSectionTitle(sectionType)}</strong>`,
+          items: [],
+        };
+  
+        // Add a default item based on section type
+        switch (sectionType) {
+          case 'education':
+            newSection.items.push({
+              id: uuidv4(),
+              title: "",
+              cityState: "",
+              degrees: [{
+                id: uuidv4(),
+                degree: "",
+                graduationDate: null
+              }]
+            });
+            break;
+          case 'work':
+          case 'project':
+          case 'leadership':
+            newSection.items.push({
+              id: uuidv4(),
+              organization: "",
+              cityState: "",
+              subItems: [{
+                id: uuidv4(),
+                title: "",
+                bulletPoints: "",
+                entryDate: null,
+                exitDate: null
+              }]
+            });
+            break;
+          case 'custom':
+            newSection.items.push({
+              id: uuidv4(),
+              content: ""
+            });
+            break;
+        }
+  
+        const updatedSections = [...prev.sections, newSection];
+        
+        // Render the new section immediately
+        setTimeout(() => {
+          renderSection(newSectionIndex, newSection);
+        }, 0);
+  
+        return {
+          ...prev,
+          sections: updatedSections,
+        };
+      });
+      setShowSectionSelector(false);
+    },
+    [updateDataAndUpload, renderSection]
+  );
 
   // 전체 UI 렌더링
   return (
@@ -1023,6 +1184,20 @@ const DynamicResumeEditors = ({
           {resumeData.sections.map((sectionData, index) =>
             renderSection(index, sectionData)
           )}
+
+          <div className="add-section-button-container">
+            {showSectionSelector && (
+              <SectionSelector onSelect={addNewSection} />
+            )}
+            <button
+              className={`add-section-button${
+                showSectionSelector ? "active" : ""
+              }`}
+              onClick={() => setShowSectionSelector(!showSectionSelector)}
+            >
+              {showSectionSelector ? "Cancel" : "Add Section"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
