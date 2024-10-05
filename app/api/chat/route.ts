@@ -20,7 +20,6 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { StreamingTextResponse, streamText, generateText } from "ai";
 import { generateEmbedding } from './embedding';
 import { queryPinecone } from './pinecone';
-import { translateText } from './translation';
 import actionVerbs from './actionVerbs.json';
 
 type ActionVerbCategories = keyof typeof actionVerbs;
