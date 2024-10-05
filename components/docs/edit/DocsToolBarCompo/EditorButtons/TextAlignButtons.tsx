@@ -32,20 +32,9 @@ const TextAlignButtons: React.FC<TextAlignProps> = ({ editor }) => {
         </svg>
       </button>
       <button onClick={() => editor.chain().focus().setTextAlign('justify').run()} className={editor.isActive({ textAlign: 'justify' }) ? activeButtonClass : baseButtonClass}>
-        <div className='flex flex-col space-between'>
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
-            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
-            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
-            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="3" viewBox="0 0 14 3" fill="none">
-            <path d="M13 1.25H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="13" viewBox="0 0 14 13" fill="none">
+          <path d="M13 1H1M13 4.5H1M13 8H1M13 11.5H1" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
       </button>
     </div>
 

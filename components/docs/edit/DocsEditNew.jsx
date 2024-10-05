@@ -315,53 +315,88 @@ const DynamicResumeEditors = ({
   //현재 resume 문서의 preview 이미지를 생성하는 함수
   async function captureAndUpload(docsID) {
     try {
-      // 'doc' 클래스를 가진 요소 찾기
-      const element = document.querySelector(".doc");
+        // 모든 스타일시트 내용을 문자열로 수집
+        let styles = '';
+        for (const sheet of document.styleSheets) {
+            try {
+                const rules = sheet.cssRules || sheet.rules;
+                for (const rule of rules) {
+                    styles += rule.cssText + '\n';
+                }
+            } catch (e) {
+                console.warn('스타일시트 접근 오류:', e);
+            }
+        }
 
-      if (!element) {
-        throw new Error("'doc' 클래스를 가진 요소를 찾을 수 없습니다.");
-      }
+        // 스타일을 적용할 임시 컨테이너 생성
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        document.body.appendChild(tempContainer);
 
-      // HTML 요소를 캔버스로 변환
-      const canvas = await html2canvas(element);
+        // 'doc' 클래스를 가진 요소 찾아 복제
+        const originalElement = document.querySelector(".doc");
+        if (!originalElement) {
+            throw new Error("'doc' 클래스를 가진 요소를 찾을 수 없습니다.");
+        }
+        const clonedElement = originalElement.cloneNode(true);
 
-      // 캔버스를 Blob으로 변환
-      const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/png")
-      );
+        // 스타일 적용
+        const styleElement = document.createElement('style');
+        styleElement.textContent = styles;
+        tempContainer.appendChild(styleElement);
+        tempContainer.appendChild(clonedElement);
 
-      // docsID를 사용하여 파일 이름 생성
-      const fileName = `${docsID}.png`;
+        // 캡처 전 잠시 대기 (스타일 적용을 위해)
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Supabase Storage에 업로드
-      const { data, error } = await supabase.storage
-        .from("DocsPreview") // 'DocsPreview'는 Supabase에서 생성한 버킷 이름입니다.
-        .upload(fileName, blob, {
-          contentType: "image/png",
-          upsert: true, // 같은 이름의 파일이 있으면 덮어쓰기
+        // 복제된 요소를 캔버스로 변환
+        const canvas = await html2canvas(clonedElement, {
+            logging: false,
+            useCORS: true,
+            scale: 2 // 해상도 향상을 위해
         });
 
-      if (error) {
-        throw error;
-      }
+        // 임시 컨테이너 제거
+        document.body.removeChild(tempContainer);
 
-      // 업로드된 파일의 public URL 가져오기
-      const {
-        data: { publicUrl },
-        error: urlError,
-      } = supabase.storage.from("DocsPreview").getPublicUrl(fileName);
+        // 캔버스를 Blob으로 변환
+        const blob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/png")
+        );
 
-      if (urlError) {
-        throw urlError;
-      }
+        // docsID를 사용하여 파일 이름 생성
+        const fileName = `${docsID}.png`;
 
-      console.log("업로드 성공:", publicUrl);
-      return publicUrl;
+        // Supabase Storage에 업로드
+        const { data, error } = await supabase.storage
+            .from("DocsPreview")
+            .upload(fileName, blob, {
+                contentType: "image/png",
+                upsert: true,
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        // 업로드된 파일의 public URL 가져오기
+        const {
+            data: { publicUrl },
+            error: urlError,
+        } = supabase.storage.from("DocsPreview").getPublicUrl(fileName);
+
+        if (urlError) {
+            throw urlError;
+        }
+
+        console.log("업로드 성공:", publicUrl);
+        return publicUrl;
     } catch (error) {
-      console.error("캡처 또는 업로드 중 오류 발생:", error);
-      throw error;
+        console.error("캡처 또는 업로드 중 오류 발생:", error);
+        throw error;
     }
-  }
+}
   //supabase에 Data를 업로드하는 함수
   const updateSupabase = async (newData) => {
 
