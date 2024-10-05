@@ -1,4 +1,4 @@
-<a href="https://www.cvmate.site/">
+# <a href="https://www.cvmate.site/">
   <img alt="CVMATE LOGO" src="./public/images/resume.png">
   <h1 align="center">CVMATE</h1>
 </a>
@@ -29,11 +29,9 @@
 -**AI 활용부분**
 <img alt="CVMATE LOGO" src="./public/images/AISTRUCTURE.png">
 
-
-
 ## DEMO
 
-You can view a fully working demo at [cvmate.site](https://www.cvmate.site/).
+다음에서 데모를 확인할 수 있습니다. [cvmate.site](https://www.cvmate.site/).
 
 ## 설치 방법
 
@@ -81,5 +79,3 @@ git clone https://github.com/juiceple/resume.git
 5. 버튼을 누른 후 FORM 제출
 
 6. 완성된 BULLETPOINT에서 수정사항 요청
-
-
