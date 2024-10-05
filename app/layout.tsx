@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko" className={GeistSans.className}>
+    <html lang="ko" className="pretendard-font">
       <body className="bg-background text-foreground">
         <main className="min-h-screen flex flex-col items-center">
           {children}

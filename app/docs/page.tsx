@@ -97,7 +97,7 @@ export default function Resumes() {
   }
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gray-100">
+    <div className="w-full pretendard-font h-screen flex flex-col bg-gray-100">
       <header className="fixed top-0 left-0 right-0 z-10 bg-white shadow-md">
         <DocsHeader />
       </header>
