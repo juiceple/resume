@@ -26,9 +26,16 @@ export default function Edits() {
 
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [jobFormData, setJobFormData] = useState<JobFormData>({
+    job: "",
+    workOnJob: "",
+    announcement: "",
+  });
 
   const { messages, append, setMessages, isLoading, handleSubmit, handleInputChange, input } = useChat({
     onFinish: () => setIsGenerating(false),
+    api: '/api/chat', // Make sure this matches your API route
+    body: { jobFormData }, // Include jobFormData in the API call
   });
 
 
@@ -37,11 +44,7 @@ export default function Edits() {
   const [updateStatus, setUpdateStatus] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [jobformData, setJobFormData] = useState<JobFormData>({
-    job: "",
-    workOnJob: "",
-    announcement: "",
-  });
+
 
   const [bulletContent, setBulletContent] = useState<string | null>(null);
   const [showForm, setShowForm] = useState<boolean>(false);
@@ -147,23 +150,32 @@ export default function Edits() {
     e.preventDefault();
     if (bulletPoints > 0) {
       await updateBulletPointsGenerated();
-      setMessages([]); // 기존 메시지 초기화
+      setMessages([]); // Reset existing messages
       setIsGenerating(true);
-      const textOfJSON = `My job title is ${jobformData.job}, and what I did in the job is ${jobformData.workOnJob}. Generate only one bullet points in English no matter what.`;
+      const textOfJSON = `My job title is ${jobFormData.job}, and what I did in the job is ${jobFormData.workOnJob}. `;
       append({ content: textOfJSON, role: "user" });
       setShowChat(true);
     } else {
-      alert("사용 가능한 Bullet Point가 없습니다.");
+      alert("No available Bullet Points.");
     }
   };
+  
 
-  const handleChatSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  
+
+  const handleSubmitMessage = useCallback(() => {
     if (!input.trim()) return;
-
     setIsGenerating(true);
-    handleSubmit(e);
-  }, [input, handleSubmit]);
+    handleSubmit(new Event('submit') as any);
+    updateBulletPointsModified();
+  }, [input, handleSubmit, updateBulletPointsModified]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmitMessage();
+    }
+  };
 
 
   useEffect(() => {
@@ -263,8 +275,8 @@ export default function Edits() {
                   <textarea
                     className="w-full p-2 border border-[#AEB3BC] rounded-md resize-none focus:outline-none focus:border-black focus:ring-black"
                     placeholder="예: Account Manager"
-                    onChange={(e) => setJobFormData({ ...jobformData, job: e.target.value })}
-                    value={jobformData.job}
+                    onChange={(e) => setJobFormData({ ...jobFormData, job: e.target.value })}
+                    value={jobFormData.job}
                     rows={1}
                   />
                 </div>
@@ -275,8 +287,8 @@ export default function Edits() {
                   <textarea
                     className="w-full p-2 border border-[#AEB3BC] rounded-md resize-none focus:outline-none focus:border-black focus:ring-black"
                     placeholder="국/영문으로 작성해주세요"
-                    onChange={(e) => setJobFormData({ ...jobformData, workOnJob: e.target.value })}
-                    value={jobformData.workOnJob}
+                    onChange={(e) => setJobFormData({ ...jobFormData, workOnJob: e.target.value })}
+                    value={jobFormData.workOnJob}
                     rows={4}
                   />
                 </div>
@@ -286,8 +298,8 @@ export default function Edits() {
                   </div>
                   <textarea
                     className="w-full p-2 border border-[#AEB3BC] rounded-md resize-none focus:outline-none focus:border-black focus:ring-black"
-                    onChange={(e) => setJobFormData({ ...jobformData, announcement: e.target.value })}
-                    value={jobformData.announcement}
+                    onChange={(e) => setJobFormData({ ...jobFormData, announcement: e.target.value })}
+                    value={jobFormData.announcement}
                     rows={6}
                   />
                 </div>
@@ -297,7 +309,7 @@ export default function Edits() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={!jobformData.job || !jobformData.workOnJob}
+                  disabled={!jobFormData.job || !jobFormData.workOnJob}
                   className="rounded-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 flex items-center justify-center"
                 >
                   <span className="mr-2">생성하기</span>
@@ -327,15 +339,19 @@ export default function Edits() {
               </div>
               <form
                 ref={formRef}
-                onSubmit={handleSubmit}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmitMessage();
+                }}
                 className="flex items-center rounded-full h-[60px] w-[430px]"
                 style={{ backgroundColor: "#F4F4F4" }}
               >
                 <textarea
                   className="pr-10 text-m h-[55px] border-none focus:none w-[370px] pl-10 rounded-full resize-none focus:outline-none focus:ring-0 pt-[16px]"
-                  placeholder="무엇이든 물어보세요!"
+                  placeholder="수정하고 싶은 부분을 알려주세요!"
                   value={input}
                   onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
                   style={{ backgroundColor: "#F4F4F4" }}
                 />
                 <button

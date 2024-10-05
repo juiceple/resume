@@ -364,18 +364,21 @@ const DynamicResumeEditors = ({
   }
   //supabase에 Data를 업로드하는 함수
   const updateSupabase = async (newData) => {
+
     setUpdateStatusTrue();
     setError(null);
     try {
       if (!newData) {
         throw new Error("Invalid data for update");
       }
+      const previewUrl = await captureAndUpload(docsId);
 
       // Supabase 업데이트
       const { data, error } = await supabase
         .from("resumes")
         .update({
           content: newData,
+          docs_preview_url: previewUrl,
         })
         .eq("id", docsId)
         .select();

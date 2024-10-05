@@ -126,10 +126,10 @@ const SignUpStep2: React.FC<SignUpStep2Props> = ({ onDataChange, name, birthDate
     });
 
     const options = useMemo(() => ({
-        career: { "Junior": [], "Mid-level": [], "Senior": [] },
+        career: { "학생(0-1년)": [], "신입(2-3년)": [], "경력(4-7년)": [], "경력(7년 이상)": [] },
         job: jobCategories,
         desiredJob: jobCategories,
-        country: { "Korea": [], "USA": [], "Japan": [], "China": [], "Singapore": [] }
+        country: { "대한민국": [], "미국": [], "캐나다": [], "호주": [], "싱가포르": [], "영국": [] , "독일": [] , "프랑스": [] , "기타": []  }
     }), []);
 
 

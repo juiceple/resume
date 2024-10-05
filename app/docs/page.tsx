@@ -8,7 +8,9 @@ import { Resume } from '@/lib/Resume'
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { ResumeSkeleton } from '@/components/docs/ResumeListSkeleton'
 import DocsHeader from '@/components/docs/DocsHeader';
+
 export default function Resumes() {
+  console.log("Resumes 컴포넌트 렌더링 시작");
   const [resumes, setResumes] = useState<Resume[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -16,10 +18,12 @@ export default function Resumes() {
   const supabase = createClient()
 
   const fetchResumes = useCallback(async () => {
+    console.log("fetchResumes 함수 호출됨");
     setIsLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {
+      console.log("세션이 없음, 홈페이지로 리다이렉트");
       router.push('/')
       return
     }
@@ -33,15 +37,20 @@ export default function Resumes() {
       return
     }
 
+    console.log("가져온 이력서 데이터:", data);
+
     const sortedResumes = data ? data.sort((a, b) =>
       new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
     ) : []
+
+    console.log("정렬된 이력서:", sortedResumes);
 
     setResumes(sortedResumes)
     setIsLoading(false)
   }, [supabase, router])
 
   useEffect(() => {
+    console.log("useEffect 실행됨");
     fetchResumes()
 
     // Supabase 실시간 db 설정
@@ -76,8 +85,12 @@ export default function Resumes() {
   }, [supabase, fetchResumes])
 
   const refreshResumes = useCallback(async () => {
+    console.log("refreshResumes 함수 호출됨");
     await fetchResumes()
   }, [fetchResumes])
+
+  console.log("현재 resumes 상태:", resumes);
+  console.log("현재 isLoading 상태:", isLoading);
 
   if (error) {
     return <div>{error}</div>
@@ -96,6 +109,5 @@ export default function Resumes() {
         )}
       </main>
     </div>
-
   )
 }

@@ -53,26 +53,27 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
           try {
             const url = resume.docs_preview_url.trim();
             if (url === "") {
-              console.warn(`Empty docs_preview_url for resume ${resume.id}`);
+              console.warn(`Resume ${resume.id}의 docs_preview_url이 비어 있음`);
               continue;
             }
 
             const encodedUrl = encodeURIComponent(resume.id + '.png');
             const res = await fetch(`/api/getSignedUrl/${encodedUrl}`);
             if (!res.ok) {
-              throw new Error(`HTTP error! status: ${res.status}`);
+              throw new Error(`HTTP 오류! 상태: ${res.status}`);
             }
             const data = await res.json();
             if (data.signedUrl) {
               urls[resume.id] = data.signedUrl;
+              console.log(`Resume ${resume.id} 서명된 URL:`, data.signedUrl);
             } else {
-              console.warn(`No signed URL returned for resume ${resume.id}`);
+              console.warn(`Resume ${resume.id}의 서명된 URL이 반환되지 않음`);
             }
           } catch (error) {
-            console.error(`Error fetching signed URL for resume ${resume.id}:`, error);
+            console.error(`Resume ${resume.id}의 서명된 URL 가져오기 오류:`, error);
           }
         } else {
-          console.warn(`No docs_preview_url for resume ${resume.id}`);
+          console.warn(`Resume ${resume.id}의 docs_preview_url 없음`);
         }
       }
       setSignedUrls(urls);
@@ -82,7 +83,6 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
       fetchSignedUrls();
     }
   }, [resumes]);
-
   const handleCreateNewResume = useCallback(async () => {
     setLoading(true);
     setLoadingMessage('생성 중입니다...');

@@ -1,0 +1,20 @@
+{
+    "SERVING": ["Assisted", "Ushered", "Attended", "Waited upon", "Supplied", "Provided"],
+    "PERSUADING": ["Influenced", "Motivated", "Convinced", "Promoted", "Solicited", "Sold"],
+    "SUPERVISING": ["Led", "Ordered", "Appointed", "Assigned", "Enforced", "Rated"],
+    "EXCHANGING INFORMATION": ["Discussed", "Interviewed", "Questioned", "Informed", "Dictated", "Answered", "Described", "Indicated", "Relayed", "Requested", "Met", "Greeted", "Communicated"],
+    "COMPARING": ["Ranked", "Inspected", "Distinguished", "Contrasted", "Selected", "Chose", "Classified", "Graded", "Indexed", "Segregated", "Sorted", "Matched", "Arranged"],
+    "SYNTHESIZING": ["Devised", "Composed", "Invented", "Discovered", "Hypothesized", "Planned", "Designed", "Solved", "Calculated", "Forecasted", "Interpreted", "Translated", "Innovated"],
+    "COMPILING": ["Measured", "Collected", "Accumulated", "Inventoried", "Counted", "Observed"],
+    "NEGOTIATING": ["Mediated", "Settled", "Debated", "Bargained", "Reasoned", "Conferred"],
+    "ANALYZING": ["Investigated", "Researched", "Experimented", "Studied", "Scrutinized", "Examined", "Audited", "Scanned", "Evaluated", "Verified", "Appraised", "Tested", "Reported", "Identified", "Recommended", "Summarized", "Suggested", "Documented"],
+    "INSTRUCTING": ["Taught", "Lectured", "Tutored", "Explained", "Instructed", "Demonstrated", "Trained"],
+    "ESTABLISHING": ["Directed", "Managed", "Implemented", "Controlled", "Regulated", "Authorized", "Executed", "Decided", "Deliberated", "Determined", "Developed", "Formulated", "Organized", "Marshaled", "Scheduled", "Initiated"],
+    "COLLABORATING": ["Partnered", "Collaborated", "Teamed up", "Coordinated", "Liaised"],
+    "MENTORING": ["Prognosticated", "Diagnosed", "Prescribed", "Advised", "Counseled", "Consoled", "Arbitrated", "Judged"],
+    "COMPUTING": ["Estimated", "Plotted", "Figured"],
+    "DEVELOPING": ["Developed", "Debugged", "Engineered", "Deployed"],
+    "DESIGNING": ["Designed", "Created"],
+    "IMPROVING": ["Optimized", "Enhanced", "Refined", "Upgraded", "Streamlined"]
+}
+  
