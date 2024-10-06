@@ -1,13 +1,8 @@
 {
     "functions": {
-      "app/api/**/*.js": {
+      "app/api/**/*.(js|ts)": {
         "memory": 1024,
         "maxDuration": 60
-      }
-    },
-    "build": {
-      "env": {
-        "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD": "true"
       }
     }
   }

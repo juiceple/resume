@@ -4,7 +4,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-   "vercel-build": "yum install -y nss atk-bridge-lib cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib"
+   "vercel-build": "yum install -y nss at-spi2-atk cups-libs libdrm libxkbcommon libXcomposite libXdamage libXfixes libXrandr mesa-libgbm alsa-lib"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.53",
@@ -54,6 +54,7 @@
     "openai": "^4.56.0",
     "postcss": "8.4.33",
     "puppeteer": "^23.3.0",
+    "puppeteer-core": "^10.1.0",
     "quill-to-pdf": "^1.0.7",
     "react": "18.2.0",
     "react-beautiful-dnd": "^13.1.1",
