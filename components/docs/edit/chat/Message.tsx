@@ -79,10 +79,10 @@ export default function Message({ message, isLast, isLoading, onAddToResume, use
           </button>
           <button
             onClick={handleTranslate}
-            className="flex items-center gap-2 text-green-500 py-1 px-2 rounded-full bg-gray-300 hover:text-green-700"
+            className="flex items-center text-xs gap-2 text-blue-500 py-1 px-2 rounded-full bg-gray-300 hover:text-blue-700"
             disabled={isTranslating}
           >
-            <RefreshCw size={20} className={isTranslating ? "animate-spin" : ""} />
+            <RefreshCw size={16} className={isTranslating ? "animate-spin" : ""} />
             <p className="text-black">
               {isTranslating ? "번역 중..." : (showTranslation ? "원본보기" : "번역하기")}
             </p>
