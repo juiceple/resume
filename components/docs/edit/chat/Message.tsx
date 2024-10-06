@@ -69,7 +69,7 @@ export default function Message({ message, isLast, isLoading, onAddToResume, use
   const [skeletonDirections, setSkeletonDirections] = useState([1, 1, 1]);
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading && role === "assistant") {
       const intervals = skeletonWidths.map((_, index) => 
         setInterval(() => {
           setSkeletonWidths(prevWidths => {
@@ -92,7 +92,7 @@ export default function Message({ message, isLast, isLoading, onAddToResume, use
 
       return () => intervals.forEach(clearInterval);
     }
-  }, [isLoading, skeletonDirections]);
+  }, [isLoading, role, skeletonDirections]);
 
   if (role === "assistant") {
     return (
@@ -126,7 +126,6 @@ export default function Message({ message, isLast, isLoading, onAddToResume, use
                 style={{ width: `${width}px` }} 
               />
             ))}
-          
           </div>
         ) : (
           <div className="text-sm text-gray-800">
