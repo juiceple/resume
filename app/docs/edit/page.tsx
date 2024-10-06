@@ -152,7 +152,7 @@ export default function Edits() {
       await updateBulletPointsGenerated();
       setMessages([]); // Reset existing messages
       setIsGenerating(true);
-      const textOfJSON = `My job title is ${jobFormData.job}, and what I did in the job is ${jobFormData.workOnJob}. `;
+      const textOfJSON = `My job title is ${jobFormData.job}, and what I did in the job is ${jobFormData.workOnJob}. Generate Only One BulletPoint in ENGLISH with quanified NUMBER`;
       append({ content: textOfJSON, role: "user" });
       setShowChat(true);
     } else {
