@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Message as MessageType } from "ai";
@@ -65,6 +65,35 @@ export default function Message({ message, isLast, isLoading, onAddToResume, use
     }
   };
 
+  const [skeletonWidths, setSkeletonWidths] = useState([300, 250, 200]);
+  const [skeletonDirections, setSkeletonDirections] = useState([1, 1, 1]);
+
+  useEffect(() => {
+    if (isLoading) {
+      const intervals = skeletonWidths.map((_, index) => 
+        setInterval(() => {
+          setSkeletonWidths(prevWidths => {
+            const newWidths = [...prevWidths];
+            if (newWidths[index] >= 300) setSkeletonDirections(prev => {
+              const newDirections = [...prev];
+              newDirections[index] = -1;
+              return newDirections;
+            });
+            if (newWidths[index] <= 200) setSkeletonDirections(prev => {
+              const newDirections = [...prev];
+              newDirections[index] = 1;
+              return newDirections;
+            });
+            newWidths[index] += skeletonDirections[index] * (2 + index);  // 각 라인마다 다른 속도
+            return newWidths;
+          });
+        }, 50 + index * 10)  // 각 라인마다 다른 간격
+      );
+
+      return () => intervals.forEach(clearInterval);
+    }
+  }, [isLoading, skeletonDirections]);
+
   if (role === "assistant") {
     return (
       <div className="flex flex-col gap-3 p-4 bg-white rounded-lg shadow-md" style={{ backgroundColor: "#EDEDED" }}>
@@ -90,9 +119,14 @@ export default function Message({ message, isLast, isLoading, onAddToResume, use
         </div>
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-4 w-[300px] bg-gray-300" />
-            <Skeleton className="h-4 w-[280px] bg-gray-300" />
-            <Skeleton className="h-4 w-[250px] bg-gray-300" />
+            {skeletonWidths.map((width, index) => (
+              <Skeleton 
+                key={index} 
+                className="h-4 bg-gray-300" 
+                style={{ width: `${width}px` }} 
+              />
+            ))}
+          
           </div>
         ) : (
           <div className="text-sm text-gray-800">
