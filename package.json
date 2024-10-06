@@ -3,8 +3,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-   "vercel-build": "next build"
+    "start": "next start"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.53",
@@ -54,7 +53,6 @@
     "openai": "^4.56.0",
     "postcss": "8.4.33",
     "puppeteer": "^23.3.0",
-    "puppeteer-core": "^10.1.0",
     "quill-to-pdf": "^1.0.7",
     "react": "18.2.0",
     "react-beautiful-dnd": "^13.1.1",
