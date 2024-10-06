@@ -4,17 +4,7 @@
 <br/>
 
 ## 프로젝트 개요
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+CV 메이트는 직무명과 국/영문 경력 요약 한 줄만으로 영문 이력서를 자동으로 생성하는 AI 영문이력서 빌더입니다. 해외 및 국내 외국계 기업, 대학원에 지원하는 사용자들이 지원 공고에 맞춘 맞춤형 이력서를 신속하게 작성할 수 있도록 돕습니다. 또한, 글로벌 대기업에서 사용하는 이력서 양식을 제공하며, 작성된 이력서는 바로 PDF로 다운로드 가능합니다. 10,000개 이상의 이력서 데이터를 학습한 특화된 Solar 모델을 활용하며, 사용자는 이력서를 docs 편집기에서 자유롭게 수정할 수 있습니다. 작성된 이력서는 전문적인 어휘와 문장 구조, 성과의 수치화를 반영한 형태로 제공됩니다.
 
 ## 기술 스택
 
@@ -47,12 +37,17 @@
   ```
 
 3. **환경설정(API키 삽입)**
-   .env.local root directiory에 생성하기
+   1. .env.local root directiory에 생성하기
+   2. 파일내 다음과 같은 코드 작성하기
+   ```bash
    NEXT_PUBLIC_SUPABASE_URL= 
+
    NEXT_PUBLIC_SUPABASE_ANON_KEY=
-   OPENAI_API_KEY=""
+
    SOLAR_API_KEY=""
+
    PINECONE_API_KEY=""
+   ```
 
 4. **필수 패키지 설치**
    ```bash
