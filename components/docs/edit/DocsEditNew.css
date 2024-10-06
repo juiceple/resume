@@ -120,6 +120,7 @@
   float: left;
   height: 0;
   pointer-events: none;
+
 }
 /* Section Title (Bold) */
 .ProseMirror p[data-placeholder="Section Title"].is-empty.is-editor-empty::before {
@@ -161,15 +162,18 @@
 .tiptap ul,
 .tiptap ol {
   padding-left: 20px;
-  margin: 16px 0;
+  margin: 0; /* 16px에서 0으로 변경 */
 }
 
 .tiptap li {
   position: relative;
+  margin: 0; /* 새로 추가 */
+  padding: 0; /* 새로 추가 */
 }
 
 .tiptap li > p {
   margin: 0;
+  display: inline; /* 인라인으로 변경하여 줄바꿈 방지 */
 }
 
 /* Indentation styles for lists */
@@ -222,6 +226,10 @@
 .tiptap li[data-indent='6'] { padding-left: 125px; }
 .tiptap li[data-indent='7'] { padding-left: 145px; }
 .tiptap li[data-indent='8'] { padding-left: 165px; }
+
+.ProseMirror p:empty {
+  display: none;
+}
 
 
 /* Other styles remain the same */

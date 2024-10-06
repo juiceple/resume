@@ -118,17 +118,14 @@ const EditorComponent = ({
     extensions: [
       ...extensions,
       Placeholder.configure({
-        placeholder: placeholderText || "내용을 입력하세요...",
-        includeChildren: true,
-        shouldShow: ({ editor }) => {
-          const html = editor.getHTML();
-          return (
-            html === "" ||
-            html === "<p></p>" ||
-            html === "<p><br></p>" ||
-            html === "<p></p><p></p>"
-          );
+        placeholder: ({ node }) => {
+          if (node.type.name === 'bulletList') {
+            return "Click to add bullet points";
+          }
+          return placeholderText || "내용을 입력하세요...";
         },
+        showOnlyWhenEditable: false,
+        showOnlyCurrent: false,
       }),
     ],
     content,
@@ -146,6 +143,7 @@ const EditorComponent = ({
       if (className === "sectionbulletPoint" && editor.isEmpty) {
         editor.commands.clearContent();
         editor.commands.toggleBulletList();
+        editor.commands.focus('end');
       }
     },
   });
