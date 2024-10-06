@@ -6,11 +6,6 @@ import { useRouter, redirect, useSearchParams, usePathname } from "next/navigati
 import { createClient } from "@/utils/supabase/client";
 import FullScreenLoader from '@/components/FullScreenLoad';
 
-const signOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    return redirect("/login");
-};
 
 const DocsHeader = () => {
     const [loading, setLoading] = useState(false);
@@ -18,6 +13,12 @@ const DocsHeader = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
+
+    const signOut = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push("/");
+    };
 
     const handleNavigation = useCallback((path: string, message: string) => {
         // 현재 페이지와 이동하려는 페이지가 같으면 아무 작업도 하지 않음

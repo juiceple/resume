@@ -17,11 +17,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-const signOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    return redirect("/login");
-};
+
 
 const DocsHeader = () => {
     const [loading, setLoading] = useState(false);
@@ -31,6 +27,11 @@ const DocsHeader = () => {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const supabase = createClient();
+    const signOut = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push("/");
+    };
 
     const fetchUserPoints = useCallback(async () => {
         try {
