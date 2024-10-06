@@ -3,8 +3,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "postinstall": "node node_modules/puppeteer/install.js"
+    "start": "next start"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.53",
