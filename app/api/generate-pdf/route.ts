@@ -14,11 +14,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
        console.log('Chrome 실행 중');
        const browser = await chromium.puppeteer.launch({
-         args: chromium.args,
-         defaultViewport: chromium.defaultViewport,
-         executablePath: await chromium.executablePath,
-         headless: true,
-       });
+        args: [
+          ...chromium.args,
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+        ],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath,
+        headless: true,
+      });
+      
 
        const page = await browser.newPage();
 

@@ -205,7 +205,6 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
           cleanedContent.querySelectorAll('.button-container').forEach(el => el.remove());
           cleanedContent.querySelectorAll('.ai-generate-button').forEach(el => el.remove());
           cleanedContent.querySelectorAll('.is-empty').forEach(el => el.remove());
-          
           cleanedContent.querySelectorAll('.add-section-button-container').forEach(el => el.remove());
           // .ProseMirror-focused 클래스 제거 대신 클래스를 가진 요소의 스타일만 초기화
           cleanedContent.querySelectorAll('.ProseMirror-focused').forEach(el => {
