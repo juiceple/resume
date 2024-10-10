@@ -214,7 +214,7 @@ export default function Index() {
                 <div>
                     <p>상호명: CV메이트</p>
                     <p>대표자명: 김예은</p>
-                    <p>주소: 서울특별리 성북구 안암로 145</p>
+                    <p>주소: 서울특별시 성북구 안암로 145</p>
                     <p>상담문의: cvmate@gmail.com (평일 10:00-18:00)</p>
                     <p>&copy; 2024 CV메이트. All rights reserved.</p>
                 </div>
