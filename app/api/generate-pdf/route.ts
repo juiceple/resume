@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'HTML 내용이 필요합니다' }, { status: 400 });
     }
 
-    console.log('Chrome 실행 중');
+    console.log('Chrome 실행 준비 중');
     let browser;
     
     if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
+        executablePath: await chromium.executablePath('/tmp/chromium'),
         headless: chromium.headless,
       });
     } else {
@@ -41,7 +41,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('브라우저 실행됨');
+
     const page = await browser.newPage();
+    console.log('새 페이지 생성됨');
 
     console.log('페이지 내용 설정 중');
     const styledHtml = `
@@ -64,6 +67,7 @@ export async function POST(request: NextRequest) {
     await page.setContent(styledHtml, { 
       waitUntil: ['networkidle0', 'load', 'domcontentloaded']
     });
+    console.log('페이지 내용 설정 완료');
 
     console.log('애니메이션 대기 중');
     await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 1000)));
@@ -75,9 +79,11 @@ export async function POST(request: NextRequest) {
       margin: { top: '48px', right: '48px', bottom: '48px', left: '48px' },
       preferCSSPageSize: true,
     });
+    console.log('PDF 생성 완료');
 
     console.log('브라우저 종료 중');
     await browser.close();
+    console.log('브라우저 종료됨');
 
     console.log('PDF 응답 전송 중');
     return new NextResponse(pdf, {
