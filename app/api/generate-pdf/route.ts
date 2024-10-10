@@ -18,16 +18,16 @@ export async function POST(request: NextRequest) {
     
     if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
       // 서버리스 환경 (예: AWS Lambda, Vercel)
-      const executablePath = await chromium.executablePath('');
-      
+      console.log('서버리스 환경에서 실행 중');
       browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath,
+        executablePath: await chromium.executablePath(),
         headless: chromium.headless,
       });
     } else {
       // 로컬 환경
+      console.log('로컬 환경에서 실행 중');
       const executablePath = process.platform === 'win32'
         ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
         : process.platform === 'linux'
@@ -89,6 +89,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('PDF 생성 오류:', error);
-    return NextResponse.json({ message: `PDF 생성 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}` }, { status: 500 });
+    return NextResponse.json({ 
+      message: `PDF 생성 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`,
+      stack: error instanceof Error ? error.stack : undefined
+    }, { status: 500 });
   }
 }
