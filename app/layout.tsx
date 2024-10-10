@@ -1,5 +1,7 @@
-import { GeistSans } from "geist/font/sans";
+
 import "./globals.css";
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import { Analytics } from "@vercel/analytics/react"
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -19,6 +21,8 @@ export default function RootLayout({
   return (
     <html lang="ko" className="pretendard-font">
       <body className="bg-background text-foreground">
+      <Analytics />
+        <GoogleAnalytics measurementId="G-T3MPNHTTJW" />
         <main className="min-h-screen flex flex-col items-center">
           {children}
         </main>

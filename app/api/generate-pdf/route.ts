@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import chromium from '@sparticuz/chromium-min';
 
 export async function POST(request: NextRequest) {
   console.log('PDF 생성 요청 받음');
@@ -18,10 +18,12 @@ export async function POST(request: NextRequest) {
     
     if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
       // 서버리스 환경 (예: AWS Lambda, Vercel)
+      const executablePath = await chromium.executablePath('');
+      
       browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath,
+        executablePath,
         headless: chromium.headless,
       });
     } else {
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
       browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        executablePath: executablePath,
+        executablePath,
       });
     }
 
