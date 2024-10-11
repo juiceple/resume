@@ -240,29 +240,31 @@ export default function SignupPage() {
   };
 
   return (
-    <>
-      {loading && <FullScreenLoader message={loadingMessage} />}
-      <div className="w-full relative flex flex-col items-center h-screen justify-between">
-        <div className="absolute top-0 w-full flex justify-between items-center h-[75px] bg-white px-[30px]">
-          <Link href="/docs" onClick={(e) => {
+      <div className="flex flex-col h-screen w-full">
+        {loading && <FullScreenLoader message={loadingMessage} />}
+
+        {/* Header */}
+        <header className="flex justify-between items-center h-[75px] bg-white px-[30px]">
+          <Link href="/" onClick={(e) => {
             e.preventDefault();
-            loadingCompoSet("문서 목록을 불러오는 중...")
+            loadingCompoSet("홈 화면으로 돌아가는 중..");
           }}>
             <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
           </Link>
-          <Link href={`/`} passHref>
-                        <button className="flex Resume-color-60 w-[25px] h-[25px] rounded-md items-center justify-center">
-                            <CornerUpLeft className="w-[15px] h-[15px]" />
-                        </button>
-                    </Link>
-        </div>
-        <div className="absolute top-[75px] py-4 w-full flex items-center h-[75px] bg-[#EDF4FF]">
-          <div className="flex h-full justify-center items-center mx-auto px-4 gap-6">
+          <Link href="/" passHref>
+            <button className="flex Resume-color-60 w-[25px] h-[25px] rounded-md items-center justify-center">
+              <CornerUpLeft className="w-[15px] h-[15px]" />
+            </button>
+          </Link>
+        </header>
+        {/* Progress Bar */}
+        <div className="flex items-center justify-center h-[75px] bg-[#EDF4FF]">
+          <div className="flex items-center gap-6">
             {["회원정보 입력하기", "프로필 만들기", "시작하기"].map((label, idx) => {
               const step = idx + 1;
               return (
                 <Fragment key={step}>
-                  <div className={`flex h-full items-center gap-2 font-bold ${currentStep >= step ? "text-[#2871E6]" : "text-gray-300"} ${currentStep == step ? "border-b-2 border-[#2871E6]" : ""}`}>
+                  <div className={`flex items-center gap-2 font-bold ${currentStep >= step ? "text-[#2871E6]" : "text-gray-300"} ${currentStep == step ? "border-b-2 border-[#2871E6]" : ""}`}>
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= step ? "bg-[#2871E6]" : "bg-gray-300"}`}>
                       <p className="font-bold text-white">
                         {currentStep > step ? "✓" : step}
@@ -276,27 +278,28 @@ export default function SignupPage() {
             })}
           </div>
         </div>
-        <div className="absolute bottom-4 left-4 w-auto">
+
+        {/* Main Content */}
+        <main className="flex-grow flex flex-col justify-center items-center overflow-hidden">
+          {renderStepContent()}
+        </main>
+
+        {/* Footer */}
+        <footer className="h-[75px] flex justify-end items-center px-[30px] pb-[30px]">
           {errorMessage && (
-            <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4">
+            <div className="bg-red-100 text-red-700 p-3 rounded-md mr-4">
               {errorMessage}
             </div>
           )}
-        </div>
-        <div className="absolute w-full flex justify-center top-[150px] pt-6">
-          {renderStepContent()}
-        </div>
-        {currentStep !== 3 && (
-          <div className="absolute bottom-4 right-4 w-full flex justify-end py-4">
+          {currentStep !== 3 && (
             <NavigationButtons
               currentStep={currentStep}
               isNextDisabled={isNextDisabled}
               onNext={handleNext}
               onPrevious={handlePrevious}
             />
-          </div>
-        )}
+          )}
+        </footer>
       </div>
-    </>
   );
 }

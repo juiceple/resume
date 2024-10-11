@@ -142,21 +142,22 @@ const SignUpStep2: React.FC<SignUpStep2Props> = ({ onDataChange, name, birthDate
     }, [onDataChange]);
 
     return (
-        <div className='w-3/4 flex flex-col max-w-[900px] gap-4 pb-4 font-semibold'>
+        <div className='flex flex-col h-full justify-center items-center overflow-hidden'>
+          <div className='w-full max-w-4xl flex flex-col gap-4 font-bold overflow-y-auto max-h-[calc(100vh-250px)]'>
             <div className="flex flex-col text-center gap-4 border-b-2 text-4xl p-2">
-                <p><strong>환영합니다, </strong> {name}<strong>님!</strong></p>
-                <p>더욱 정확한 이력서를 위해 프로필을 추가해주세요.</p>
+              <p>환영합니다, {name}님!</p>
+              <p>더욱 정확한 이력서를 위해 프로필을 추가해주세요.</p>
             </div>
             <div className='flex flex-col gap-3 bg-gray-100 rounded-lg p-4'>
-            <SelectOption
+              <SelectOption
                 defaultValue={profileData.career || ''}
                 title="현재 경력"
                 options={options.career}
                 onChange={handleChange('career')}
                 placeholders={["현재 경력 선택"]}
                 required={true}
-            />
-            <SelectOption
+              />
+              <SelectOption
                 defaultValue={profileData.job || []}
                 title="직종"
                 options={options.job}
@@ -164,26 +165,29 @@ const SignUpStep2: React.FC<SignUpStep2Props> = ({ onDataChange, name, birthDate
                 onChange={handleChange('job')}
                 placeholders={["직종 선택", "세부 직종 선택"]}
                 required={true}
-            />
-            <hr className="my-4 border-gray-300" />
-            <SelectOption
+              />
+              <hr className="my-4 border-gray-300" />
+              <SelectOption
                 defaultValue={profileData.desiredJob || []}
                 title="지원하고자 하는 직무는 무엇인가요?"
                 options={options.desiredJob}
                 isDouble={true}
                 onChange={handleChange('desiredJob')}
                 placeholders={["직무 선택", "세부 직무 선택"]}
-            />
-            <SelectOption
+              />
+              <SelectOption
                 defaultValue={profileData.country || ''}
                 title="취업하고자 하는 국가는 어디인가요?"
                 options={options.country}
                 onChange={handleChange('country')}
                 placeholders={["국가 선택"]}
-            />
+              />
             </div>
+          </div>
         </div>
-    );
-};
+      );
+    };
+    
+
 
 export default SignUpStep2;

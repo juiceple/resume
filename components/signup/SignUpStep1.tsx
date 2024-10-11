@@ -123,7 +123,8 @@ const SignupStep1: React.FC<{formData: FormData, updateFormData: (data: Partial<
   };
 
   return (
-    <div className="w-1/4 space-y-4">
+    <div className="flex flex-col h-full justify-center items-center">
+    <div className="w-full max-w-md space-y-4 overflow-y-auto max-h-[calc(100vh-250px)] px-4">
       <div>
         <label htmlFor="email" className="block text-lg font-medium text-gray-700">이메일 <span className='text-red-700'>*</span></label>
         <input
@@ -137,6 +138,7 @@ const SignupStep1: React.FC<{formData: FormData, updateFormData: (data: Partial<
         />
         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
       </div>
+
       <div>
         <label htmlFor="password" className="block text-lg font-medium text-gray-700">비밀번호 <span className='text-red-700'>*</span></label>
         <input
@@ -203,17 +205,17 @@ const SignupStep1: React.FC<{formData: FormData, updateFormData: (data: Partial<
         {errors.birthDate && <p className="text-red-500 text-sm mt-1">{errors.birthDate}</p>}
       </div>
       <div>
-        <label className="block text-lg font-medium text-gray-700">이용약관</label>
-        <div className="flex flex-col mt-2 space-y-2">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={formData.agreements.all}
-              onChange={(e) => handleAgreementChange('all', e.target.checked)}
-              className="w-5 h-5 rounded border-gray-300 text-indigo-600 shadow-sm"
-            />
-            <span className="ml-2 text-lg">아래 내용에 모두 동의합니다.</span>
-          </label>
+          <label className="block text-lg font-medium text-gray-700">이용약관</label>
+          <div className="flex flex-col mt-2 space-y-2">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.agreements.all}
+                onChange={(e) => handleAgreementChange('all', e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300 text-indigo-600 shadow-sm"
+              />
+              <span className="ml-2 text-lg">아래 내용에 모두 동의합니다.</span>
+            </label>
           <hr/>
           <label className="flex items-center">
             <input
@@ -285,6 +287,7 @@ const SignupStep1: React.FC<{formData: FormData, updateFormData: (data: Partial<
             />
             <span className="ml-2">마케팅 정보 수신 동의 (선택)</span>
           </label>
+          </div>
         </div>
       </div>
     </div>
