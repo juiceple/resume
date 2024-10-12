@@ -2,8 +2,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "build": "npm run download-chromium && next build",
+    "start": "next start",
+    "download-chromium": "node node_modules/@sparticuz/chromium-min/install.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.53",
