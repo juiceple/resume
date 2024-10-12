@@ -5,7 +5,7 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals.push('chrome-aws-lambda');
+      config.externals.push('_http_common');
     }
     return config;
   },
