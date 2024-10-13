@@ -274,7 +274,12 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
       
           const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
           cleanedContent.querySelectorAll('.pdf-exclude, .page-break, .button-container, .ai-generate-button, .is-empty, .add-section-button-container').forEach(el => el.remove());
+          cleanedContent.querySelectorAll('.ProseMirror-focused').forEach(el => {
+            (el as HTMLElement).style.cssText = '';
+          });
           
+          // .custom-date-picker:focus-within 요소 제거
+          cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
           const htmlContent = cleanedContent.innerHTML;
       
           const response = await fetch('/api/generate-pdf', {
