@@ -35,7 +35,7 @@ const extensions = [
   BulletList,
   // ReactComponent, // 사용자 정의 확장 기능
   Indent.configure({
-    types: ['listItem'],
+    types: ['listItem', 'paragraph'],
     minLevel: 0,
     maxLevel: 8,
 }),
