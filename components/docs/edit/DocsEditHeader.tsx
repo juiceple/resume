@@ -161,13 +161,13 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     // const generatePDF = useCallback(async () => {
     //     setLoading(true);
     //     setLoadingMessage('PDF를 생성 중입니다...');
-      
+
     //     try {
     //       const resumeContent = document.querySelector('.doc');
     //       if (!resumeContent || !(resumeContent instanceof HTMLElement)) {
     //         throw new Error('이력서 내용을 찾을 수 없습니다.');
     //       }
-      
+
     //       // 모든 스타일시트의 CSS 규칙 수집
     //       const cssRules: string[] = [];
     //       for (let i = 0; i < document.styleSheets.length; i++) {
@@ -184,10 +184,10 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     //           console.warn('스타일시트 접근 오류:', e);
     //         }
     //       }
-      
+
     //       // 인라인 스타일 수집
     //       const inlineStyles = resumeContent.getAttribute('style') || '';
-      
+
     //       // 계산된 스타일 수집 (옵션)
     //       const computedStyles = window.getComputedStyle(resumeContent);
     //       const importantStyles = {
@@ -198,7 +198,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     //         backgroundColor: computedStyles.backgroundColor,
     //         // 필요한 다른 스타일 속성 추가
     //       };
-      
+
     //       const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
     //       cleanedContent.querySelectorAll('.pdf-exclude').forEach(el => el.remove());
     //       cleanedContent.querySelectorAll('.page-break').forEach(el => el.remove());
@@ -211,9 +211,9 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     //         (el as HTMLElement).style.cssText = '';
     //       });
     //       cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
-    
+
     //       const htmlContent = cleanedContent.innerHTML;
-      
+
     //       const response = await fetch('/api/generate-pdf', {
     //         method: 'POST',
     //         headers: { 'Content-Type': 'application/json' },
@@ -224,12 +224,12 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     //           computedStyles: importantStyles
     //         }),
     //       });
-      
+
     //       if (!response.ok) {
     //         const errorText = await response.text();
     //         throw new Error(`서버 응답 오류: ${response.status} ${errorText}`);
     //       }
-      
+
     //       const blob = await response.blob();
     //       const url = window.URL.createObjectURL(blob);
     //       const link = document.createElement('a');
@@ -237,7 +237,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     //       link.download = `${title || 'resume'}.pdf`;
     //       link.click();
     //       window.URL.revokeObjectURL(url);
-      
+
     //     } catch (error) {
     //       console.error('PDF 생성 오류:', error);
     //       alert(`PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
@@ -248,75 +248,95 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     const generatePDF = useCallback(async () => {
         setLoading(true);
         setLoadingMessage('PDF를 생성 중입니다...');
-      
+
         try {
-          const resumeContent = document.querySelector('.doc');
-          if (!resumeContent || !(resumeContent instanceof HTMLElement)) {
-            throw new Error('이력서 내용을 찾을 수 없습니다.');
-          }
-      
-          // Collect all stylesheet CSS rules
-          const cssRules: string[] = [];
-          for (let i = 0; i < document.styleSheets.length; i++) {
-            const sheet = document.styleSheets[i];
-            try {
-              const rules = sheet.cssRules || sheet.rules;
-              for (let j = 0; j < rules.length; j++) {
-                cssRules.push(rules[j].cssText);
-              }
-            } catch (e) {
-              console.warn('스타일시트 접근 오류:', e);
+            const resumeContent = document.querySelector('.doc');
+            if (!resumeContent || !(resumeContent instanceof HTMLElement)) {
+                throw new Error('이력서 내용을 찾을 수 없습니다.');
             }
-          }
-      
-          const inlineStyles = resumeContent.getAttribute('style') || '';
-          const computedStyles = window.getComputedStyle(resumeContent);
-      
-          const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
-          cleanedContent.querySelectorAll('.pdf-exclude, .page-break, .button-container, .ai-generate-button, .is-empty, .add-section-button-container').forEach(el => el.remove());
-          cleanedContent.querySelectorAll('.ProseMirror-focused').forEach(el => {
-            (el as HTMLElement).style.cssText = '';
-          });
-          
-          // .custom-date-picker:focus-within 요소 제거
-          cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
-          const htmlContent = cleanedContent.innerHTML;
-      
-          const response = await fetch('/api/generate-pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              html: htmlContent, 
-              css: cssRules.join('\n'),
-              inlineStyles,
-              computedStyles: {
-                fontFamily: computedStyles.fontFamily,
-                fontSize: computedStyles.fontSize,
-                lineHeight: computedStyles.lineHeight,
-                color: computedStyles.color,
-                backgroundColor: computedStyles.backgroundColor,
-              }
-            }),
-          });
-      
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`서버 응답 오류: ${response.status} ${errorText}`);
-          }
-      
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `${title || 'resume'}.pdf`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-      
+
+            // 제외할 선택자 목록 정의
+            const excludeSelectors = [
+                '.ProseMirror-focused',
+                '.pdf-exclude',
+                '.page-break',
+                '.button-container',
+                '.ai-generate-button',
+                '.is-empty',
+                '.add-section-button-container',
+                '.custom-date-picker:focus-within'
+            ];
+
+            // Collect all stylesheet CSS rules
+            const cssRules: string[] = [];
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                const sheet = document.styleSheets[i];
+                try {
+                    const rules = sheet.cssRules || sheet.rules;
+                    for (let j = 0; j < rules.length; j++) {
+                        const rule = rules[j];
+                        if (rule instanceof CSSStyleRule) {
+                            // Check if the rule contains any of the exclude selectors
+                            if (!excludeSelectors.some(selector => rule.selectorText.includes(selector))) {
+                                cssRules.push(rule.cssText);
+                            }
+                        } else {
+                            // Include non-style rules (like @media) without filtering
+                            cssRules.push(rule.cssText);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('스타일시트 접근 오류:', e);
+                }
+            }
+
+            const inlineStyles = resumeContent.getAttribute('style') || '';
+            const computedStyles = window.getComputedStyle(resumeContent);
+
+            const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
+            cleanedContent.querySelectorAll(excludeSelectors.join(', ')).forEach(el => el.remove());
+            cleanedContent.querySelectorAll('.ProseMirror-focused').forEach(el => {
+                (el as HTMLElement).style.cssText = '';
+            });
+            // .custom-date-picker:focus-within 요소 제거
+            cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
+            const htmlContent = cleanedContent.innerHTML;
+
+            const response = await fetch('/api/generate-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    html: htmlContent,
+                    css: cssRules.join('\n'),
+                    inlineStyles,
+                    computedStyles: {
+                        fontFamily: computedStyles.fontFamily,
+                        fontSize: computedStyles.fontSize,
+                        lineHeight: computedStyles.lineHeight,
+                        color: computedStyles.color,
+                        backgroundColor: computedStyles.backgroundColor,
+                    }
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`서버 응답 오류: ${response.status} ${errorText}`);
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title || 'resume'}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
         } catch (error) {
-          console.error('PDF 생성 오류:', error);
-          alert(`PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+            console.error('PDF 생성 오류:', error);
+            alert(`PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         } finally {
-          setLoading(false);
+            setLoading(false);
         }
     }, [title]);
 
