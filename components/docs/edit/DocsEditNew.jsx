@@ -863,16 +863,24 @@ const DynamicResumeEditors = ({
     }
   }, []);
 
+  // Existing effects
   useEffect(() => {
-    addPageBreaks();
     window.addEventListener("resize", addPageBreaks);
     return () => window.removeEventListener("resize", addPageBreaks);
   }, [addPageBreaks]);
 
-  // Effect to update page breaks when resumeData changes
   useEffect(() => {
     addPageBreaks();
   }, [resumeData, addPageBreaks]);
+
+  // New effect to ensure page breaks are added after initial render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      addPageBreaks();
+    }, 500); // Delay of 500ms
+
+    return () => clearTimeout(timer);
+  }, []);
 
   //////////////////////////////////////////////////////////////////
   //          resume data 기반해서 실제 랜더링을 담당하는 부분       //
