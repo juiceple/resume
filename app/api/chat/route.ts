@@ -177,10 +177,11 @@ YOU ARE A PROFESSIONAL RESUME BULLET POINT GENERATOR, RECOGNIZED FOR YOUR EXPERT
 
 ### BULLET POINT REQUIREMENTS ###
 
-1. **USE AN ACTION VERB**: Start the bullet point with a strong, action-oriented verb.
+1. **USE AN ACTION VERB**: Start the bullet point with a strong, action-oriented only one verb.
 2. **BE SPECIFIC**: Clearly describe the project/task the user performed, highlighting key details.
 3. **INCLUDE QUANTIFIABLE RESULTS**: Use numbers or metrics wherever possible to demonstrate impact.
 4. **AVOID PERSONAL PRONOUNS**: Do not start the bullet points with words like "I" or "My."
+
 
 ### GUIDELINES FOR PARAPHRASING ###
 
@@ -281,7 +282,7 @@ export async function POST(req: Request) {
   if (messages.length == 1) {
     const userInput = messages[messages.length - 1].content;
 
-
+    
     const choosedJobTitle = await chooseJobTitle(jobFormData.job);
 
     const choosedActionVerb = await chooseActionVerb(jobFormData.workOnJob);
@@ -291,8 +292,10 @@ export async function POST(req: Request) {
       choosedKeyWordOfJobDescription = await chooseKeyWordOfJobDescription(jobFormData.announcement);
     }
 
+    const preBulletPoint = await generateOneBulletPoint(jobFormData.workOnJob, jobFormData.job)
+    console.log(preBulletPoint);
 
-    const embedding = await generateEmbedding(jobFormData.workOnJob);
+    const embedding = await generateEmbedding(preBulletPoint);
 
     const examples = await queryPinecone(choosedJobTitle, embedding);
     console.log('Pinecone query results:', examples);
@@ -306,7 +309,8 @@ export async function POST(req: Request) {
     const result = await streamText({
       model: openai('solar-pro'),
       messages,
-      system: FirstFinalSystemPrompt,
+      system: FirstFinalSystemPrompt+
+      '만약, 이상한 input에 대한 내용이 들어오면 제대로 입력해달라고 해줘. 하지만 정상 값이라면 bulletpoint 외 다른 내용이 있다면 제거해주고 수치화돼있지 않으면 수치화해줘.',
       onFinish({ text, finishReason, usage }) {
         if (usage) {
           updateUsage(usage);
@@ -400,6 +404,19 @@ async function chooseKeyWordOfJobDescription(jobDesCription: string): Promise<st
   console.log('Generated KeyWord:', text.trim());
   updateUsage(usage);
   console.log('chooseKeyWordOfJobDescription', usage);
+  return text.trim();
+}
+
+async function generateOneBulletPoint(workExperience: string, userJobTitle: string): Promise<string> {
+  const { text, usage } = await generateText({
+    model: openai('solar-pro'),
+    system: "Generate only One bulletpoint without job title for resume in English",
+    prompt: `i am doing ${workExperience}. GENERATE One bulletpoint for resume without job title in English`
+  });
+
+  console.log('Generated KeyWord:', text.trim());
+  updateUsage(usage);
+  console.log('generateOneBulletPointOfworkExperience', usage);
   return text.trim();
 }
 
