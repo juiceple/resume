@@ -41,7 +41,7 @@ interface ProfileData {
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [currentStep, setCurrentStep] = useState(2);
+  const [currentStep, setCurrentStep] = useState(1);
   const [isNextDisabled, setIsNextDisabled] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
