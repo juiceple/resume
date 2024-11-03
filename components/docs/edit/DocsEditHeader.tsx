@@ -302,7 +302,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
             const htmlContent = cleanedContent.innerHTML;
 
-            const response = await fetch('/api/generate-pdf', {
+            const response = await fetch('http://localhost:3001/api/generate-pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

@@ -121,7 +121,7 @@ export default function TermsDetailPage() {
     <div className="min-h-screen flex flex-col w-full">
       <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center border-b border-b-foreground/10 h-16 bg-white">
         <div className="w-full flex justify-between items-center px-10 text-sm">
-          <Link href="/docs">
+          <Link href="/">
             <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
           </Link>
         </div>

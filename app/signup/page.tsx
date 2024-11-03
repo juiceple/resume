@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { createClient } from "@/utils/supabase/client";
 import SignupStep1 from '@/components/signup/SignUpStep1';
@@ -7,7 +7,7 @@ import SignupStep3 from '@/components/signup/SignUpStep3';
 import NavigationButtons from '@/components/signup/NavigationButtons';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, Fragment } from "react";
-import Link from 'next/link'
+import Link from 'next/link';
 import Image from "next/image";
 import FullScreenLoader from '@/components/FullScreenLoad';
 import { CornerUpLeft } from 'lucide-react';
@@ -44,6 +44,7 @@ export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isNextDisabled, setIsNextDisabled] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [otpVerified, setOtpVerified] = useState(false); // OTP 인증 상태
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -87,8 +88,6 @@ export default function SignupPage() {
       const success = await uploadProfileData();
       if (success) {
         setCurrentStep(3);
-      } else {
-
       }
     } else {
       completeSignup();
@@ -125,19 +124,24 @@ export default function SignupPage() {
       return false;
     }
 
-    const { error } = await supabase.auth.signUp({
+    if (!otpVerified) {
+      setErrorMessage("이메일 인증을 완료해주세요.");
+      return false;
+    }
+
+    const { error } = await supabase.auth.updateUser({
       email: formData.email,
       password: formData.password,
-      options: {
-        data: {
-          name: formData.name,
-          birthDate: `${formData.birthDate.year}-${formData.birthDate.month}-${formData.birthDate.day}`,
-          terms_accepted: formData.agreements.terms,
-          privacy_accepted: formData.agreements.privacy,
-          age_verified: formData.agreements.age,
-          marketing_accepted: formData.agreements.marketing
-        }
-      },
+      // options: {
+      //   data: {
+      //     name: formData.name,
+      //     birthDate: `${formData.birthDate.year}-${formData.birthDate.month}-${formData.birthDate.day}`,
+      //     terms_accepted: formData.agreements.terms,
+      //     privacy_accepted: formData.agreements.privacy,
+      //     age_verified: formData.agreements.age,
+      //     marketing_accepted: formData.agreements.marketing
+      //   }
+      // },
     });
 
     if (error) {
@@ -155,17 +159,22 @@ export default function SignupPage() {
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user.id,  // 명시적으로 user_id를 포함
+          user_id: user.id,
           name: formData.name,
           birth_date: `${formData.birthDate.year}-${formData.birthDate.month}-${formData.birthDate.day}`,
           career: profileData.career,
           job: profileData.job,
           desired_job: profileData.desiredJob,
-          country: profileData.country
-          // username 필드는 제거됨
+          country: profileData.country,
+          필수동의사항: {
+          terms_accepted: formData.agreements.terms,
+          privacy_accepted: formData.agreements.privacy,
+          age_verified: formData.agreements.age,
+        },
+        마케팅동의: formData.agreements.marketing
         }, {
-          onConflict: 'user_id',  // user_id가 충돌할 경우 업데이트
-          ignoreDuplicates: false  // 중복을 무시하지 않고 업데이트 수행
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         });
 
       if (error) {
@@ -173,7 +182,6 @@ export default function SignupPage() {
         setErrorMessage("프로필 업데이트 중 오류가 발생했습니다.");
         return false;
       }
-      console.log('Profile updated successfully');
       return true;
     }
     setErrorMessage("사용자 정보를 찾을 수 없습니다.");
@@ -181,7 +189,6 @@ export default function SignupPage() {
   };
 
   const completeSignup = async () => {
-    // Implement any final steps or redirects here
     router.push('/docs');
   };
 
@@ -197,7 +204,8 @@ export default function SignupPage() {
         formData.birthDate.day &&
         formData.agreements.terms &&
         formData.agreements.privacy &&
-        formData.agreements.age
+        formData.agreements.age &&
+        otpVerified // OTP 인증 완료 확인
       );
     };
 
@@ -219,87 +227,95 @@ export default function SignupPage() {
         setIsNextDisabled(false);
         break;
     }
-  }, [currentStep, formData, profileData]);
-
+  }, [currentStep, formData, profileData, otpVerified]);
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return <SignupStep1 formData={formData} updateFormData={updateFormData} />;
+        return (
+          <SignupStep1
+            formData={formData}
+            updateFormData={updateFormData}
+            otpVerified={otpVerified}
+            updateOtpVerified={setOtpVerified} // OTP 인증 상태 업데이트 함수 전달
+          />
+        );
       case 2:
-        return <SignupStep2
-          onDataChange={handleStep2DataChange}
-          name={formData.name}
-          birthDate={`${formData.birthDate.year}-${formData.birthDate.month}-${formData.birthDate.day}`}
-        />;
+        return <SignupStep2 onDataChange={handleStep2DataChange} name={formData.name} birthDate={`${formData.birthDate.year}-${formData.birthDate.month}-${formData.birthDate.day}`} />;
       case 3:
         return <SignupStep3 formData={formData} updateFormData={updateFormData} />;
       default:
-        return <SignupStep1 formData={formData} updateFormData={updateFormData} />;
+        return <SignupStep1
+        formData={formData}
+        updateFormData={updateFormData}
+        otpVerified={otpVerified}
+        updateOtpVerified={setOtpVerified}
+      />;
     }
   };
 
   return (
-      <div className="flex flex-col h-screen w-full">
-        {loading && <FullScreenLoader message={loadingMessage} />}
+    <div className="flex flex-col h-screen w-full">
+      {loading && <FullScreenLoader message={loadingMessage} />}
 
-        {/* Header */}
-        <header className="flex justify-between items-center h-[75px] bg-white px-[30px]">
-          <Link href="/" onClick={(e) => {
-            e.preventDefault();
-            loadingCompoSet("홈 화면으로 돌아가는 중..");
-          }}>
-            <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
-          </Link>
-          <Link href="/" passHref>
-            <button className="flex Resume-color-60 w-[25px] h-[25px] rounded-md items-center justify-center">
-              <CornerUpLeft className="w-[15px] h-[15px]" />
-            </button>
-          </Link>
-        </header>
-        {/* Progress Bar */}
-        <div className="flex items-center justify-center h-[75px] bg-[#EDF4FF]">
-          <div className="flex items-center gap-6">
-            {["회원정보 입력하기", "프로필 만들기", "시작하기"].map((label, idx) => {
-              const step = idx + 1;
-              return (
-                <Fragment key={step}>
-                  <div className={`flex items-center gap-2 font-bold ${currentStep >= step ? "text-[#2871E6]" : "text-gray-300"} ${currentStep == step ? "border-b-2 border-[#2871E6]" : ""}`}>
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= step ? "bg-[#2871E6]" : "bg-gray-300"}`}>
-                      <p className="font-bold text-white">
-                        {currentStep > step ? "✓" : step}
-                      </p>
-                    </div>
-                    <div>{label}</div>
+      {/* Header */}
+      <header className="flex justify-between items-center h-[75px] bg-white px-[30px]">
+        <Link href="/" onClick={(e) => {
+          e.preventDefault();
+          loadingCompoSet("홈 화면으로 돌아가는 중..");
+        }}>
+          <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
+        </Link>
+        <Link href="/" passHref>
+          <button className="flex Resume-color-60 w-[25px] h-[25px] rounded-md items-center justify-center">
+            <CornerUpLeft className="w-[15px] h-[15px]" />
+          </button>
+        </Link>
+      </header>
+
+      {/* Progress Bar */}
+      <div className="flex items-center justify-center h-[75px] bg-[#EDF4FF]">
+        <div className="flex items-center gap-6">
+          {["회원정보 입력하기", "프로필 만들기", "시작하기"].map((label, idx) => {
+            const step = idx + 1;
+            return (
+              <Fragment key={step}>
+                <div className={`flex items-center gap-2 font-bold ${currentStep >= step ? "text-[#2871E6]" : "text-gray-300"} ${currentStep == step ? "border-b-2 border-[#2871E6]" : ""}`}>
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= step ? "bg-[#2871E6]" : "bg-gray-300"}`}>
+                    <p className="font-bold text-white">
+                      {currentStep > step ? "✓" : step}
+                    </p>
                   </div>
-                  {step < 3 && <div className={`h-[1px] w-12 ${currentStep > step ? "bg-[#2871E6]" : "bg-gray-300"}`}></div>}
-                </Fragment>
-              );
-            })}
-          </div>
+                  <div>{label}</div>
+                </div>
+                {step < 3 && <div className={`h-[1px] w-12 ${currentStep > step ? "bg-[#2871E6]" : "bg-gray-300"}`}></div>}
+              </Fragment>
+            );
+          })}
         </div>
-
-        {/* Main Content */}
-        <main className="flex-grow flex flex-col justify-center items-center overflow-hidden">
-          {renderStepContent()}
-        </main>
-
-        {/* Footer */}
-        <footer className="h-[75px] flex justify-end items-center px-[30px] pb-[30px]">
-          {errorMessage && (
-            <div className="bg-red-100 text-red-700 p-3 rounded-md mr-4">
-              {errorMessage}
-            </div>
-          )}
-          {currentStep !== 3 && (
-            <NavigationButtons
-              currentStep={currentStep}
-              isNextDisabled={isNextDisabled}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-            />
-          )}
-        </footer>
       </div>
+
+      {/* Main Content */}
+      <main className="w-full h-[500px] flex-grow flex flex-col justify-center items-center overflow-hidden">
+        {renderStepContent()}
+      </main>
+
+      {/* Footer */}
+      <footer className="h-[75px] flex justify-end items-center px-[30px] pb-[30px]">
+        {errorMessage && (
+          <div className="bg-red-100 text-red-700 p-3 rounded-md mr-4">
+            {errorMessage}
+          </div>
+        )}
+        {currentStep !== 3 && (
+          <NavigationButtons
+            currentStep={currentStep}
+            isNextDisabled={isNextDisabled}
+            onNext={handleNext}
+            onPrevious={handlePrevious}
+          />
+        )}
+      </footer>
+    </div>
   );
 }
