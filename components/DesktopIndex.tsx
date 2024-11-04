@@ -5,10 +5,23 @@ import AuthButton from '@/components/AuthButton';
 import HomeButton from '@/components/HomeButton';
 import './desktop.css'
 import dynamic from 'next/dynamic';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 // 동적 임포트를 사용하여 클라이언트 컴포넌트 로드
 const FadeInText = dynamic(() => import('@/components/FadeInText').then(mod => mod.default), { ssr: false });
 const CountUp = dynamic(() => import('@/components/CountUp').then(mod => mod.default), { ssr: false });
 const SlideUpSection = dynamic(() => import('@/components/SlideUpSection').then(mod => mod.default), { ssr: false });
+const FirstVisitAlert = dynamic(() => import('@/components/FirstVisitAlert').then(mod => mod.default), { ssr: false });
+
 
 const featureData = [
   {
@@ -49,6 +62,8 @@ const featureData = [
 export default function Index() {
   return (
     <div className="flex-1 w-full flex flex-col items-center">
+      <FirstVisitAlert />
+
       <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center border-b border-b-foreground/10 h-16 bg-white">
         <div className="w-full flex justify-between items-center mx-10 text-sm">
           <Link href="/docs">

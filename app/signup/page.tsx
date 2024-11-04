@@ -36,6 +36,7 @@ interface ProfileData {
   job: string[];
   desiredJob: string[];
   country: string;
+  workplace: string;
 }
 
 export default function SignupPage() {
@@ -67,7 +68,8 @@ export default function SignupPage() {
     career: '',
     job: [],
     desiredJob: [],
-    country: ''
+    country: '',
+    workplace: '', // 추가된 필드
   });
   const router = useRouter();
   const supabase = createClient();
@@ -166,12 +168,13 @@ export default function SignupPage() {
           job: profileData.job,
           desired_job: profileData.desiredJob,
           country: profileData.country,
+          Organization: profileData.workplace, // 학교/직장 필드 추가
           필수동의사항: {
-          terms_accepted: formData.agreements.terms,
-          privacy_accepted: formData.agreements.privacy,
-          age_verified: formData.agreements.age,
-        },
-        마케팅동의: formData.agreements.marketing
+            terms_accepted: formData.agreements.terms,
+            privacy_accepted: formData.agreements.privacy,
+            age_verified: formData.agreements.age,
+          },
+          마케팅동의: formData.agreements.marketing
         }, {
           onConflict: 'user_id',
           ignoreDuplicates: false

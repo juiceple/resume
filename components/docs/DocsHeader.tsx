@@ -5,17 +5,7 @@ import Link from 'next/link';
 import { useRouter, redirect, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import FullScreenLoader from '@/components/FullScreenLoad';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+
 
 
 
@@ -84,7 +74,7 @@ const DocsHeader = () => {
                             <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
                         </Link>
 
-                        {/* <Link href="/pointShop" onClick={(e) => {
+                        <Link href="/pointShop" onClick={(e) => {
                             if (pathname !== '/pointShop') {
                                 e.preventDefault();
                                 handleNavigation('/pointShop', '포인트샵을 불러오는 중...');
@@ -102,39 +92,8 @@ const DocsHeader = () => {
                             <div>
                                 포인트샵
                             </div>
-                        </Link> */}
-                        <AlertDialog>
-                            <AlertDialogTrigger>
-                                <div className='flex pretendard-font items-center gap-4 pl-10 font-bold'>
-                                    <div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                            <path d="M20 12V22H4V12" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            <path d="M22 7H2V12H22V7Z" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            <path d="M12 22V7" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            <path d="M7.5 7H12C12 7 11 2 7.5 2C6.83696 2 6.20107 2.26339 5.73223 2.73223C5.26339 3.20107 5 3.83696 5 4.5C5 5.16304 5.26339 5.79893 5.73223 6.26777C6.20107 6.73661 6.83696 7 7.5 7Z" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                            <path d="M16.5 7H12C12 7 13 2 16.5 2C17.163 2 17.7989 2.26339 18.2678 2.73223C18.7366 3.20107 19 3.83696 19 4.5C19 5.16304 18.7366 5.79893 18.2678 6.26777C17.7989 6.73661 17.163 7 16.5 7Z" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        포인트샵
-                                    </div>
-                                </div>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className='w-[476px] h-[527px] py-[60px] flex flex-col gap-[30px] items-center'>
-                                <div className='text-[35px] font-semibold'>
-                                    <h2>걱정 마세요, 무료니까요!</h2>
-                                </div>
-                                <div>
-                                <Image src='/images/resume.png' alt="Logo" width={192} height={68} />
-                                </div>
-                                <div className='flex flex-col text-[24px] items-center gap-[8px]'>
-                                   <p> 많은 분의 성원에 힘입어 출시한 만큼,</p>
-                                   <p> 12월 1일까지 무료 혜택을 제공합니다.</p>
-                                   <p> 많은 이용 부탁드립니다!</p>
-                                </div>
-                                <AlertDialogCancel className='bg-[#2871E6] text-[25px] flex w-[160px] h-[60px] items-center justify-center rounded-2xl text-white hover:bg-[#2871E6] hover:text-white'>확인</AlertDialogCancel>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                        </Link>
+                    
 
 
                         <div className='flex items-center gap-4 font-bold'>

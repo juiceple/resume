@@ -4,6 +4,11 @@ import { generateEmbedding } from './embedding';
 import { queryPinecone } from './pinecone';
 import actionVerbs from './actionVerbs.json';
 
+import { openai } from '@ai-sdk/openai';
+import { groq } from '@ai-sdk/groq';
+
+const model = groq('gemma2-9b-it');
+
 interface UsageInfo {
   promptTokens: number;
   completionTokens: number;
@@ -18,12 +23,12 @@ let totalUsage: UsageInfo = {
 
 type ActionVerbCategories = keyof typeof actionVerbs;
 
-const openai = createOpenAI({
-  // custom settings, e.g.
-  baseURL: "https://api.upstage.ai/v1/solar",
-  compatibility: 'compatible', // strict mode, enable when using the OpenAI API
-  apiKey: process.env.SOLAR_API_KEY
-});
+// const openai = createOpenAI({
+//   // custom settings, e.g.
+//   baseURL: "https://api.upstage.ai/v1/solar",
+//   compatibility: 'compatible', // strict mode, enable when using the OpenAI API
+//   apiKey: process.env.SOLAR_API_KEY
+// });
 
 const Choose_Job_Title = `
 YOU ARE TASKED WITH IDENTIFYING THE MOST SUITABLE JOB TITLE FROM A PREDEFINED LIST BASED ON THE USER'S INPUT. THE USER WILL PROVIDE THEIR JOB TITLE, AND YOUR ROLE IS TO SELECT THE MOST CLOSELY MATCHING JOB TITLE FROM THE FOLLOWING LIST:
@@ -307,10 +312,9 @@ export async function POST(req: Request) {
     const FirstFinalSystemPrompt = FIRST_SYSTEM_PROMPT(examplesAsStrings, specificActionVerbs, choosedKeyWordOfJobDescription);
 
     const result = await streamText({
-      model: openai('solar-pro'),
+      model: openai('gpt-4o-mini'),
       messages,
-      system: FirstFinalSystemPrompt+
-      '만약, 이상한 input에 대한 내용이 들어오면 제대로 입력해달라고 해줘. 하지만 정상 값이라면 bulletpoint 외 다른 내용이 있다면 제거해주고 수치화돼있지 않으면 수치화해줘.',
+      system: FirstFinalSystemPrompt,
       onFinish({ text, finishReason, usage }) {
         if (usage) {
           updateUsage(usage);
@@ -337,7 +341,7 @@ export async function POST(req: Request) {
   } else {
     console.log('Streaming text with Solar Pro model for subsequent messages');
     const result = await streamText({
-      model: openai('solar-pro'),
+      model: openai('gpt-4o-mini'),
       messages,
       system: SECOND_SYSTEM_PROMPT,
       onFinish({ text, finishReason, usage }) {
@@ -370,7 +374,7 @@ export async function POST(req: Request) {
 async function chooseJobTitle(userJobTitle: string): Promise<string> {
 
   const { text, usage } = await generateText({
-    model: openai('solar-pro'),
+    model: openai('gpt-4o-mini'),
     system: Choose_Job_Title,
     prompt: userJobTitle
   });
@@ -383,7 +387,7 @@ async function chooseJobTitle(userJobTitle: string): Promise<string> {
 async function chooseActionVerb(workExperience: string): Promise<string> {
 
   const { text, usage } = await generateText({
-    model: openai('solar-pro'),
+    model: openai('gpt-4o-mini'),
     system: Choose_Action_Verb,
     prompt: workExperience
   });
@@ -396,7 +400,7 @@ async function chooseActionVerb(workExperience: string): Promise<string> {
 async function chooseKeyWordOfJobDescription(jobDesCription: string): Promise<string> {
 
   const { text, usage } = await generateText({
-    model: openai('solar-pro'),
+    model: openai('gpt-4o-mini'),
     system: Choose_KeyWord_Of_Job_Description,
     prompt: jobDesCription
   });
@@ -409,7 +413,7 @@ async function chooseKeyWordOfJobDescription(jobDesCription: string): Promise<st
 
 async function generateOneBulletPoint(workExperience: string, userJobTitle: string): Promise<string> {
   const { text, usage } = await generateText({
-    model: openai('solar-pro'),
+    model: openai('gpt-4o-mini'),
     system: "Generate only One bulletpoint without job title for resume in English",
     prompt: `i am doing ${workExperience}. GENERATE One bulletpoint for resume without job title in English`
   });
