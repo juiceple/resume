@@ -263,10 +263,7 @@ export default function SignupPage() {
 
       {/* Header */}
       <header className="flex justify-between items-center h-[75px] bg-white px-[30px]">
-        <Link href="/" onClick={(e) => {
-          e.preventDefault();
-          loadingCompoSet("홈 화면으로 돌아가는 중..");
-        }}>
+        <Link href="/" passHref>
           <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
         </Link>
         <Link href="/" passHref>
