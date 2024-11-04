@@ -19,14 +19,13 @@ export default function FirstVisitAlert() {
 
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-      <AlertDialogContent className="w-[476px] h-[527px] py-[60px] flex flex-col gap-[30px] items-center">
+      <AlertDialogContent className="w-144 h-[500px] py-12 flex flex-col justify-between items-center">
         <div>
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
         </div>
         <div className="text-[35px] font-semibold">
           <h2>11월 11일 출시 예정!</h2>
         </div>
-
         <div className="flex flex-col text-[12pxpx] items-center gap-[8px]">
           <p> 안녕하세요, CVMATE 개발팀입니다.</p>
           <p> 감사하게도 너무나 많은 분들의 응원과 관심을 받게 되어,</p>
