@@ -216,7 +216,7 @@ const PointShop: React.FC = () => {
                 orderId: uniqueOrderId, // 유니크한 주문 ID 생성
                 amount: price,
                 goodsName: `${points} 포인트`,
-                returnUrl: 'http://localhost:3000/api/serverAuth', // 실제 서버의 엔드포인트로 설정
+                returnUrl: '/api/serverAuth', // 실제 서버의 엔드포인트로 설정
                 fnError: function (result: any) {
                     alert('결제 오류: ' + result.errorMsg);
                 }
