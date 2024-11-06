@@ -206,12 +206,14 @@ const PointShop: React.FC = () => {
             if (profileError || !profileData) throw new Error("Failed to retrieve current points.");
     
             const currentPoints = profileData.BulletPoint;
+
+            const uniqueOrderId = `${user.id}_${Date.now()}`;
     
             // 결제창 호출
             AUTHNICE.requestPay({
                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
                 method: 'card',
-                orderId: `1`, // 유니크한 주문 ID 생성
+                orderId: uniqueOrderId, // 유니크한 주문 ID 생성
                 amount: price,
                 goodsName: `${points} 포인트`,
                 returnUrl: 'http://localhost:3000/api/serverAuth', // 실제 서버의 엔드포인트로 설정
@@ -225,32 +227,6 @@ const PointShop: React.FC = () => {
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
             setIsLoading(false);
-                            // fnSuccess: async function (result: any) {
-                //     const newPoints = currentPoints + points;
-    
-                //     // Update the user's points in the `profiles` table
-                //     const { error: updateError } = await supabase
-                //         .from('profiles')
-                //         .update({ BulletPoint: newPoints })
-                //         .eq('user_id', user.id);
-    
-                //     if (updateError) throw updateError;
-    
-                //     // Insert a new purchase record in `purchaseHistory`
-                //     const { error: insertError } = await supabase
-                //         .from('purchaseHistory')
-                //         .insert({
-                //             user_id: user.id,
-                //             구매일자: new Date().toISOString(),
-                //             구매포인트: points,
-                //             잔여포인트: newPoints, // Updated points after purchase
-                //             금액: price,
-                //         });
-    
-                //     if (insertError) throw insertError;
-    
-                //     alert(`Purchased ${points} points for ₩${price.toLocaleString()}!`);
-                // },
         }
     };
     
