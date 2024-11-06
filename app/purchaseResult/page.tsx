@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import Image from "next/image";
 import Link from "next/link";
 
-const PurchaseResult: React.FC = () => {
+const PurchaseResultContent: React.FC = () => {
     const searchParams = useSearchParams();
     const success = searchParams.get('success');
     const tid = searchParams.get('tid');
@@ -116,6 +116,14 @@ const PurchaseResult: React.FC = () => {
                 </Link>
             </div>
         </div>
+    );
+};
+
+const PurchaseResult: React.FC = () => {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PurchaseResultContent />
+        </Suspense>
     );
 };
 
