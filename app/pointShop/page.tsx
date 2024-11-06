@@ -1,8 +1,11 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DocsHeader from '@/components/docs/DocsHeader';
-import CancellationFlowModal from '@/components/Cancel';
+import CancellationFlowModal from '@/components/pointShop/CancelSub';
+import CancellationPoint from '@/components/pointShop/CancelPoint';
 import { createClient } from '@/utils/supabase/client';
+// PointShop.tsx 파일 상단에 추가
+declare const AUTHNICE: any;
 
 
 
@@ -23,59 +26,127 @@ const PointShop: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'purchase' | 'history'>('purchase');
     const [pinCode, setPinCode] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // Moved isLoading to the component level
-    const [error, setError] = useState<string | null>(null); // Moved error to the component level
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const supabase = createClient();
 
     const handleTabChange = (tab: 'purchase' | 'history') => {
         setActiveTab(tab);
     };
 
+    // Fetch purchase history
+    const [historyItems, setHistoryItems] = useState<HistoryItemProps[]>([]);
+
+    useEffect(() => {
+        // 나이스페이 JS SDK 스크립트 동적 로드
+        const script = document.createElement('script');
+        script.src = "https://pay.nicepay.co.kr/v1/js/";
+        script.async = true;
+        document.body.appendChild(script);
+
+        return () => {
+            // 컴포넌트 언마운트 시 스크립트 제거
+            document.body.removeChild(script);
+        };
+    }, []);
+    useEffect(() => {
+        const fetchPurchaseHistory = async () => {
+            try {
+                setIsLoading(true);
+                setError(null);
+
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) throw new Error("User not authenticated.");
+
+                const { data, error: historyError } = await supabase
+                    .from('purchaseHistory')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('구매일자', { ascending: false });
+
+                if (historyError) throw historyError;
+
+                const formattedHistoryItems = data.map((item: any) => ({
+                    date: new Date(item.구매일자).toLocaleDateString(),
+                    amount: item.금액,
+                    pointsBuy: item.구매포인트,
+                    pointsResidue: item.잔여포인트,
+                    isCancellable: true
+                }));
+
+                setHistoryItems(formattedHistoryItems);
+            } catch (err) {
+                console.error("Error fetching purchase history:", err);
+                setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchPurchaseHistory();
+    }, []);
+
     const handlePinSubmit = async () => {
         try {
             setIsLoading(true);
-            setError(null); // Reset error at the start of the submission
+            setError(null); // 시작할 때 오류 상태 초기화
     
             console.log("Starting PIN submission process...");
     
-            // Step 1: Check if the user is authenticated and retrieve user info
+            // Step 1: 사용자 인증 및 정보 가져오기
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError) throw userError;
             if (!user) throw new Error('No user logged in');
     
             console.log("User retrieved:", user);
     
-            // Step 2: Check if the entered coupon code exists in the couponCode table
+            // Step 2: 쿠폰 코드 유효성 검사
             console.log("Checking if coupon code exists:", pinCode);
             const { data: couponData, error: couponError } = await supabase
                 .from('couponCode')
                 .select('*')
-                .eq('쿠폰코드', pinCode)  // Use the actual column name '쿠폰코드' in Korean
+                .eq('쿠폰코드', pinCode)  // 실제 열 이름 '쿠폰코드' 사용
                 .single();
     
-            if (couponError) {
-                console.error("Error fetching coupon data:", couponError);
-                setError("Invalid coupon code.");
-                return;
-            }
-            if (!couponData) {
-                console.warn("Coupon code not found:", pinCode);
+            if (couponError || !couponData) {
+                console.warn("Coupon code not found or invalid:", pinCode);
                 setError("Invalid coupon code.");
                 return;
             }
     
             console.log("Coupon data retrieved:", couponData);
     
-            // Step 3: Retrieve assigned points and increment the usage count
-            const assignedPoints = couponData.할당포인트;  // Access assigned points from '할당포인트' column
-            const updatedUsageCount = couponData.사용횟수 + 1;  // Increment '사용횟수'
+            // Step 3: 사용자 쿠폰 사용 여부 확인
+            const { data: redemptionData, error: redemptionError } = await supabase
+                .from('couponredemptions')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('쿠폰코드', pinCode)
+                .single();
+    
+            if (redemptionData) {
+                // 이미 사용된 쿠폰인 경우
+                console.warn("User has already used this coupon:", pinCode);
+                setError("You have already redeemed this coupon.");
+                return;
+            }
+    
+            if (redemptionError && redemptionError.code !== 'PGRST116') {
+                // 다른 오류가 있는 경우
+                console.error("Error checking coupon redemption:", redemptionError);
+                throw redemptionError;
+            }
+    
+            // Step 4: 포인트 할당 및 사용 횟수 증가
+            const assignedPoints = couponData.할당포인트;
+            const updatedUsageCount = couponData.사용횟수 + 1;
     
             console.log("Assigned points:", assignedPoints);
             console.log("Updated usage count:", updatedUsageCount);
     
             const { error: updateUsageError } = await supabase
                 .from('couponCode')
-                .update({ 사용횟수: updatedUsageCount })  // Update '사용횟수' column
+                .update({ 사용횟수: updatedUsageCount })
                 .eq('쿠폰코드', pinCode);
     
             if (updateUsageError) {
@@ -85,20 +156,29 @@ const PointShop: React.FC = () => {
     
             console.log("Usage count updated successfully.");
     
-            // Step 4: Update the user's BulletPoint in the profiles table
+            // Step 5: 프로필의 BulletPoint 업데이트 및 쿠폰 사용 기록 추가
             console.log("Updating user's BulletPoint in profiles table...");
             const { data, error: profileError } = await supabase.rpc('increment_bullet_point', {
                 user_id_param: user.id,
                 points: assignedPoints,
-              });
-              
+            });
     
             if (profileError) {
                 console.error("Error updating user's BulletPoint:", profileError);
                 throw profileError;
             }
     
-            console.log("User's BulletPoint updated successfully. Assigned points:", assignedPoints);
+            // 쿠폰 사용 기록 추가
+            const { error: redemptionInsertError } = await supabase
+                .from('couponredemptions')
+                .insert({ user_id: user.id, 쿠폰코드: pinCode });
+    
+            if (redemptionInsertError) {
+                console.error("Error inserting coupon redemption record:", redemptionInsertError);
+                throw redemptionInsertError;
+            }
+    
+            console.log("User's BulletPoint updated and coupon redemption recorded successfully. Assigned points:", assignedPoints);
     
             alert(`Successfully added ${assignedPoints} points to your account.`);
         } catch (err) {
@@ -109,6 +189,71 @@ const PointShop: React.FC = () => {
             console.log("PIN submission process completed.");
         }
     };
+    
+    const handlePurchase = async (points: number, price: number) => {
+        try {
+            setIsLoading(true);
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+            if (userError || !user) throw new Error("User not authenticated.");
+    
+            // Fetch current points from the `profiles` table
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('BulletPoint')
+                .eq('user_id', user.id)
+                .single();
+    
+            if (profileError || !profileData) throw new Error("Failed to retrieve current points.");
+    
+            const currentPoints = profileData.BulletPoint;
+    
+            // 결제창 호출
+            AUTHNICE.requestPay({
+                clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+                method: 'card',
+                orderId: `1`, // 유니크한 주문 ID 생성
+                amount: price,
+                goodsName: `${points} 포인트`,
+                returnUrl: 'http://localhost:3000/api/serverAuth', // 실제 서버의 엔드포인트로 설정
+                fnError: function (result: any) {
+                    alert('결제 오류: ' + result.errorMsg);
+                }
+
+            });
+        } catch (err) {
+            console.error("Error recording purchase:", err);
+            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+            setIsLoading(false);
+                            // fnSuccess: async function (result: any) {
+                //     const newPoints = currentPoints + points;
+    
+                //     // Update the user's points in the `profiles` table
+                //     const { error: updateError } = await supabase
+                //         .from('profiles')
+                //         .update({ BulletPoint: newPoints })
+                //         .eq('user_id', user.id);
+    
+                //     if (updateError) throw updateError;
+    
+                //     // Insert a new purchase record in `purchaseHistory`
+                //     const { error: insertError } = await supabase
+                //         .from('purchaseHistory')
+                //         .insert({
+                //             user_id: user.id,
+                //             구매일자: new Date().toISOString(),
+                //             구매포인트: points,
+                //             잔여포인트: newPoints, // Updated points after purchase
+                //             금액: price,
+                //         });
+    
+                //     if (insertError) throw insertError;
+    
+                //     alert(`Purchased ${points} points for ₩${price.toLocaleString()}!`);
+                // },
+        }
+    };
+    
     
     
     const openModal = () => setIsModalOpen(true); // Function to open the modal
@@ -129,7 +274,7 @@ const PointShop: React.FC = () => {
                 <h3 className="text-3xl font-semibold">{points.toLocaleString()} P</h3>
                 <p className="text-lg font-medium text-gray-700">₩ {price.toLocaleString()}</p>
             </div>
-            <button className="w-full h-[51.5px] rounded-b-lg border-t-2">구매하기</button>
+            <button className="w-full h-[51.5px] rounded-b-lg border-t-2" onClick={() => handlePurchase(points, price)}>구매하기</button>
         </div>
     );
 
@@ -154,13 +299,24 @@ const PointShop: React.FC = () => {
 
     const PurchaseHistory: React.FC = () => (
         <div className="space-y-2">
-            <div className='flex items-center justify-between'>
-                <p className="text-sm">무제한 프리미엄 멤버십 구독중.</p>
-                <button className="border border-[#2871E6] bg-[#D9D9D900] p-2">구매 취소</button>
-            </div>
-            {/* 충전 내역 */}
-            <HistoryItem date="2024.12.20" amount={5000} pointsBuy={500} pointsResidue={100} />
-            <HistoryItem date="2024.10.27" amount={0} pointsBuy={0} pointsResidue={100} isCancellable={false} />
+            {isLoading ? (
+                <p>Loading purchase history...</p>
+            ) : error ? (
+                <p>Error: {error}</p>
+            ) : historyItems.length > 0 ? (
+                historyItems.map((item, index) => (
+                    <HistoryItem
+                        key={index}
+                        date={item.date}
+                        amount={item.amount}
+                        pointsBuy={item.pointsBuy}
+                        pointsResidue={item.pointsResidue}
+                        isCancellable={item.isCancellable}
+                    />
+                ))
+            ) : (
+                <p className="text-sm text-gray-500">No purchase history found.</p>
+            )}
         </div>
     );
 
@@ -169,24 +325,19 @@ const PointShop: React.FC = () => {
             <div>
                 <p className="text-sm text-gray-600">{date}</p>
                 <div>
-                    <div>
-                        <p className="text-sm text-gray-500">구매  <span className='ml-2 text-black'>{pointsBuy}</span></p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500">잔여  <span className='ml-2 text-black'>{pointsResidue}</span></p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-500">금액  <span className='ml-2 text-black'>{amount.toLocaleString()}원</span></p>
-                    </div>
+                    <p className="text-sm text-gray-500">구매  <span className='ml-2 text-black'>{pointsBuy}</span></p>
+                    <p className="text-sm text-gray-500">잔여  <span className='ml-2 text-black'>{pointsResidue}</span></p>
+                    <p className="text-sm text-gray-500">금액  <span className='ml-2 text-black'>{amount.toLocaleString()}원</span></p>
                 </div>
             </div>
             {isCancellable ? (
-                <CancellationFlowModal />  // 모달 트리거가 `구매 취소` 버튼이 되도록 설정
+                <CancellationFlowModal />
             ) : (
                 <p className="text-sm text-gray-400">취소 불가</p>
             )}
         </div>
     );
+
 
 
 

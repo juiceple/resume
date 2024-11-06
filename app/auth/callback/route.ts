@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
+  const type = requestUrl.searchParams.get("type"); // Retrieve the type (login or signup)
 
   if (code) {
     const supabase = createClient();
@@ -22,11 +23,14 @@ export async function GET(request: Request) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session) {
-    if (redirectTo) {
+    // Redirect based on the type (login or signup)
+    if (type === 'signup') {
+      return NextResponse.redirect(`${origin}/signup/google`);
+    } else if (redirectTo) {
       return NextResponse.redirect(`${origin}${redirectTo}`);
+    } else {
+      return NextResponse.redirect(`${origin}/docs`);
     }
-    // URL to redirect to after sign in process completes
-    return NextResponse.redirect(`${origin}/docs`);
   } else {
     // If authentication failed, redirect to login page
     return NextResponse.redirect(`${origin}/login?error=AuthenticationFailed`);

@@ -3,24 +3,24 @@
 import { createClient } from "@/utils/supabase/client";
 import { useCallback } from 'react';
 
-export default function GoogleSignInButton() {
-  const handleGoogleSignIn = useCallback(async () => {
+export default function GoogleSignUpButton() {
+  const handleGoogleSignUp = useCallback(async () => {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?type=login`, // 로그인으로 구분
+        redirectTo: `${window.location.origin}/auth/callback?type=signup`, // 회원가입으로 구분
       },
     });
 
     if (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error signing up with Google:', error);
     }
   }, []);
 
   return (
     <button
-      onClick={handleGoogleSignIn}
+      onClick={handleGoogleSignUp}
       className="w-full h-12 bg-[#333] border text-white font-semibold text-sm py-2 px-4 rounded-xl hover:bg-black flex items-center justify-center"
     >
       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -30,7 +30,7 @@ export default function GoogleSignInButton() {
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
         <path fill="none" d="M1 1h22v22H1z" />
       </svg>
-      구글 로그인
+      구글 계정으로 계속하기
     </button>
   );
 }
