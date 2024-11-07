@@ -16,59 +16,73 @@ const PurchaseResultContent: React.FC = () => {
     const orderId = searchParams.get('orderId');
 
     const [error, setError] = useState<string | null>(null);
+    const [processing, setProcessing] = useState(false); // 중복 방지 플래그
     const supabase = createClient();
 
     useEffect(() => {
         const processPurchase = async () => {
-            if (success === 'true' && tid && amount && goodsName && cardName && orderId) {
-                try {
-                    const points = Number(amount) / 10;
+            if (processing || success !== 'true' || !tid || !amount || !goodsName || !cardName || !orderId) {
+                return;
+            }
 
-                    const { data: { user }, error: userError } = await supabase.auth.getUser();
-                    if (userError || !user) throw new Error("User not authenticated.");
+            setProcessing(true); // 한 번만 실행하도록 설정
 
-                    const { data: profileData, error: profileError } = await supabase
-                        .from('profiles')
-                        .select('BulletPoint')
-                        .eq('user_id', user.id)
-                        .single();
+            try {
+                const points = Number(amount) / 10;
 
-                    if (profileError || !profileData) throw new Error("Failed to retrieve current points.");
-                    const currentPoints = profileData.BulletPoint;
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) throw new Error("User not authenticated.");
 
-                    const newPoints = currentPoints + points;
-                    const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({ BulletPoint: newPoints })
-                        .eq('user_id', user.id);
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('BulletPoint')
+                    .eq('user_id', user.id)
+                    .single();
 
-                    if (updateError) throw updateError;
+                if (profileError || !profileData) throw new Error("Failed to retrieve current points.");
+                const currentPoints = profileData.BulletPoint;
 
-                    const { error: insertError } = await supabase
-                        .from('purchaseHistory')
-                        .insert({
-                            user_id: user.id,
-                            구매일자: new Date().toISOString(),
-                            구매포인트: points,
-                            잔여포인트: newPoints,
-                            금액: amount,
-                            상품명: goodsName,
-                            카드명: cardName,
-                            orderId: orderId,
-                        });
+                // tid가 이미 있는지 확인
+                const { data: existingPurchase, error: checkError } = await supabase
+                    .from('purchaseHistory')
+                    .select('tid')
+                    .eq('tid', tid)
+                    .single();
 
-                    if (insertError) throw insertError;
-                } catch (err) {
-                    console.error("Error processing purchase:", err);
-                    setError(err instanceof Error ? err.message : 'An unknown error occurred');
-                }
-            } else if (success === 'false') {
-                setError("결제가 실패했습니다. 다시 시도해주세요.");
+                if (checkError && checkError.code !== 'PGRST116') throw checkError; // 다른 에러일 경우 처리
+                if (existingPurchase) return; // 이미 존재할 경우 중복 저장 방지
+
+                const newPoints = currentPoints + points;
+                const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ BulletPoint: newPoints })
+                    .eq('user_id', user.id);
+
+                if (updateError) throw updateError;
+
+                const { error: insertError } = await supabase
+                    .from('purchaseHistory')
+                    .insert({
+                        user_id: user.id,
+                        구매일자: new Date().toISOString(),
+                        구매포인트: points,
+                        잔여포인트: newPoints,
+                        금액: amount,
+                        상품명: goodsName,
+                        카드명: cardName,
+                        orderId: orderId,
+                        tid: tid
+                    });
+
+                if (insertError) throw insertError;
+            } catch (err) {
+                console.error("Error processing purchase:", err);
+                setError(err instanceof Error ? err.message : 'An unknown error occurred');
             }
         };
 
         processPurchase();
-    }, [success, tid, amount, goodsName, cardName, orderId]);
+    }, [success, tid, amount, goodsName, cardName, orderId, processing]);
 
     return (
         <div className="flex flex-col w-full items-center justify-center h-screen bg-gray-50 text-gray-800">
@@ -87,7 +101,7 @@ const PurchaseResultContent: React.FC = () => {
                 <div className="space-y-4">
                     <div className="flex justify-between text-gray-600">
                         <span>결제 ID</span>
-                        <span className="font-semibold text-gray-800">{orderId || "NONE"}</span>
+                        <span className="font-semibold text-gray-800 text-right">{orderId || "NONE"}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
                         <span>구매 내역</span>
@@ -101,11 +115,6 @@ const PurchaseResultContent: React.FC = () => {
                         <span>결제 금액</span>
                         <span className="font-semibold text-gray-800">₩{amount ||  "NONE"}</span>
                     </div>
-                    <div className="flex justify-between text-gray-600">
-                        {/* <span>다음 예정 결제일</span>
-                        <span className="font-semibold text-gray-800">2024.12.06</span> */}
-                    </div>
-
                 </div>
 
                 <Link href={"/docs"}>

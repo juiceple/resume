@@ -19,7 +19,8 @@ interface HistoryItemProps {
     amount: number;
     pointsBuy: number;
     pointsResidue: number;
-    isCancellable?: boolean;
+    tid: string;
+    status: string;
 }
 
 const PointShop: React.FC = () => {
@@ -71,8 +72,10 @@ const PointShop: React.FC = () => {
                     amount: item.금액,
                     pointsBuy: item.구매포인트,
                     pointsResidue: item.잔여포인트,
-                    isCancellable: true
+                    tid: item.tid,
+                    status: item.status, // Include status here
                 }));
+
 
                 setHistoryItems(formattedHistoryItems);
             } catch (err) {
@@ -86,20 +89,21 @@ const PointShop: React.FC = () => {
         fetchPurchaseHistory();
     }, []);
 
+
     const handlePinSubmit = async () => {
         try {
             setIsLoading(true);
             setError(null); // 시작할 때 오류 상태 초기화
-    
+
             console.log("Starting PIN submission process...");
-    
+
             // Step 1: 사용자 인증 및 정보 가져오기
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError) throw userError;
             if (!user) throw new Error('No user logged in');
-    
+
             console.log("User retrieved:", user);
-    
+
             // Step 2: 쿠폰 코드 유효성 검사
             console.log("Checking if coupon code exists:", pinCode);
             const { data: couponData, error: couponError } = await supabase
@@ -107,15 +111,15 @@ const PointShop: React.FC = () => {
                 .select('*')
                 .eq('쿠폰코드', pinCode)  // 실제 열 이름 '쿠폰코드' 사용
                 .single();
-    
+
             if (couponError || !couponData) {
                 console.warn("Coupon code not found or invalid:", pinCode);
                 setError("Invalid coupon code.");
                 return;
             }
-    
+
             console.log("Coupon data retrieved:", couponData);
-    
+
             // Step 3: 사용자 쿠폰 사용 여부 확인
             const { data: redemptionData, error: redemptionError } = await supabase
                 .from('couponredemptions')
@@ -123,63 +127,63 @@ const PointShop: React.FC = () => {
                 .eq('user_id', user.id)
                 .eq('쿠폰코드', pinCode)
                 .single();
-    
+
             if (redemptionData) {
                 // 이미 사용된 쿠폰인 경우
                 console.warn("User has already used this coupon:", pinCode);
                 setError("You have already redeemed this coupon.");
                 return;
             }
-    
+
             if (redemptionError && redemptionError.code !== 'PGRST116') {
                 // 다른 오류가 있는 경우
                 console.error("Error checking coupon redemption:", redemptionError);
                 throw redemptionError;
             }
-    
+
             // Step 4: 포인트 할당 및 사용 횟수 증가
             const assignedPoints = couponData.할당포인트;
             const updatedUsageCount = couponData.사용횟수 + 1;
-    
+
             console.log("Assigned points:", assignedPoints);
             console.log("Updated usage count:", updatedUsageCount);
-    
+
             const { error: updateUsageError } = await supabase
                 .from('couponCode')
                 .update({ 사용횟수: updatedUsageCount })
                 .eq('쿠폰코드', pinCode);
-    
+
             if (updateUsageError) {
                 console.error("Error updating usage count:", updateUsageError);
                 throw updateUsageError;
             }
-    
+
             console.log("Usage count updated successfully.");
-    
+
             // Step 5: 프로필의 BulletPoint 업데이트 및 쿠폰 사용 기록 추가
             console.log("Updating user's BulletPoint in profiles table...");
             const { data, error: profileError } = await supabase.rpc('increment_bullet_point', {
                 user_id_param: user.id,
                 points: assignedPoints,
             });
-    
+
             if (profileError) {
                 console.error("Error updating user's BulletPoint:", profileError);
                 throw profileError;
             }
-    
+
             // 쿠폰 사용 기록 추가
             const { error: redemptionInsertError } = await supabase
                 .from('couponredemptions')
                 .insert({ user_id: user.id, 쿠폰코드: pinCode });
-    
+
             if (redemptionInsertError) {
                 console.error("Error inserting coupon redemption record:", redemptionInsertError);
                 throw redemptionInsertError;
             }
-    
+
             console.log("User's BulletPoint updated and coupon redemption recorded successfully. Assigned points:", assignedPoints);
-    
+
             alert(`Successfully added ${assignedPoints} points to your account.`);
         } catch (err) {
             console.error("Error processing PIN code:", err);
@@ -189,26 +193,26 @@ const PointShop: React.FC = () => {
             console.log("PIN submission process completed.");
         }
     };
-    
+
     const handlePurchase = async (points: number, price: number) => {
         try {
             setIsLoading(true);
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError || !user) throw new Error("User not authenticated.");
-    
+
             // Fetch current points from the `profiles` table
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('BulletPoint')
                 .eq('user_id', user.id)
                 .single();
-    
+
             if (profileError || !profileData) throw new Error("Failed to retrieve current points.");
-    
+
             const currentPoints = profileData.BulletPoint;
 
             const uniqueOrderId = `${user.id}_${Date.now()}`;
-    
+
             // 결제창 호출
             AUTHNICE.requestPay({
                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
@@ -229,9 +233,9 @@ const PointShop: React.FC = () => {
             setIsLoading(false);
         }
     };
-    
-    
-    
+
+
+
     const openModal = () => setIsModalOpen(true); // Function to open the modal
     const closeModal = () => setIsModalOpen(false); // Function to close the modal
 
@@ -287,16 +291,17 @@ const PointShop: React.FC = () => {
                         amount={item.amount}
                         pointsBuy={item.pointsBuy}
                         pointsResidue={item.pointsResidue}
-                        isCancellable={item.isCancellable}
+                        tid={item.tid}
+                        status={item.status}
                     />
                 ))
             ) : (
-                <p className="text-sm text-gray-500">No purchase history found.</p>
+                <p className="text-sm text-gray-500">구매 내역이 없습니다.</p>
             )}
         </div>
     );
 
-    const HistoryItem: React.FC<HistoryItemProps> = ({ date, amount, pointsBuy, pointsResidue, isCancellable = true }) => (
+    const HistoryItem: React.FC<HistoryItemProps> = ({ date, amount, pointsBuy, pointsResidue, tid, status }) => (
         <div className="flex justify-between items-center border-t py-4">
             <div>
                 <p className="text-sm text-gray-600">{date}</p>
@@ -306,10 +311,12 @@ const PointShop: React.FC = () => {
                     <p className="text-sm text-gray-500">금액  <span className='ml-2 text-black'>{amount.toLocaleString()}원</span></p>
                 </div>
             </div>
-            {isCancellable ? (
-                <CancellationFlowModal />
+            {status === 'Refundable' ? (
+                <CancellationPoint tid={tid} points={pointsBuy} price={amount} />
+            ) : status === 'Cancelled' ? (
+                <p className="text-sm text-red-500">취소 완료</p>
             ) : (
-                <p className="text-sm text-gray-400">취소 불가</p>
+                <p className="text-sm text-gray-500">취소 불가</p>
             )}
         </div>
     );

@@ -10,85 +10,87 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { createClient } from '@/utils/supabase/client';
 
-const CancellationFlowModal: React.FC = () => {
-    const [step, setStep] = useState(1);
+interface CancellationFlowModalProps {
+    points: number;
+    price: number;
+    tid: string;
+}
 
-    const handleNextStep = () => setStep(step + 1);
-    const handlePreviousStep = () => setStep(step - 1);
+const CancelPoint: React.FC<CancellationFlowModalProps> = ({ points, price, tid }) => {
+    const supabase = createClient();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleCancel = async () => {
+        try {
+            const response = await fetch('/api/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tid, amount: price }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("NicePay 취소 오류:", data.error || 'Failed to cancel payment');
+                alert(`결제 취소 중 오류가 발생했습니다: ${data.error || '결제 취소 실패'}`);
+                return;
+            }
+
+            const { error } = await supabase
+                .from('purchaseHistory')
+                .update({ status: 'Cancelled' })
+                .eq('tid', tid);
+
+            if (error) {
+                console.error("Supabase 업데이트 오류:", error.message);
+                alert("DB 업데이트 중 오류가 발생했습니다.");
+                return;
+            }
+
+            setIsDialogOpen(false); // Close the dialog after success
+        } catch (err) {
+            console.error("취소 요청 중 오류 발생:", err);
+            alert("구매 취소를 완료할 수 없습니다.");
+        }
+    };
 
     return (
-        <AlertDialog>
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger>
-                <button className="border  p-2 border-[#2871E6] bg-[#D9D9D900]">
+                <button onClick={() => setIsDialogOpen(true)} className="border p-2 border-[#2871E6] bg-[#D9D9D900]">
                     구매 취소
                 </button>
             </AlertDialogTrigger>
-            <AlertDialogContent className='w-[476px] h-auto py-10 flex flex-col gap-6 items-center'>
-                {step === 1 && (
-                    <>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>취소할 경우, 모든 혜택이 사라집니다.</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <AlertDialogDescription className="text-center">
-                            프리미엄 멤버십을 취소하시면 영문이력서 생성에 필요한 무제한 포인트 혜택을 누리실 수 없게 돼요.<br />
-                            그래도 해지하시겠어요?
-                        </AlertDialogDescription>
-                        <div className="flex gap-4">
-                            <button onClick={handleNextStep} className="bg-blue-500 text-white px-4 py-2 rounded-md">
-                                계속
-                            </button>
-                            <AlertDialogCancel asChild>
-                                <button className="bg-gray-300 text-black px-4 py-2 rounded-md">
-                                    유지하기
-                                </button>
-                            </AlertDialogCancel>
-                        </div>
-                    </>
-                )}
-
-                {step === 2 && (
-                    <>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>멤버십을 해지하는 이유를 알려주세요!</AlertDialogTitle>
-                            <AlertDialogDescription>더 좋은 서비스를 위한 자료로 사용합니다 :)</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="flex flex-col gap-4">
-                            <label><input type="radio" name="reason" /> 취업/이직에 성공해서 CV를 업데이트할 필요가 없어요.</label>
-                            <label><input type="radio" name="reason" /> 멤버십 가격이 부담돼요.</label>
-                            <label><input type="radio" name="reason" /> 다른 서비스를 이용해요.</label>
-                            <label><input type="radio" name="reason" /> 다른 이유나 건의하고 싶은 점이 있으신가요?</label>
-                        </div>
-                        <div className="flex gap-4 mt-4">
-                            <button onClick={handleNextStep} className="bg-blue-500 text-white px-4 py-2 rounded-md">
-                                다음
-                            </button>
-                            <button onClick={handlePreviousStep} className="bg-gray-300 text-black px-4 py-2 rounded-md">
-                                이전
-                            </button>
-                        </div>
-                    </>
-                )}
-
-                {step === 3 && (
-                    <>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>00님의 커리어를 응원합니다!</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                구독을 해지해도 00월 00일까지 무제한으로 즐기실 수 있어요.<br />
-                                더 나은 서비스를 제공하는 CVMATE가 되겠습니다.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogCancel asChild>
-                            <button className="bg-blue-500 text-white px-4 py-2 rounded-md">
-                                확인
-                            </button>
-                        </AlertDialogCancel>
-                    </>
-                )}
+            <AlertDialogContent className='w-[476px] h-auto py-10 flex flex-col gap-10 items-center justify-center'>
+                <AlertDialogHeader className='flex flex-col items-center gap-8'>
+                    <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
+                    <div className='text-center text-black text-2xl font-semibold'>구매를 취소하시겠어요?</div>
+                </AlertDialogHeader>
+                <AlertDialogDescription className="text-center text-black text-2xl">
+                    구매: {points}P<br />
+                    가격: {price.toLocaleString()}원
+                </AlertDialogDescription>
+                <div className="text-sm text-gray-500 text-left">
+                    • 구매 취소 시 결제하신 수단으로 환불됩니다.<br />
+                    • 이벤트성 무료 포인트는 구매 취소 및 환불 대상이 아닙니다.
+                </div>
+                <div className="flex gap-8 justify-center">
+                    <AlertDialogCancel asChild className='w-28 h-12 px-4 py-2'>
+                        <button className="bg-blue-500 text-white text-xl px-4 py-2 rounded-xl">
+                            유지하기
+                        </button>
+                    </AlertDialogCancel>
+                    <button onClick={handleCancel} className="w-28 h-12 bg-gray-300 text-xl text-black px-4 py-2 rounded-xl">
+                        구매취소
+                    </button>
+                </div>
             </AlertDialogContent>
         </AlertDialog>
     );
 };
 
-export default CancellationFlowModal;
+export default CancelPoint;
