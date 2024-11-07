@@ -23,7 +23,7 @@ export default function FirstVisitAlert() {
         <div>
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
         </div>
-        <div className="text-[35px] font-semibold">
+        <div className="text-2xl font-semibold">
           <h2>11월 11일 출시 예정!</h2>
         </div>
         <div className="flex flex-col text-[12pxpx] items-center gap-[8px]">
