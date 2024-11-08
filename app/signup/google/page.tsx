@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from "@/utils/supabase/client";
-import SignupStep1 from '@/components/signup/SignUpStep1';
+import SignupStep1 from '@/components/signup/SignUpStep1forGoogle';
 import SignupStep2 from '@/components/signup/SignUpStep2';
 import SignupStep3 from '@/components/signup/SignUpStep3';
 import NavigationButtons from '@/components/signup/NavigationButtons';
@@ -13,15 +13,13 @@ import FullScreenLoader from '@/components/FullScreenLoad';
 import { CornerUpLeft } from 'lucide-react';
 
 interface FormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
   name: string;
   birthDate: {
     year: string;
     month: string;
     day: string;
   };
+  referralCode: string; // Add this line
   agreements: {
     all: boolean;
     terms: boolean;
@@ -30,6 +28,7 @@ interface FormData {
     marketing: boolean;
   };
 }
+
 
 interface ProfileData {
   career: string;
@@ -45,17 +44,14 @@ export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isNextDisabled, setIsNextDisabled] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [otpVerified, setOtpVerified] = useState(false); // OTP 인증 상태
   const [formData, setFormData] = useState<FormData>({
-    email: '',
-    password: '',
-    confirmPassword: '',
     name: '',
     birthDate: {
       year: '',
       month: '',
       day: ''
     },
+    referralCode: '', // Initialize this field
     agreements: {
       all: false,
       terms: false,
@@ -64,6 +60,7 @@ export default function SignupPage() {
       marketing: false
     }
   });
+
   const [profileData, setProfileData] = useState<ProfileData>({
     career: '',
     job: [],
@@ -111,44 +108,9 @@ export default function SignupPage() {
   };
 
   const createSupabaseAccount = async () => {
-    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.name) {
-      setErrorMessage("모든 필수 필드를 입력해주세요.");
-      return false;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("비밀번호가 일치하지 않습니다.");
-      return false;
-    }
 
     if (!formData.agreements.terms || !formData.agreements.privacy || !formData.agreements.age) {
       setErrorMessage("필수 약관에 동의해주세요.");
-      return false;
-    }
-
-    if (!otpVerified) {
-      setErrorMessage("이메일 인증을 완료해주세요.");
-      return false;
-    }
-
-    const { error } = await supabase.auth.updateUser({
-      email: formData.email,
-      password: formData.password,
-      // options: {
-      //   data: {
-      //     name: formData.name,
-      //     birthDate: `${formData.birthDate.year}-${formData.birthDate.month}-${formData.birthDate.day}`,
-      //     terms_accepted: formData.agreements.terms,
-      //     privacy_accepted: formData.agreements.privacy,
-      //     age_verified: formData.agreements.age,
-      //     marketing_accepted: formData.agreements.marketing
-      //   }
-      // },
-    });
-
-    if (error) {
-      console.error(error.code + " " + error.message);
-      setErrorMessage("계정 생성 중 오류가 발생했습니다.");
       return false;
     }
 
@@ -198,17 +160,13 @@ export default function SignupPage() {
   useEffect(() => {
     const validateStep1 = () => {
       return (
-        formData.email &&
-        formData.password &&
-        formData.confirmPassword &&
         formData.name &&
         formData.birthDate.year &&
         formData.birthDate.month &&
         formData.birthDate.day &&
         formData.agreements.terms &&
         formData.agreements.privacy &&
-        formData.agreements.age &&
-        otpVerified // OTP 인증 완료 확인
+        formData.agreements.age 
       );
     };
 
@@ -230,7 +188,7 @@ export default function SignupPage() {
         setIsNextDisabled(false);
         break;
     }
-  }, [currentStep, formData, profileData, otpVerified]);
+  }, [currentStep, formData, profileData]);
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -239,8 +197,6 @@ export default function SignupPage() {
           <SignupStep1
             formData={formData}
             updateFormData={updateFormData}
-            otpVerified={otpVerified}
-            updateOtpVerified={setOtpVerified} // OTP 인증 상태 업데이트 함수 전달
           />
         );
       case 2:
@@ -249,11 +205,9 @@ export default function SignupPage() {
         return <SignupStep3 formData={formData} updateFormData={updateFormData} />;
       default:
         return <SignupStep1
-        formData={formData}
-        updateFormData={updateFormData}
-        otpVerified={otpVerified}
-        updateOtpVerified={setOtpVerified}
-      />;
+          formData={formData}
+          updateFormData={updateFormData}
+        />;
     }
   };
 
