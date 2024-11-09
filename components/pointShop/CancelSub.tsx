@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import {
-    Dialog,
+    AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
