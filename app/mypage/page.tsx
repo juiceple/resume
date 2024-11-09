@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import CustomAlert from '@/components/CustomAlert';
-import schoolsData from '@/components/signUp/schools.json';
+import schoolsData from '@/components/signup/schools.json';
 import { ChevronsDown, CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 

@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { ChevronsDown, CheckIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import schoolsData from "@/components/signUp/schools.json";
+import schoolsData from "@/components/signup/schools.json";
 
 
 interface SignUpStep2Props {
