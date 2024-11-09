@@ -259,7 +259,7 @@ export default function SignupPage() {
 
   return (
     <div className="flex flex-col h-screen w-full">
-      {loading && <FullScreenLoader message={loadingMessage} />}
+      {loading && <FullScreenLoader message={loadingMessage} isVisible={true}/>}
 
       {/* Header */}
       <header className="flex justify-between items-center h-[75px] bg-white px-[30px]">

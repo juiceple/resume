@@ -34,8 +34,6 @@ export async function POST(req: Request) {
       console.error('NicePay cancellation error:', data.error || 'Failed to cancel payment');
       return NextResponse.json({ error: data.error || 'Failed to cancel payment' }, { status: response.status });
     }
-
-
     // Send a success response back to the client
     return NextResponse.json({ resultMsg: data.resultMsg });
   } catch (error: any) {

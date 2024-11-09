@@ -5,6 +5,7 @@ import { Input } from "@/components/forms/input";
 import { Label } from "@/components/forms/label";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import CustomAlert from '@/components/CustomAlert';
 
 export default function PasswordReset() {
   const router = useRouter();
@@ -16,6 +17,9 @@ export default function PasswordReset() {
     newPassword: false,
     confirmPassword: false,
   });
+  const [showAlert, setShowAlert] = useState(false); // Alert 표시 여부
+const [alertTitle, setAlertTitle] = useState<string>(""); // Alert 제목
+const [alertMessage, setAlertMessage] = useState<string | null>(null); // Alert 메시지
 
   const validatePassword = () => {
     if (newPassword !== confirmPassword) {
@@ -34,28 +38,37 @@ export default function PasswordReset() {
 
   const handlePasswordChange = async () => {
     const supabase = createClient();
-
+  
     if (error) return;
-
+  
     try {
       setIsChangingPassword(true);
-
+  
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
-
+  
       if (updateError) throw updateError;
-
-      alert("비밀번호가 성공적으로 변경되었습니다.");
+  
+      // 성공 시 Alert 설정
+      setAlertTitle("비밀번호 변경 성공");
+      setAlertMessage("비밀번호가 성공적으로 변경되었습니다.");
+      setShowAlert(true);
       setIsChangingPassword(false);
-      router.push("/login"); // Redirect to login after successful password reset
+  
+      // 성공 후 로그인 페이지로 리디렉션
+      router.push("/login");
     } catch (error) {
       console.error("Error updating password:", error);
-      alert(
+  
+      // 오류 시 Alert 설정
+      setAlertTitle("비밀번호 변경 실패");
+      setAlertMessage(
         error instanceof Error
           ? error.message
           : "비밀번호 변경 중 오류가 발생했습니다."
       );
+      setShowAlert(true);
       setIsChangingPassword(false);
     }
   };
@@ -123,6 +136,13 @@ export default function PasswordReset() {
           이전
         </button>
       </form>
+      {showAlert && (
+      <CustomAlert
+        title={alertTitle}
+        message={[alertMessage || "An unexpected error occurred."]}
+        onClose={() => setShowAlert(false)} // Alert 닫기
+      />
+    )}
     </div>
   );
 }

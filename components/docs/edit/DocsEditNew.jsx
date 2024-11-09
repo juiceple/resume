@@ -363,7 +363,7 @@ const DynamicResumeEditors = ({
             canvas.toBlob(resolve, "image/png")
         );
 
-        // docsID를 사용하여 파일 이름 생성
+        // docsID를 사용하여 파일  생성
         const fileName = `${docsID}.png`;
 
         // Supabase Storage에 업로드

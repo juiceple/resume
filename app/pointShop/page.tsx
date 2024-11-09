@@ -4,6 +4,7 @@ import DocsHeader from '@/components/docs/DocsHeader';
 import CancellationFlowModal from '@/components/pointShop/CancelSub';
 import CancellationPoint from '@/components/pointShop/CancelPoint';
 import { createClient } from '@/utils/supabase/client';
+import CustomAlert from '@/components/CustomAlert';
 // PointShop.tsx 파일 상단에 추가
 declare const AUTHNICE: any;
 
@@ -23,16 +24,46 @@ interface HistoryItemProps {
     status: string;
 }
 
+interface BulletPointHistoryItemProps {
+    purchasePoint: number;
+    eventPoint: number;
+    reason: string;
+    timestamp: string;
+    totalchange: number;
+    totalPoint: number;
+}
+
+type TabType = 'purchase' | 'history' | 'bulletPointHistory';
+
 const PointShop: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'purchase' | 'history'>('purchase');
+    const [activeTab, setActiveTab] = useState<TabType>('purchase');
+    const [bulletHistoryItems, setBulletHistoryItems] = useState<BulletPointHistoryItemProps[]>([]);
     const [pinCode, setPinCode] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [historyUpdated, setHistoryUpdated] = useState(false);
     const supabase = createClient();
 
-    const handleTabChange = (tab: 'purchase' | 'history') => {
+
+    const handleTabChange = (tab: 'purchase' | 'history' | 'bulletPointHistory') => {
         setActiveTab(tab);
+    };
+
+    // Define alert state for CustomAlert
+    const [alert, setAlert] = useState({
+        show: false,
+        title: '',
+        message: [] as string[],
+    });
+
+    // Function to update alert state
+    const updateAlert = (title: string, message: string | string[], show = true) => {
+        setAlert({
+            title,
+            message: Array.isArray(message) ? message : [message],
+            show,
+        });
     };
 
     // Fetch purchase history
@@ -73,9 +104,8 @@ const PointShop: React.FC = () => {
                     pointsBuy: item.구매포인트,
                     pointsResidue: item.잔여포인트,
                     tid: item.tid,
-                    status: item.status, // Include status here
+                    status: item.status,
                 }));
-
 
                 setHistoryItems(formattedHistoryItems);
             } catch (err) {
@@ -87,40 +117,29 @@ const PointShop: React.FC = () => {
         };
 
         fetchPurchaseHistory();
-    }, []);
+    }, [historyUpdated]); // Re-fetch when historyUpdated changes
 
 
     const handlePinSubmit = async () => {
         try {
             setIsLoading(true);
-            setError(null); // 시작할 때 오류 상태 초기화
+            setError(null);
 
-            console.log("Starting PIN submission process...");
-
-            // Step 1: 사용자 인증 및 정보 가져오기
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError) throw userError;
             if (!user) throw new Error('No user logged in');
 
-            console.log("User retrieved:", user);
-
-            // Step 2: 쿠폰 코드 유효성 검사
-            console.log("Checking if coupon code exists:", pinCode);
             const { data: couponData, error: couponError } = await supabase
                 .from('couponCode')
                 .select('*')
-                .eq('쿠폰코드', pinCode)  // 실제 열 이름 '쿠폰코드' 사용
+                .eq('쿠폰코드', pinCode)
                 .single();
 
             if (couponError || !couponData) {
-                console.warn("Coupon code not found or invalid:", pinCode);
                 setError("Invalid coupon code.");
                 return;
             }
 
-            console.log("Coupon data retrieved:", couponData);
-
-            // Step 3: 사용자 쿠폰 사용 여부 확인
             const { data: redemptionData, error: redemptionError } = await supabase
                 .from('couponredemptions')
                 .select('*')
@@ -129,70 +148,81 @@ const PointShop: React.FC = () => {
                 .single();
 
             if (redemptionData) {
-                // 이미 사용된 쿠폰인 경우
-                console.warn("User has already used this coupon:", pinCode);
-                setError("You have already redeemed this coupon.");
+                updateAlert("실패", `이미 쿠폰을 사용하셨습니다!`);
                 return;
             }
 
             if (redemptionError && redemptionError.code !== 'PGRST116') {
-                // 다른 오류가 있는 경우
-                console.error("Error checking coupon redemption:", redemptionError);
                 throw redemptionError;
             }
 
-            // Step 4: 포인트 할당 및 사용 횟수 증가
             const assignedPoints = couponData.할당포인트;
             const updatedUsageCount = couponData.사용횟수 + 1;
-
-            console.log("Assigned points:", assignedPoints);
-            console.log("Updated usage count:", updatedUsageCount);
 
             const { error: updateUsageError } = await supabase
                 .from('couponCode')
                 .update({ 사용횟수: updatedUsageCount })
                 .eq('쿠폰코드', pinCode);
 
-            if (updateUsageError) {
-                console.error("Error updating usage count:", updateUsageError);
-                throw updateUsageError;
-            }
+            if (updateUsageError) throw updateUsageError;
 
-            console.log("Usage count updated successfully.");
+            // BulletPointHistory에서 가장 최근의 포인트 기록 가져오기
+            const { data: latestHistory, error: historyError } = await supabase
+                .from('BulletPointHistory')
+                .select('purchasePoint, eventPoint')
+                .eq('user_id', user.id)
+                .order('timestamp', { ascending: false })
+                .limit(1)
+                .single();
 
-            // Step 5: 프로필의 BulletPoint 업데이트 및 쿠폰 사용 기록 추가
-            console.log("Updating user's BulletPoint in profiles table...");
-            const { data, error: profileError } = await supabase.rpc('increment_bullet_point', {
-                user_id_param: user.id,
-                points: assignedPoints,
-            });
+            if (historyError) throw new Error("Failed to retrieve latest history points.");
 
-            if (profileError) {
-                console.error("Error updating user's BulletPoint:", profileError);
-                throw profileError;
-            }
+            const previousPurchasePoint = latestHistory ? latestHistory.purchasePoint : 0;
+            const previousEventPoint = latestHistory ? latestHistory.eventPoint : 0;
+
+            // 새로운 이벤트 포인트 값 계산
+            const newEventPoint = previousEventPoint + assignedPoints;
+
+            // BulletPointHistory에 업데이트된 기록 추가
+            const { error: insertError } = await supabase
+                .from('BulletPointHistory')
+                .insert({
+                    user_id: user.id,
+                    changeEventPoint: assignedPoints,  // 이번에 추가된 이벤트 포인트
+                    purchasePoint: previousPurchasePoint, // 구매 포인트는 변경 없음
+                    eventPoint: newEventPoint,         // 누적된 이벤트 포인트
+                    reason: '쿠폰 코드 교환',                // 상태는 'Redeemed'
+                    timestamp: new Date().toISOString()     // 현재 날짜
+                });
+
+            if (insertError) throw insertError;
 
             // 쿠폰 사용 기록 추가
             const { error: redemptionInsertError } = await supabase
                 .from('couponredemptions')
-                .insert({ user_id: user.id, 쿠폰코드: pinCode });
+                .insert({
+                    user_id: user.id,
+                    쿠폰코드: pinCode,
+                    사용일: new Date().toISOString()
+                });
 
-            if (redemptionInsertError) {
-                console.error("Error inserting coupon redemption record:", redemptionInsertError);
-                throw redemptionInsertError;
-            }
+            if (redemptionInsertError) throw redemptionInsertError;
 
-            console.log("User's BulletPoint updated and coupon redemption recorded successfully. Assigned points:", assignedPoints);
-
-            alert(`Successfully added ${assignedPoints} points to your account.`);
+            updateAlert("성공", `성공적으로 ${assignedPoints} 포인트를 계정에 추가했습니다!`);
         } catch (err) {
+            updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.");
             console.error("Error processing PIN code:", err);
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
             setIsLoading(false);
-            console.log("PIN submission process completed.");
         }
     };
+    const handleCancellation = () => {
+        setHistoryUpdated(true);
+        setHistoryUpdated(false); // Toggle historyUpdated to refresh history
+    };
+
+
 
     const handlePurchase = async (points: number, price: number) => {
         try {
@@ -200,37 +230,29 @@ const PointShop: React.FC = () => {
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError || !user) throw new Error("User not authenticated.");
 
-            // Fetch current points from the `profiles` table
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('BulletPoint')
-                .eq('user_id', user.id)
-                .single();
-
-            if (profileError || !profileData) throw new Error("Failed to retrieve current points.");
-
-            const currentPoints = profileData.BulletPoint;
-
             const uniqueOrderId = `${user.id}_${Date.now()}`;
 
             // 결제창 호출
             AUTHNICE.requestPay({
                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-                method: 'card',
+                method: 'cardAndEasyPay',
                 orderId: uniqueOrderId, // 유니크한 주문 ID 생성
                 amount: price,
                 goodsName: `${points} 포인트`,
                 returnUrl: '/api/serverAuth', // 실제 서버의 엔드포인트로 설정
                 fnError: function (result: any) {
-                    alert('결제 오류: ' + result.errorMsg);
+                    updateAlert("결제 오류", '결제 오류: ' + result.errorMsg);
                 }
 
             });
+            setHistoryUpdated(true);
         } catch (err) {
+            updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.")
             console.error("Error recording purchase:", err);
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
             setIsLoading(false);
+            setHistoryUpdated(false);
         }
     };
 
@@ -312,7 +334,7 @@ const PointShop: React.FC = () => {
                 </div>
             </div>
             {status === 'Refundable' ? (
-                <CancellationPoint tid={tid} points={pointsBuy} price={amount} />
+                <CancellationPoint tid={tid} points={pointsBuy} price={amount} onCancellation={handleCancellation} />
             ) : status === 'Cancelled' ? (
                 <p className="text-sm text-red-500">취소 완료</p>
             ) : (
@@ -320,6 +342,86 @@ const PointShop: React.FC = () => {
             )}
         </div>
     );
+
+    useEffect(() => {
+        const fetchBulletPointHistory = async () => {
+            try {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) throw new Error("User not authenticated.");
+
+                const { data, error } = await supabase
+                    .from('BulletPointHistory')
+                    .select('purchasePoint, eventPoint, reason, timestamp, totalchange, totalPoint')
+                    .eq('user_id', user.id)
+                    .order('timestamp', { ascending: false });
+
+                if (error) throw error;
+
+                const formattedHistory = data.map((item: any) => ({
+                    purchasePoint: item.purchasePoint,
+                    eventPoint: item.eventPoint,
+                    reason: item.reason,
+                    timestamp: new Date(item.timestamp).toLocaleString(),
+                    totalchange: item.totalchange,
+                    totalPoint: item.totalPoint,
+                }));
+
+                setBulletHistoryItems(formattedHistory);
+            } catch (error) {
+                console.error("Error fetching BulletPointHistory:", error);
+            }
+        };
+
+        if (activeTab === 'bulletPointHistory') {
+            fetchBulletPointHistory();
+        }
+    }, [activeTab]);
+
+    const BulletPointHistoryTable: React.FC = () => {
+        // Sort items in descending order by timestamp (assuming they are already fetched in descending order).
+        const sortedItems = [...bulletHistoryItems].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        // Get the most recent event and purchase points
+        const latestItem = sortedItems[0];
+
+        return (
+            <div className="space-y-4">
+                {latestItem && (
+                    <div className="flex flex-col justify-between px-4 py-2 bg-gray-100 rounded-lg">
+                        <p className="font-semibold">구매한 포인트: <span className="text-blue-600">{latestItem.purchasePoint} P</span></p>
+                        <p className="font-semibold">보너스 포인트: <span className="text-blue-600">{latestItem.eventPoint} P</span></p>
+                    </div>
+                )}
+                {sortedItems.length > 0 ? (
+                    <table className="min-w-full bg-white border">
+                        <thead>
+                            <tr className="bg-gray-100">
+                                <th className="py-2 px-4 text-center border-b">일시</th>
+                                <th className="py-2 px-4 text-center border-b">사용/충전 내역</th>
+                                <th className="py-2 px-4 text-center border-b">사용/충전 포인트</th>
+                                <th className="py-2 px-4 text-center border-b">잔여 포인트</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sortedItems.map((item, index) => (
+                                <tr key={index} className="border-t">
+                                    <td className="py-2 px-4 text-center">{item.timestamp}</td>
+                                    <td className="py-2 px-4 text-center">{item.reason}</td>
+                                    <td className="py-2 px-4 text-center">{item.totalchange > 0 ? `+${item.totalchange} P` : `${item.totalchange} P`}</td>
+                                    <td className="py-2 px-4 text-center">{item.totalPoint} P</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <p className="text-sm text-gray-500">No history available.</p>
+                )}
+            </div>
+        );
+    };
+
+
+
 
 
 
@@ -346,9 +448,15 @@ const PointShop: React.FC = () => {
                         >
                             충전 내역
                         </button>
+                        <button
+                            className={`w-[150px] py-2 px-4 text-center font-semibold rounded-t-lg ${activeTab === 'bulletPointHistory' ? 'bg-[#EDF4FF] text-black border-2 border-[#2871E6] -mb-[2px]' : 'bg-[#E0E2E5]'}`}
+                            onClick={() => handleTabChange('bulletPointHistory')}
+                        >
+                            포인트 사용 내역
+                        </button>
                     </div>
                     <div className="p-10">
-                        {activeTab === 'purchase' ? (
+                        {activeTab === 'purchase' &&
                             <div className="space-y-8">
                                 {/* Point Packages */}
                                 <div className="flex justify-between gap-8">
@@ -377,9 +485,10 @@ const PointShop: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                        ) : (
-                            <PurchaseHistory />
-                        )}
+                        }
+                        {activeTab === 'history' && <PurchaseHistory />}
+                        {activeTab === 'bulletPointHistory' && <BulletPointHistoryTable />}
+
                     </div>
                 </div>
                 <div className="mt-[50px]">
@@ -412,6 +521,13 @@ const PointShop: React.FC = () => {
                 </div>
             </main>
             {isModalOpen && <CancellationFlowModal />}
+            {alert.show && (
+                <CustomAlert
+                    title={alert.title}
+                    message={alert.message}
+                    onClose={() => setAlert({ ...alert, show: false })}
+                />
+            )}
         </div>
     );
 };

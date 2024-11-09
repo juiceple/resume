@@ -21,6 +21,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
+import CustomAlert from '@/components/CustomAlert';
 
 interface ResumesListProps {
   initialResumes: Resume[];
@@ -40,6 +41,20 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
   const [signedUrls, setSignedUrls] = useState<SignedUrls>({});
   const router = useRouter();
   const supabase = createClient();
+  const [alert, setAlert] = useState({
+    show: false,
+    title: '',
+    message: [] as string[],
+  });
+
+  // Function to update alert state
+  const updateAlert = (title: string, message: string | string[], show = true) => {
+    setAlert({
+      title,
+      message: Array.isArray(message) ? message : [message],
+      show,
+    });
+  };
 
   useEffect(() => {
     setResumes(initialResumes);
@@ -102,7 +117,7 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
       }
     } catch (error) {
       console.error('새 이력서 생성 오류:', error);
-      alert('새 이력서 생성에 실패했습니다. 다시 시도해 주세요.');
+      updateAlert("생성 실패", '새 이력서 생성에 실패했습니다. 다시 시도해 주세요.');
     } finally {
       setLoading(false);
     }
@@ -126,7 +141,7 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
       }
     } catch (error) {
       console.error('이력서 복제 오류:', error);
-      alert('이력서 복제에 실패했습니다. 다시 시도해 주세요.');
+      updateAlert("이력서 복제 오류", '이력서 복제에 실패했습니다. 다시 시도해 주세요.');
     } finally {
       setLoading(false);
     }
@@ -146,7 +161,7 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
       }
     } catch (error) {
       console.error('이력서 삭제 오류:', error);
-      alert('이력서 삭제에 실패했습니다. 다시 시도해 주세요.');
+      updateAlert('이력서 삭제 오류', '이력서 삭제에 실패했습니다. 다시 시도해 주세요.');
     } finally {
       setLoading(false);
       setShowDeleteAlert(false);
@@ -156,7 +171,7 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
 
   return (
     <>
-      {loading && <FullScreenLoader message={loadingMessage} />}
+      {loading && <FullScreenLoader message={loadingMessage} isVisible={true}/>}
       <div className="flex flex-wrap gap-4 p-4">
         <div className="w-[200px] h-[300px] m-2">
           <button
@@ -255,6 +270,13 @@ const ResumesList: React.FC<ResumesListProps> = ({ initialResumes, refreshResume
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {alert.show && (
+        <CustomAlert
+          title={alert.title}
+          message={alert.message}
+          onClose={() => setAlert({ ...alert, show: false })}
+        />
+      )}
     </>
   );
 }

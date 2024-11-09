@@ -11,7 +11,7 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
+
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -277,8 +277,9 @@ export default function Index() {
           <p>&copy; 2024 CV메이트. All rights reserved.</p>
         </div>
         <div className='flex gap-10'>
-          <Link href="/"><p className='underline decoration-solid'>이용약관</p></Link>
-          <Link href="/"><p className='underline decoration-solid'>개인정보 처리방침</p></Link>
+          <Link href="/terms/이용약관"><p className='underline decoration-solid'>이용약관</p></Link>
+          <Link href="terms/개인정보처리방침"><p className='underline decoration-solid'>개인정보 처리방침</p></Link>
+          <Link href="terms/마케팅%20이용%20및%20수신%20동의"><p className='underline decoration-solid'>마케팅 이용 및 수신 동의</p></Link>
         </div>
       </footer>
     </div>

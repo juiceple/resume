@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import ProfileSkeleton from '@/components/mypage/ProfileSkeleton';
@@ -13,17 +13,26 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import CustomAlert from '@/components/CustomAlert';
+import schoolsData from '@/components/signUp/schools.json';
+import { ChevronsDown, CheckIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 
 type TabType = 'profile' | 'info';
 
-
+interface WorkplaceInputProps {
+    value: string;
+    onChange: (value: string) => void;
+    isStudent: boolean;
+}
 
 interface ProfileData {
     career: string;
     job: string[];
     desiredJob: string[];
     country: string;
+    workplace: string;
 }
 
 
@@ -52,6 +61,29 @@ interface MyPageData {
     profile: ProfileData;
     userInfo: UserInfo;
 }
+
+interface School {
+    학교명: string;
+    "학교 영문명": string;  // JSON 데이터의 실제 키와 일치하도록 수정
+    본분교구분명: string;
+    대학구분명: string;
+    학교구분명: string;
+    설립형태구분명: string;
+    시도코드: string;
+    시도명: string;
+    소재지도로명주소: string;
+    소재지지번주소: string;
+    도로명우편번호: string;
+    소재지우편번호: string;
+    홈페이지주소: string;
+    대표전화번호: string;
+    대표팩스번호: string;
+    설립일자: string;
+    기준연도: string;
+    데이터기준일자: string;
+    제공기관코드: string;
+    제공기관명: string;
+}
 const jobCategories = {
     "개발": ["프론트엔드 개발", "백엔드 개발", "웹 개발", "iOS 개발", "안드로이드 개발", "데브옵스", "네트워크 엔지니어링", "시스템 엔지니어링", "DBA", "게임 개발", "QA", "클라우드 엔지니어링", "사이버보안", "솔루션 아키텍트", "기타"],
     "데이터 & AI": ["데이터 분석가", "데이터 엔지니어", "데이터 사이언티스트", "머신러닝 엔지니어", "빅데이터 엔지니어", "BI 엔지니어", "AI 엔지니어", "기타"],
@@ -67,7 +99,7 @@ const jobCategories = {
     "HR": ["채용", "HRD", "기타"],
     "엔지니어링": ["하드웨어 엔지니어링", "기타"],
     "기타": []
-  };
+};
 
 
 const useMyPageData = () => {
@@ -76,7 +108,8 @@ const useMyPageData = () => {
             career: '',
             job: ['', ''],
             desiredJob: ['', ''],
-            country: ''
+            country: '',
+            workplace: ''
         },
         userInfo: {
             name: '',
@@ -85,7 +118,10 @@ const useMyPageData = () => {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    console.log(myPageData);
+    // Alert 상태 관리
+    const [showAlert, setShowAlert] = useState(false);
+    const [alertTitle, setAlertTitle] = useState<string>("");
+    const [alertMessage, setAlertMessage] = useState<string>("");
 
     const fetchMyPageData = async () => {
         const supabase = createClient();
@@ -97,7 +133,7 @@ const useMyPageData = () => {
 
             const { data, error } = await supabase
                 .from('profiles')
-                .select('name, career, job, desired_job, country')
+                .select('name, career, job, desired_job, country, Organization')
                 .eq('user_id', user.id)
                 .single();
 
@@ -109,7 +145,8 @@ const useMyPageData = () => {
                         career: data.career || '',
                         job: Array.isArray(data.job) ? data.job : ['', ''],
                         desiredJob: Array.isArray(data.desired_job) ? data.desired_job : ['', ''],
-                        country: data.country || ''
+                        country: data.country || '',
+                        workplace: data.Organization || ''
                     },
                     userInfo: {
                         name: data.name || '',
@@ -131,7 +168,7 @@ const useMyPageData = () => {
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError) throw userError;
             if (!user) throw new Error('No user logged in');
-
+    
             if (updatedData.profile) {
                 const { error: profileError } = await supabase
                     .from('profiles')
@@ -141,40 +178,46 @@ const useMyPageData = () => {
                         job: updatedData.profile.job,
                         desired_job: updatedData.profile.desiredJob,
                         country: updatedData.profile.country,
+                        Organization: updatedData.profile.workplace, // Add workplace field here
                     });
-
+    
                 if (profileError) throw profileError;
             }
-
+    
             if (updatedData.userInfo) {
                 if (updatedData.userInfo.name) {
                     const { error: nameError } = await supabase
                         .from('profiles')
                         .update({ name: updatedData.userInfo.name })
                         .eq('user_id', user.id);
-
+    
                     if (nameError) throw nameError;
                 }
-
+    
                 if (updatedData.userInfo.email) {
                     const { error: emailError } = await supabase.auth.updateUser({
                         email: updatedData.userInfo.email,
                     });
-
+    
                     if (emailError) throw emailError;
                 }
             }
-
+    
             setMyPageData(prev => ({
                 ...prev,
                 ...updatedData
             }));
-            alert('데이터가 성공적으로 저장되었습니다.');
+            setAlertTitle("Success");
+            setAlertMessage("데이터가 성공적으로 저장되었습니다.");
+            setShowAlert(true);
         } catch (error) {
             console.error('Error saving my page data:', error);
-            alert('데이터 저장 중 오류가 발생했습니다.');
+            setAlertTitle("Error");
+            setAlertMessage("데이터 저장 중 오류가 발생했습니다.");
+            setShowAlert(true);
         }
     };
+    
 
     return { myPageData, setMyPageData, isLoading, error, fetchMyPageData, saveMyPageData };
 };
@@ -215,9 +258,9 @@ const SelectOption: React.FC<SelectOptionProps> = ({
     return (
         <div>
             <h2 className="pl-2 text-xl font-semibold mb-4">{title}</h2>
-            <div className={`flex ${isDouble ? 'gap-32' : ''}`}>
+            <div className={`flex ${isDouble ? 'justify-between' : ''}`}>
                 <Select value={firstValue} onValueChange={handleFirstChange}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] border hover:bg-gray-100">
                         <SelectValue placeholder={placeholders[0]} />
                     </SelectTrigger>
                     <SelectContent>
@@ -230,7 +273,7 @@ const SelectOption: React.FC<SelectOptionProps> = ({
                 </Select>
                 {isDouble && firstValue && (
                     <Select value={secondValue} onValueChange={handleSecondChange}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[180px] border hover:bg-gray-100">
                             <SelectValue placeholder={placeholders[1]} />
                         </SelectTrigger>
                         <SelectContent>
@@ -247,41 +290,188 @@ const SelectOption: React.FC<SelectOptionProps> = ({
     );
 };
 
+// WorkplaceInput 컴포넌트 정의
+const WorkplaceInput: React.FC<WorkplaceInputProps> = React.memo(({ value, onChange, isStudent }) => {
+    const [isSearchMode, setIsSearchMode] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [showError, setShowError] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    // Hook들을 조건문 밖으로 이동
+    const schoolsList = useMemo(() => {
+        try {
+            return Array.isArray(schoolsData?.schools) ? schoolsData.schools : [];
+        } catch (e) {
+            console.error('Error accessing schools data:', e);
+            return [];
+        }
+    }, []);
+
+    const filteredSchools = useMemo(() => {
+        if (!isStudent) return [];
+        if (!searchTerm.trim()) return schoolsList.slice(0, 10);
+        
+        return schoolsList.filter((school) => {
+            const schoolName = (school?.학교명 || '').toLowerCase();
+            const schoolEngName = (school?.['학교 영문명'] || '').toLowerCase();
+            const searchLower = searchTerm.toLowerCase();
+            return schoolName.includes(searchLower) || schoolEngName.includes(searchLower);
+        }).slice(0, 50);
+    }, [searchTerm, schoolsList, isStudent]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsSearchMode(false);
+                if (!value && isStudent) {
+                    setShowError(true);
+                }
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [value, isStudent]);
+
+    useEffect(() => {
+        if (isSearchMode && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isSearchMode]);
+
+    const handleButtonClick = useCallback(() => {
+        setIsSearchMode(true);
+        setShowError(false);
+        setSearchTerm("");
+    }, []);
+
+    const handleSchoolSelect = useCallback((schoolName: string) => {
+        onChange(schoolName);
+        setIsSearchMode(false);
+        setShowError(false);
+        setSearchTerm("");
+    }, [onChange]);
+
+    // 직장인 입력 컴포넌트
+    if (!isStudent) {
+        return (
+            <Input
+                type="text"
+                placeholder="직장명을 입력해주세요"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-[400px] bg-gray-100 border-2"
+            />
+        );
+    }
+
+    // 학생 검색 컴포넌트
+    return (
+        <div className="w-[300px] absolute bottom-0 right-0" ref={wrapperRef}>
+            <div className="relative">
+                {isSearchMode ? (
+                    <div>
+                        <Input
+                            ref={inputRef}
+                            type="text"
+                            placeholder="학교 검색..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-white border-1"
+                        />
+                        {(searchTerm || (!searchTerm && filteredSchools.length > 0)) && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                                {filteredSchools.length > 0 ? (
+                                    filteredSchools.map((school) => (
+                                        <div
+                                            key={`${school.학교명}-${school.시도명}`}
+                                            className={cn(
+                                                "flex flex-col p-2 cursor-pointer hover:bg-gray-100",
+                                                value === school.학교명 ? "bg-blue-50" : ""
+                                            )}
+                                            onClick={() => handleSchoolSelect(school.학교명)}
+                                        >
+                                            <div className="font-medium">{school.학교명}</div>
+                                            <div className="text-sm text-gray-500">
+                                                {school.시도명} | {school.대학구분명} | {school.설립형태구분명}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="p-2 text-gray-500">검색 결과가 없습니다</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleButtonClick}
+                        className="w-full justify-between bg-white h-10 px-3 py-2"
+                    >
+                        <span className={value ? "text-black" : "text-gray-500"}>
+                            {value || "학교를 선택해주세요"}
+                        </span>
+                        <ChevronsDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                )}
+            </div>
+        </div>
+    );
+});
+
+
+// ProfileContent 컴포넌트
 const ProfileContent: React.FC<{
     profileData: ProfileData;
-    saveProfile: (data: Partial<ProfileData>) => Promise<void>
-}> = ({ profileData, saveProfile }) => {
+    saveProfile: (data: Partial<ProfileData>) => Promise<void>;
+    updateAlert: (title: string, message: string | string[], show?: boolean) => void;
+}> = ({ profileData, saveProfile, updateAlert }) => {
     const [localProfileData, setLocalProfileData] = useState(profileData);
 
     useEffect(() => {
         setLocalProfileData(profileData);
     }, [profileData]);
 
-    // Use useMemo to memoize the options
     const options = useMemo(() => ({
         career: { "학생(0-1년)": [], "신입(2-3년)": [], "경력(4-7년)": [], "경력(7년 이상)": [] },
         job: jobCategories,
         desiredJob: jobCategories,
-        country: { "대한민국": [], "미국": [], "캐나다": [], "호주": [], "싱가포르": [], "영국": [] , "독일": [] , "프랑스": [] , "기타": []  }
+        country: { "대한민국": [], "미국": [], "캐나다": [], "호주": [], "싱가포르": [], "영국": [], "독일": [], "프랑스": [], "기타": [] }
+        
     }), []);
 
     const handleChange = (field: keyof ProfileData) => (value: string | string[]) => {
         setLocalProfileData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSave = () => {
-        saveProfile(localProfileData);
+    const handleSave = async () => {
+        try {
+            await saveProfile(localProfileData);
+            updateAlert("Success", "데이터가 성공적으로 저장되었습니다.");
+        } catch (error) {
+            updateAlert("Error", "데이터 저장 중 오류가 발생했습니다.");
+        }
     };
 
     return (
         <div className='flex flex-col gap-4 pb-4 font-semibold'>
-            <SelectOption
-                defaultValue={localProfileData.career}
-                title="현재 경력"
-                options={options.career}
-                onChange={handleChange('career')}
-                placeholders={["현재 경력 선택"]}
-            />
+            <div className='flex justify-between relative'>
+                <SelectOption
+                    defaultValue={localProfileData.career}
+                    title="현재 경력"
+                    options={options.career}
+                    onChange={handleChange('career')}
+                    placeholders={["현재 경력 선택"]}
+                />
+                <WorkplaceInput
+                    value={localProfileData.workplace || ''}
+                    onChange={(value) => handleChange('workplace')(value)}
+                    isStudent={localProfileData.career === "학생(0-1년)"}
+                />
+            </div>
             <SelectOption
                 defaultValue={localProfileData.job}
                 title="직종"
@@ -290,7 +480,6 @@ const ProfileContent: React.FC<{
                 onChange={handleChange('job')}
                 placeholders={["직종 선택", "세부 직종 선택"]}
             />
-            <hr className="my-4 border-gray-300" />
             <SelectOption
                 defaultValue={localProfileData.desiredJob}
                 title="지원하고자 하는 직무는 무엇인가요?"
@@ -372,10 +561,27 @@ const PasswordChangeForm: React.FC<{
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
+    // Define alert state for CustomAlert
+    const [alert, setAlert] = useState({
+        show: false,
+        title: '',
+        message: [] as string[],
+    });
+
+    // Function to update alert state
+    const updateAlert = (title: string, message: string | string[], show = true) => {
+        setAlert({
+            title,
+            message: Array.isArray(message) ? message : [message],
+            show,
+        });
+    };
+
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
-            alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+            updateAlert("에러", '새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
             return;
         }
         onSubmit(currentPassword, newPassword);
@@ -439,8 +645,9 @@ const PasswordChangeForm: React.FC<{
 
 const InfoContent: React.FC<{
     userInfo: UserInfo;
-    saveUserInfo: (data: Partial<UserInfo>) => Promise<void>
-}> = ({ userInfo, saveUserInfo }) => {
+    saveUserInfo: (data: Partial<UserInfo>) => Promise<void>;
+    updateAlert: (title: string, message: string | string[], show?: boolean) => void; // Accept updateAlert as a prop
+}> = ({ userInfo, saveUserInfo, updateAlert }) => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
@@ -459,11 +666,10 @@ const InfoContent: React.FC<{
 
             if (updateError) throw updateError;
 
-            alert('비밀번호가 성공적으로 변경되었습니다.');
+            updateAlert("Success", "비밀번호가 성공적으로 변경되었습니다."); // Use updateAlert for success
             setIsChangingPassword(false);
         } catch (error) {
-            console.error('Error updating password:', error);
-            alert(error instanceof Error ? error.message : '비밀번호 변경 중 오류가 발생했습니다.');
+            updateAlert("Error", error instanceof Error ? error.message : '비밀번호 변경 중 오류가 발생했습니다.'); // Use updateAlert for error
         }
     };
 
@@ -511,6 +717,22 @@ export default function MyPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { myPageData, isLoading, error, fetchMyPageData, saveMyPageData } = useMyPageData();
+
+    // Centralized alert state and update function
+    const [alert, setAlert] = useState({
+        show: false,
+        title: '',
+        message: [] as string[],
+    });
+
+    // UpdateAlert function that can handle multiple messages
+    const updateAlert = (title: string, message: string | string[], show = true) => {
+        setAlert({
+            title,
+            message: Array.isArray(message) ? message : [message],
+            show,
+        });
+    };
 
     useEffect(() => {
         const tab = searchParams.get('tab') as TabType;
@@ -562,15 +784,25 @@ export default function MyPage() {
                             <ProfileContent
                                 profileData={myPageData.profile}
                                 saveProfile={(data) => saveMyPageData({ profile: { ...myPageData.profile, ...data } })}
+                                updateAlert={updateAlert} // Pass down to ProfileContent
                             />
                         ) : (
                             <InfoContent
                                 userInfo={myPageData.userInfo}
                                 saveUserInfo={(data) => saveMyPageData({ userInfo: { ...myPageData.userInfo, ...data } })}
+                                updateAlert={updateAlert} // Pass down to InfoContent
                             />
                         )}
+
                     </div>
                 </div>
+                {alert.show && (
+                    <CustomAlert
+                        title={alert.title}
+                        message={alert.message}
+                        onClose={() => setAlert({ ...alert, show: false })}
+                    />
+                )}
             </main>
         </div>
     );

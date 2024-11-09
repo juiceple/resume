@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import CustomAlert from '@/components/CustomAlert';
 
 interface FormData {
   email: string;
@@ -52,6 +53,21 @@ const SignupStep1: React.FC<{
   const [otp, setOtp] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
   const supabase = createClient();
+  // Define alert state for CustomAlert
+  const [alert, setAlert] = useState({
+    show: false,
+    title: '',
+    message: [] as string[],
+  });
+
+  // Function to update alert state
+  const updateAlert = (title: string, message: string | string[], show = true) => {
+    setAlert({
+      title,
+      message: Array.isArray(message) ? message : [message],
+      show,
+    });
+  };
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -81,7 +97,7 @@ const SignupStep1: React.FC<{
     } else {
       setOtpSent(true);
       setTimeLeft(180); // 3분 타이머 설정
-      alert('인증 메일이 발송되었습니다. 이메일을 확인하세요.');
+      updateAlert('메일 전송 완료', '인증 메일이 발송되었습니다. 이메일을 확인하세요.');
     }
   };
 
@@ -102,7 +118,7 @@ const SignupStep1: React.FC<{
       setErrors({ ...errors, email: '잘못된 OTP입니다. 다시 시도해주세요.' });
     } else {
       updateOtpVerified(true); // OTP 인증 완료 상태 업데이트
-      alert('이메일 인증이 완료되었습니다.');
+      updateAlert('인증 완료', '이메일 인증이 완료되었습니다.');
     }
   };
 
@@ -152,7 +168,7 @@ const SignupStep1: React.FC<{
           <label htmlFor="email" className="block text-lg font-medium text-gray-700">
             이메일 <span className="text-red-700">*</span>
           </label>
-          <div className="relative">
+          <div className="flex gap-2 h-12">
             <input
               type="email"
               id="email"
@@ -164,7 +180,7 @@ const SignupStep1: React.FC<{
             />
             <button
               onClick={handleSendOtp}
-              className="absolute right-2 top-2 h-8 px-4 bg-blue-500 text-white rounded-md"
+              className="h-full w-24 px-4 bg-blue-500 text-white rounded-md"
               disabled={otpSent && timeLeft > 0}
             >
               {otpSent && timeLeft > 0 ? `재발송 (${timeLeft}초)` : '인증'}
@@ -172,7 +188,7 @@ const SignupStep1: React.FC<{
           </div>
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           {otpSent && !otpVerified && (
-            <div className="mt-4">
+            <div className="mt-4 flex gap-2 h-12">
               <input
                 type="text"
                 placeholder="인증 번호 입력"
@@ -180,8 +196,8 @@ const SignupStep1: React.FC<{
                 onChange={(e) => setOtp(e.target.value)}
                 className="h-12 w-full bg-[#F3F4F6] border-none pl-3 pr-10 py-3 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
-              <button onClick={handleVerifyOtp} className="mt-2 h-8 w-full bg-green-500 text-white rounded-md">
-                OTP 확인
+              <button onClick={handleVerifyOtp} className="h-full w-24 px-4 bg-blue-500 text-white rounded-md">
+                확인
               </button>
             </div>
           )}
@@ -272,23 +288,29 @@ const SignupStep1: React.FC<{
               <span className="ml-2 text-lg">아래 내용에 모두 동의합니다.</span>
             </label>
             <hr />
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.agreements.terms}
-                onChange={(e) => handleAgreementChange('terms', e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 shadow-sm"
-              />
-              <div className="ml-2">이용약관 동의 (필수)</div>
+            <label className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.agreements.terms}
+                  onChange={(e) => handleAgreementChange('terms', e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 shadow-sm"
+                />
+                <div className="ml-2">이용약관 동의 (필수)</div>
+              </div>
+              <a href="/terms/이용약관" target="_blank" className="text-blue-600">약관 보기</a>
             </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.agreements.privacy}
-                onChange={(e) => handleAgreementChange('privacy', e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 shadow-sm"
-              />
-              <div className="ml-2">개인정보 수집 및 이용 동의 (필수)</div>
+            <label className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.agreements.privacy}
+                  onChange={(e) => handleAgreementChange('privacy', e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 shadow-sm"
+                />
+                <div className="ml-2">개인정보 수집 및 이용 동의 (필수)</div>
+              </div>
+              <a href="/terms/개인정보처리방침" target="_blank" className="text-blue-600">약관 보기</a>
             </label>
             <label className="flex items-center">
               <input
@@ -299,18 +321,29 @@ const SignupStep1: React.FC<{
               />
               <span className="ml-2">만 14세 이상입니다. (필수)</span>
             </label>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.agreements.marketing}
-                onChange={(e) => handleAgreementChange('marketing', e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 shadow-sm"
-              />
-              <span className="ml-2">마케팅 정보 수신 동의 (선택)</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.agreements.marketing}
+                  onChange={(e) => handleAgreementChange('marketing', e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 shadow-sm"
+                />
+                <span className="ml-2">마케팅 정보 수신 동의 (선택)</span>
+              </label>
+              <a href="/terms/마케팅 이용 및 수신 동의" target="_blank" className="text-blue-600">약관 보기</a>
+              
+            </div>
           </div>
         </div>
       </div>
+      {alert.show && (
+        <CustomAlert
+          title={alert.title}
+          message={alert.message}
+          onClose={() => setAlert({ ...alert, show: false })}
+        />
+      )}
     </div>
   );
 };

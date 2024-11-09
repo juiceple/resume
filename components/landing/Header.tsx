@@ -38,7 +38,7 @@ const DocsHeader = () => {
 
     return (
         <>
-            {loading && <FullScreenLoader message={loadingMessage} />}
+            {loading && <FullScreenLoader message={loadingMessage} isVisible={true}/>}
             <header className="bg-white shadow h-[75px]">
                 <div className="px-[30px] py-4 flex items-center justify-between">
                     <div className="flex items-center justify-between space-x-6">

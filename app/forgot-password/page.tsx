@@ -6,6 +6,7 @@ import { Input } from "@/components/forms/input";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image"
+import CustomAlert from '@/components/CustomAlert';
 
 interface Message {
   content: string;
@@ -20,6 +21,10 @@ export default function FindPassword() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; otp?: string }>({});
   const [timeLeft, setTimeLeft] = useState(0);
+  const [showAlert, setShowAlert] = useState(false); // Alert 표시 여부
+const [alertTitle, setAlertTitle] = useState<string>(""); // Alert 제목
+const [alertMessage, setAlertMessage] = useState<string | null>(null); // Alert 메시지
+
 
   const validateEmail = (email: string) => {
     return /\S+@\S+\.\S+/.test(email);
@@ -30,18 +35,23 @@ export default function FindPassword() {
       setErrors({ ...errors, email: "유효한 이메일 주소를 입력해주세요." });
       return;
     }
-
+  
     const { error } = await supabase.auth.signInWithOtp({
       email: formData.email,
     });
-
+  
     if (error) {
       console.error("OTP 발송 오류:", error.message);
       setErrors({ ...errors, email: "OTP 발송에 실패했습니다." });
+      setAlertTitle("OTP 발송 실패");
+      setAlertMessage("OTP 발송에 실패했습니다. 다시 시도해주세요.");
+      setShowAlert(true); // Alert 표시
     } else {
       setOtpSent(true);
       setTimeLeft(180); // Start 3-minute timer
-      alert("인증 메일이 발송되었습니다. 이메일을 확인하세요.");
+      setAlertTitle("OTP 발송 성공");
+      setAlertMessage("인증 메일이 발송되었습니다. 이메일을 확인하세요.");
+      setShowAlert(true); // Alert 표시
     }
   };
 
@@ -50,19 +60,24 @@ export default function FindPassword() {
       setErrors({ ...errors, otp: "OTP를 입력해주세요." });
       return;
     }
-
+  
     const { error } = await supabase.auth.verifyOtp({
       email: formData.email,
       token: otp,
       type: "email",
     });
-
+  
     if (error) {
       console.error("OTP 인증 오류:", error.message);
       setErrors({ ...errors, otp: "잘못된 OTP입니다. 다시 시도해주세요." });
+      setAlertTitle("OTP 인증 실패");
+      setAlertMessage("잘못된 OTP입니다. 다시 시도해주세요.");
+      setShowAlert(true); // Alert 표시
     } else {
       setOtpVerified(true);
-      alert("이메일 인증이 완료되었습니다.");
+      setAlertTitle("OTP 인증 성공");
+      setAlertMessage("이메일 인증이 완료되었습니다.");
+      setShowAlert(true); // Alert 표시
     }
   };
 
@@ -185,6 +200,13 @@ export default function FindPassword() {
           </button>
         </div>
       </form>
+      {showAlert && (
+      <CustomAlert
+        title={alertTitle}
+        message={[alertMessage || "An unexpected error occurred."]}
+        onClose={() => setShowAlert(false)} // Alert 닫기
+      />
+    )}
     </div>
   );
 }

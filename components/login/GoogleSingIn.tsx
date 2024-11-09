@@ -6,15 +6,41 @@ import { useCallback } from 'react';
 export default function GoogleSignInButton() {
   const handleGoogleSignIn = useCallback(async () => {
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data: session, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?type=login`, // 로그인으로 구분
+        redirectTo: `${window.location.origin}/auth/callback?type=login`,
       },
     });
 
     if (error) {
       console.error('Error signing in with Google:', error);
+      return;
+    }
+
+    if (session) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+
+      // Check if the user already exists in your `profiles` table
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching user data:', fetchError);
+        return;
+      }
+
+      if (!existingUser) {
+        // If the user does not exist, redirect to a sign-up page
+        window.location.href = '/signup/google';
+      } else {
+        // User exists, proceed with login
+        console.log('User exists, proceed with login');
+      }
     }
   }, []);
 

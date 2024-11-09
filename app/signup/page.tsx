@@ -14,7 +14,7 @@ import GoogleSignUp from "@/components/signup/GoogleSignUp";
 export default function Login({ searchParams }: { searchParams: Message }) {
 
   return (
-    <div className="flex flex-col bg-[#EEE] flex-1 p-4 w-full items-center justify-center min-h-screen">
+    <div className="flex flex-col bg-[#EEE] gap-4 flex-1 p-4 w-full items-center justify-center min-h-screen">
       <div className="relative w-1/4 bg-white shadow-lg rounded-xl">
         <div className="absolute w-full -top-20 flex justify-center">
           <div>
@@ -22,17 +22,19 @@ export default function Login({ searchParams }: { searchParams: Message }) {
           </div>
         </div>
         <div className="p-8">
-          <h1 className="text-lg font-semibold ml-2 mt-4 mb-8">회원가입
+          <h1 className="text-xl text-center text-[#AEB3BC] font-semibold ml-2 mt-4 mb-8">
+          CVMATE로 빠르고 손쉽게<br/>
+          합격 영문이력서를 작성해보세요.
           </h1>
-          <Link className="text-[#2871E6] font-medium" href="/signup">
-            회원가입
-          </Link>
-          <hr className="bg-gray-100 h-[0.5]" />
-          <div className="mt-6">
+          <div className="mt-4">
             <GoogleSignUp />
           </div>
+          <Link className="font-medium " href="/signup/email">
+            <div className="w-full mt-4 h-12 bg-[#2871E6] border text-white font-semibold text-sm py-2 px-4 rounded-xl flex items-center justify-center">
+              이메일로 계속하기
+            </div>
+          </Link>
         </div>
-
       </div>
 
     </div>
