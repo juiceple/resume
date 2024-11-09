@@ -47,6 +47,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^11.5.4",
     "geist": "^1.2.1",
+    "got": "^14.4.4",
     "html-to-image": "^1.11.11",
     "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.10.2",

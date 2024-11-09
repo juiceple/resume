@@ -224,30 +224,47 @@ const PointShop: React.FC = () => {
 
 
 
-    const handlePurchase = async (points: number, price: number) => {
+    const handlePurchase = async (points: number, price: number, isPremium: boolean = false) => {
         try {
             setIsLoading(true);
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError || !user) throw new Error("User not authenticated.");
-
+    
             const uniqueOrderId = `${user.id}_${Date.now()}`;
-
-            // 결제창 호출
-            AUTHNICE.requestPay({
-                clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-                method: 'cardAndEasyPay',
-                orderId: uniqueOrderId, // 유니크한 주문 ID 생성
-                amount: price,
-                goodsName: `${points} 포인트`,
-                returnUrl: '/api/serverAuth', // 실제 서버의 엔드포인트로 설정
-                fnError: function (result: any) {
-                    updateAlert("결제 오류", '결제 오류: ' + result.errorMsg);
-                }
-
-            });
+            const goodsName = isPremium ? "무제한 프리미엄" : `${points} 포인트`;
+            const amount = isPremium ? 25000 : price;
+    
+            if (isPremium) {
+                // Make a subscription request for the premium purchase
+                AUTHNICE.requestPay({
+                    clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+                    method: 'card', // Change to subscription method for recurring payment
+                    orderId: uniqueOrderId,
+                    amount,
+                    goodsName,
+                    returnUrl: '/api/subscription', // Actual endpoint
+                    fnError: function (result: any) {
+                        updateAlert("구독 오류", '구독 오류: ' + result.errorMsg);
+                    }
+                });
+            } else {
+                // Standard one-time purchase request
+                AUTHNICE.requestPay({
+                    clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+                    method: 'cardAndEasyPay',
+                    orderId: uniqueOrderId,
+                    amount,
+                    goodsName,
+                    returnUrl: '/api/serverAuth',
+                    fnError: function (result: any) {
+                        updateAlert("결제 오류", '결제 오류: ' + result.errorMsg);
+                    }
+                });
+            }
+    
             setHistoryUpdated(true);
         } catch (err) {
-            updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.")
+            updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.");
             console.error("Error recording purchase:", err);
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
@@ -255,6 +272,7 @@ const PointShop: React.FC = () => {
             setHistoryUpdated(false);
         }
     };
+    
 
 
 
@@ -283,7 +301,6 @@ const PointShop: React.FC = () => {
     const PremiumPackage: React.FC = () => (
         <div className="w-full h-[228px] bg-[#EDF4FF] rounded-2xl shadow-xl text-center">
             <div className='flex flex-col h-[176.5px] items-center justify-center gap-4'>
-                {/* Gift icon */}
                 <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" fill="none">
                     <path d="M28.3327 17V31.1667H5.66602V17" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M31.1673 9.91663H2.83398V17H31.1673V9.91663Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -291,13 +308,18 @@ const PointShop: React.FC = () => {
                     <path d="M10.6257 9.91671H17.0007C17.0007 9.91671 15.584 2.83337 10.6257 2.83337C9.68634 2.83337 8.78551 3.20651 8.12131 3.8707C7.45712 4.5349 7.08398 5.43573 7.08398 6.37504C7.08398 7.31435 7.45712 8.21519 8.12131 8.87938C8.78551 9.54357 9.68634 9.91671 10.6257 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M23.375 9.91671H17C17 9.91671 18.4167 2.83337 23.375 2.83337C24.3143 2.83337 25.2151 3.20651 25.8793 3.8707C26.5435 4.5349 26.9167 5.43573 26.9167 6.37504C26.9167 7.31435 26.5435 8.21519 25.8793 8.87938C25.2151 9.54357 24.3143 9.91671 23.375 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                {/* Point and price details */}
                 <h3 className="text-3xl font-semibold">무제한 프리미엄</h3>
                 <p className="text-lg font-medium text-gray-700">₩ 25000</p>
             </div>
-            <button className="h-[51.5px] w-full rounded-b-lg border-t-2">구독하기</button>
+            <button
+                className="h-[51.5px] w-full rounded-b-lg border-t-2"
+                onClick={() => handlePurchase(0, 25000, true)}
+            >
+                구독하기
+            </button>
         </div>
     );
+
 
     const PurchaseHistory: React.FC = () => (
         <div className="space-y-2">
