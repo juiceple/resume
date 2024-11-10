@@ -18,7 +18,7 @@ export default function FirstVisitAlert() {
   }, []);
 
   return (
-    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen} className="w-full">
       <AlertDialogContent className="w-11/12 h-auto py-12 flex flex-col justify-between items-center rounded-xl">
         <div>
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
