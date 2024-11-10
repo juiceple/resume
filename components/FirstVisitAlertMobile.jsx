@@ -18,8 +18,8 @@ export default function FirstVisitAlert() {
   }, []);
 
   return (
-    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen} className="w-full">
-      <AlertDialogContent className="w-11/12 h-auto py-12 flex flex-col justify-between items-center rounded-xl">
+    <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen} className="w-11/12">
+      <AlertDialogContent className="w-full h-auto py-12 flex flex-col justify-between items-center rounded-xl">
         <div>
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
         </div>
@@ -33,7 +33,7 @@ export default function FirstVisitAlert() {
         </div>
         <AlertDialogCancel
           onClick={() => setIsAlertOpen(false)}
-          className="bg-[#2871E6] text-[25px] flex w-36 h-24 items-center justify-center rounded-2xl text-white hover:bg-[#2871E6] hover:text-white"
+          className="bg-[#2871E6] text-10 flex w-36 h-24 items-center justify-center rounded-2xl text-white hover:bg-[#2871E6] hover:text-white"
         >
           확인
         </AlertDialogCancel>
