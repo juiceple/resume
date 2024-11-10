@@ -45,15 +45,19 @@ export default function TermsPage() {
             <h2 className="text-xl font-semibold mb-4">약관 모두보기</h2>
             <TermsSection 
               title="이용약관" 
-              date="2024.11.03 분"
+              date="개인회원 이용약관(2024.11.03 본)"
             />
             <TermsSection 
               title="개인정보처리방침" 
-              date="2024.11.03 분"
+              date="개인정보 처리방침(2024.11.03 본)"
             />
             <TermsSection 
               title="마케팅 이용 및 수신 동의" 
-              date="2024.11.03 분"
+              date="마케팅 이용 및 수신 동의(2024.11.03. 본)"
+            />
+            <TermsSection 
+              title="결제 서비스 이용약관" 
+              date="결제 서비스 이용약관(2024.11.09. 본)"
             />
           </div>
         </div>

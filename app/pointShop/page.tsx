@@ -48,6 +48,7 @@ const PointShop: React.FC = () => {
     const [selectedPoints, setSelectedPoints] = useState(0);
     const [selectedPrice, setSelectedPrice] = useState(0);
     const [isPremium, setIsPremium] = useState(false);
+    const [name, setName] = useState<string | null>(null); // State to hold user's name
 
     // Agreement checkboxes state
     const [formData, setFormData] = useState({
@@ -104,6 +105,31 @@ const PointShop: React.FC = () => {
         });
     };
 
+    useEffect(() => {
+        // Fetch user name from profiles table
+        const fetchUserName = async () => {
+            try {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) throw new Error("User not authenticated.");
+
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('name')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+
+                setName(profile?.name || null);
+            } catch (error) {
+                console.error("Error fetching user name:", error);
+                setError(error instanceof Error ? error.message : 'An unknown error occurred');
+            }
+        };
+
+        fetchUserName();
+    }, []);
+
 
     // Fetch purchase history
     const [historyItems, setHistoryItems] = useState<HistoryItemProps[]>([]);
@@ -120,6 +146,7 @@ const PointShop: React.FC = () => {
             document.body.removeChild(script);
         };
     }, []);
+
     useEffect(() => {
         const fetchPurchaseHistory = async () => {
             try {
@@ -541,7 +568,7 @@ const PointShop: React.FC = () => {
                 <div className="bg-gray-100 p-4 rounded-lg space-y-4">
                     <div className="flex justify-between items-center text-lg">
                         <span>구매자명</span>
-                        <span>김예은</span>
+                        <span>{name || '이름을 가져오는 중...'}</span> {/* Display the user's name */}
                     </div>
                     <div className="flex justify-between items-center text-lg">
                         <span>구매 포인트</span>
@@ -577,7 +604,7 @@ const PointShop: React.FC = () => {
                             />
                             <span className="ml-2">[필수] 결제 정보 제 3자 제공 동의</span>
                         </div>
-                        <a href="/terms/third-party-consent" target="_blank" className="text-blue-600">약관 보기</a>
+                        <a href="/terms/결제%20서비스%20이용약관" target="_blank" className="text-blue-600">약관 보기</a>
                     </label>
                     <label className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -589,7 +616,7 @@ const PointShop: React.FC = () => {
                             />
                             <span className="ml-2">[필수] CVMATE 유료서비스 이용약관</span>
                         </div>
-                        <a href="/terms/cvmate-service" target="_blank" className="text-blue-600">약관 보기</a>
+                        <a href="/terms/결제%20서비스%20이용약관" target="_blank" className="text-blue-600">약관 보기</a>
                     </label>
                 </div>
                 <div className="flex space-x-4 mt-6">

@@ -55,6 +55,8 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             show,
         });
     };
+
+
     // 제목을 불러오는 함수
     const getTitle = useCallback(async () => {
         try {
@@ -173,6 +175,10 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             console.error('Error fetching user points:', error);
         }
     }, [supabase]);
+
+    useEffect(() => {
+        fetchUserPoints();
+    }, [fetchUserPoints]);
 
     //--현재 Resume 삭제 함수--//
     const handleDeleteResume = useCallback(async () => {

@@ -376,7 +376,7 @@ export default function Edits() {
                 </div>
               </div>
               {/* 생성하기 버튼 */}
-              <div className="mt-6">
+              <div className="mb-12">
                 <Button
                   type="submit"
                   size="lg"
@@ -387,6 +387,7 @@ export default function Edits() {
                   <Send size={20} />
                 </Button>
               </div>
+              <div className='absolute bottom-4 text-[#8D8D8D] text-center'>불렛 포인트 생성에는 50P가 사용됩니다.</div>
             </form>
           )}
         </div>
@@ -397,7 +398,7 @@ export default function Edits() {
               <button className="absolute right-4" onClick={handleCloseButton}>
                 <CircleX />
               </button>
-              <div className="flex-grow overflow-y-auto mb-4 mt-[30px]">
+              <div className="flex-grow overflow-y-auto mb-4 mt-[30px] mb-[30px]">
                 {renderMessages()}
                 {isGenerating && messages[messages.length - 1]?.role !== "assistant" && (
                   <Message
@@ -434,6 +435,7 @@ export default function Edits() {
                 >
                   <ArrowUp />
                 </button>
+                <div className='absolute w-full -ml-4 bottom-[75px] text-[#8D8D8D] flex justify-center items-center'>채팅으로 수정은 20P가 사용됩니다.</div>
               </form>
             </div>
           )}
