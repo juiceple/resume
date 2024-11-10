@@ -24,12 +24,10 @@ export default function FirstVisitAlertMobile() {
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
         </div>
         <div className="text-xl font-semibold">
-          <h2>출시 기념 200P 무료 제공!</h2>
+          <h2>PC로 만나보세요!</h2>
         </div>
-        <div className="flex flex-col text-10 items-center gap-[8px]">
-          <p>감사하게도 너무나 많은 분들의 응원과 관심을 받게 되어,</p>
-          <p>회원가입 시 200포인트를 무료로 제공해드립니다.</p>
-          <p>지금 바로 회원가입하고 혜택을 받아보세요!</p>
+        <div className="flex flex-col text-10 items-center px-6">
+          <p>CVMATE는 PC버전에서만 서비스를 이용하실 수 있는 점 양해부탁드립니다. 현재 출시 기념으로 무료 200포인트 제공 이벤트를 진행중이니 지금 바로 PC에서 회원가입하고 혜택을 받아보세요!</p>
         </div>
         <AlertDialogCancel
           onClick={() => setIsAlertOpen(false)}
