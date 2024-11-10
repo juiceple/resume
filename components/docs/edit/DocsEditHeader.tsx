@@ -498,6 +498,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                         onDownload={() => {
                             generatePDF();
                         }}
+                        isPremium={isPremium}
                     />
 
                     <Popover>
