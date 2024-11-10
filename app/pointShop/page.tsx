@@ -396,9 +396,9 @@ const PointShop: React.FC = () => {
                     </li>
                 </ul>
                 <div className="w-full text-lg font-medium text-gray-700">
-                    <span className="relative">₩ 25000/월
+                    <span className="relative">₩ 25,000/월
 
-                        <span className="absolute -left-28 line-through text-gray-400">₩ 30000/월</span>
+                        <span className="absolute -left-28 line-through text-gray-400">₩ 30,000/월</span>
                     </span>
                 </div>
             </div>
