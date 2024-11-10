@@ -360,8 +360,8 @@ const PointShop: React.FC = () => {
                     </h3>
                     {bonusAmount > 0 && (
                         <div className='flex mt-1'>
-                            <p className='text-xs'>{(points).toLocaleString()}P</p>
-                            <span className="text-blue-600 text-xs ml-2">
+                            <p className='text-xl'>{(points).toLocaleString()}P</p>
+                            <span className="text-blue-600 text-xl ml-2">
                                 +{bonusAmount.toLocaleString()} P 보너스
                             </span>
                         </div>

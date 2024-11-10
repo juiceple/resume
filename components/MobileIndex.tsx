@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 const FadeInText = dynamic(() => import('@/components/FadeInText').then(mod => mod.default), { ssr: false });
 const CountUp = dynamic(() => import('@/components/CountUp').then(mod => mod.default), { ssr: false });
 const SlideUpSection = dynamic(() => import('@/components/SlideUpSection').then(mod => mod.default), { ssr: false });
-
+const FirstVisitAlert = dynamic(() => import('@/components/FirstVisitAlert').then(mod => mod.default), { ssr: false });
 const featureData = [
     {
         title: 'ATS-Friendly CV',
@@ -49,6 +49,7 @@ const featureData = [
 export default function Index() {
     return (
         <div className="flex-1 w-full flex flex-col items-center">
+            <FirstVisitAlert />
             <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center border-b border-b-foreground/10 h-16 bg-white">
                 <div className="w-full flex justify-between items-center px-4 text-sm">
                     <Link href="/docs">
