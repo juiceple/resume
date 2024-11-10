@@ -450,9 +450,9 @@ const ProfileContent: React.FC<{
     const handleSave = async () => {
         try {
             await saveProfile(localProfileData);
-            updateAlert("Success", "데이터가 성공적으로 저장되었습니다.");
+            updateAlert("수정 완료", "수정이 정상적으로 완료되었습니다.");
         } catch (error) {
-            updateAlert("Error", "데이터 저장 중 오류가 발생했습니다.");
+            updateAlert("오류가 발생했습니다.", "잠시 후에 다시 시도해주세요. 계속적인 오류 발생 시 고객센터로 문의 부탁드립니다. ");
         }
     };
 

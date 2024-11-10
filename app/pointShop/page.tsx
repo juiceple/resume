@@ -47,6 +47,7 @@ const PointShop: React.FC = () => {
     const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
     const [selectedPoints, setSelectedPoints] = useState(0);
     const [selectedPrice, setSelectedPrice] = useState(0);
+    const [bonusPoints, setBonusPoint]= useState(0);
     const [isPremium, setIsPremium] = useState(false);
     const [name, setName] = useState<string | null>(null); // State to hold user's name
 
@@ -77,10 +78,11 @@ const PointShop: React.FC = () => {
     };
 
     // 모달을 열고 결제 정보를 설정하는 함수
-    const initiatePurchase = (points: number, price: number, premium: boolean = false) => {
+    const initiatePurchase = (points: number, price: number, premium: boolean = false, bonusPoints: number) => {
         setSelectedPoints(points);
         setSelectedPrice(price);
         setIsPremium(premium);
+        setBonusPoint(bonusPoints);
         setIsConfirmationModalOpen(true);
     };
 
@@ -207,7 +209,7 @@ const PointShop: React.FC = () => {
                 .single();
 
             if (couponError || !couponData) {
-                setError("Invalid coupon code.");
+                updateAlert("오류가 발생했습니다.", `유효하지 않은 쿠폰입니다.`);
                 return;
             }
 
@@ -219,7 +221,7 @@ const PointShop: React.FC = () => {
                 .single();
 
             if (redemptionData) {
-                updateAlert("실패", `이미 쿠폰을 사용하셨습니다!`);
+                updateAlert("오류가 발생했습니다.", `이미 쿠폰을 사용하셨습니다.`);
                 return;
             }
 
@@ -301,7 +303,7 @@ const PointShop: React.FC = () => {
 
             // 주문 ID 및 상품 이름 설정
             const uniqueOrderId = `${user.id}_${Date.now()}`;
-            const goodsName = isPremium ? "무제한 프리미엄" : `${selectedPoints} 포인트`;
+            const goodsName = isPremium ? "무제한 프리미엄" : `${selectedPoints+bonusPoints} 포인트`;
             const amount = isPremium ? 25000 : selectedPrice;
             // 일반 1회 결제 요청
             AUTHNICE.requestPay({
@@ -329,83 +331,54 @@ const PointShop: React.FC = () => {
     };
 
 
-    // const handlePurchase = async (points: number, price: number, isPremium: boolean = false) => {
-    //     try {
-    //         setIsLoading(true);
-    //         const { data: { user }, error: userError } = await supabase.auth.getUser();
-    //         if (userError || !user) throw new Error("User not authenticated.");
-
-    //         const uniqueOrderId = `${user.id}_${Date.now()}`;
-    //         const goodsName = isPremium ? "무제한 프리미엄" : `${points} 포인트`;
-    //         const amount = isPremium ? 25000 : price;
-
-    //         if (isPremium) {
-    //             // Make a subscription request for the premium purchase
-    //             AUTHNICE.requestPay({
-    //                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-    //                 method: 'card', // Change to subscription method for recurring payment
-    //                 orderId: uniqueOrderId,
-    //                 amount,
-    //                 goodsName,
-    //                 returnUrl: '/api/subscription', // Actual endpoint
-    //                 fnError: function (result: any) {
-    //                     updateAlert("구독 오류", '구독 오류: ' + result.errorMsg);
-    //                 }
-    //             });
-    //         } else {
-    //             // Standard one-time purchase request
-    //             AUTHNICE.requestPay({
-    //                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-    //                 method: 'cardAndEasyPay',
-    //                 orderId: uniqueOrderId,
-    //                 amount,
-    //                 goodsName,
-    //                 returnUrl: '/api/serverAuth',
-    //                 fnError: function (result: any) {
-    //                     updateAlert("결제 오류", '결제 오류: ' + result.errorMsg);
-    //                 }
-    //             });
-    //         }
-
-    //         setHistoryUpdated(true);
-    //     } catch (err) {
-    //         updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.");
-    //         console.error("Error recording purchase:", err);
-    //         setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    //     } finally {
-    //         setIsLoading(false);
-    //         setHistoryUpdated(false);
-    //     }
-    // };
-
-
 
 
     const openModal = () => setIsModalOpen(true); // Function to open the modal
     const closeModal = () => setIsModalOpen(false); // Function to close the modal
 
-    const PointPackage: React.FC<PointPackageProps> = ({ points, price }) => (
-        <div className="w-1/3 h-[228px] bg-[#EDF4FF] rounded-2xl shadow-xl text-center">
-            <div className='flex flex-col h-[176.5px] items-center justify-center gap-4'>
-                {/* Gift icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" fill="none">
-                    <path d="M28.3327 17V31.1667H5.66602V17" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M31.1673 9.91663H2.83398V17H31.1673V9.91663Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M17 31.1666V9.91663" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M10.6257 9.91671H17.0007C17.0007 9.91671 15.584 2.83337 10.6257 2.83337C9.68634 2.83337 8.78551 3.20651 8.12131 3.8707C7.45712 4.5349 7.08398 5.43573 7.08398 6.37504C7.08398 7.31435 7.45712 8.21519 8.12131 8.87938C8.78551 9.54357 9.68634 9.91671 10.6257 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M23.375 9.91671H17C17 9.91671 18.4167 2.83337 23.375 2.83337C24.3143 2.83337 25.2151 3.20651 25.8793 3.8707C26.5435 4.5349 26.9167 5.43573 26.9167 6.37504C26.9167 7.31435 26.5435 8.21519 25.8793 8.87938C25.2151 9.54357 24.3143 9.91671 23.375 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                {/* Point and price details */}
-                <h3 className="text-3xl font-semibold">{points.toLocaleString()} P</h3>
-                <p className="text-lg font-medium text-gray-700">₩ {price.toLocaleString()}</p>
+    const PointPackage: React.FC<PointPackageProps> = ({ points, price }) => {
+        const bonusAmount = points === 700 ? 100 : points === 1000 ? 200 : 0;
+        return (
+            <div className="w-1/3 h-[228px] bg-[#EDF4FF] rounded-2xl shadow-xl text-center relative">
+                {(points === 700 || points === 1000) && (
+                    <div className="absolute top-0 left-0 w-1/3 bg-[#0944A2] text-white text-sm font-semibold py-1 rounded-tl-2xl rounded-br-2xl">
+                        {points === 700 ? "출시 보너스!" : "BEST 출시 보너스!"}
+                    </div>
+                )}
+                <div className='flex flex-col h-[176.5px] items-center justify-center'>
+                    {/* Gift icon */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" fill="none">
+                        <path d="M28.3327 17V31.1667H5.66602V17" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M31.1673 9.91663H2.83398V17H31.1673V9.91663Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M17 31.1666V9.91663" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M10.6257 9.91671H17.0007C17.0007 9.91671 15.584 2.83337 10.6257 2.83337C9.68634 2.83337 8.78551 3.20651 8.12131 3.8707C7.45712 4.5349 7.08398 5.43573 7.08398 6.37504C7.08398 7.31435 7.45712 8.21519 8.12131 8.87938C8.78551 9.54357 9.68634 9.91671 10.6257 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M23.375 9.91671H17C17 9.91671 18.4167 2.83337 23.375 2.83337C24.3143 2.83337 25.2151 3.20651 25.8793 3.8707C26.5435 4.5349 26.9167 5.43573 26.9167 6.37504C26.9167 7.31435 26.5435 8.21519 25.8793 8.87938C25.2151 9.54357 24.3143 9.91671 23.375 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    {/* Point and price details */}
+                    <h3 className="text-3xl font-semibold">
+                        {(points+bonusAmount).toLocaleString()}P
+                    </h3>
+                    {bonusAmount > 0 && (
+                        <div className='flex mt-1'>
+                            <p className='text-xs'>{(points).toLocaleString()}P</p>
+                            <span className="text-blue-600 text-xs ml-2">
+                                +{bonusAmount.toLocaleString()} P 보너스
+                            </span>
+                        </div>
+                    )}
+                    <p className="text-lg font-medium text-gray-700 mt-1">₩ {price.toLocaleString()}</p>
+                </div>
+                <button className="w-full h-[51.5px] rounded-b-lg border-t-2" onClick={() => initiatePurchase(points, price, false, bonusAmount)}>구매하기</button>
             </div>
-            <button className="w-full h-[51.5px] rounded-b-lg border-t-2" onClick={() => initiatePurchase(points, price)}>구매하기</button>
-        </div>
-    );
+        );
+    };
 
     const PremiumPackage: React.FC = () => (
-        <div className="w-full h-[228px] bg-[#EDF4FF] rounded-2xl shadow-xl text-center">
-            <div className='flex flex-col h-[176.5px] items-center justify-center gap-4'>
+        <div className="relative w-1/3 h-[290px] bg-[#EDF4FF] rounded-2xl shadow-xl text-center border-2 border-[#0944A2]">
+            <div className="absolute top-0 left-0 w-1/3 bg-[#0944A2] text-white text-sm font-semibold py-1 rounded-tl-xl rounded-br-xl">
+                출시 할인
+            </div>
+            <div className='flex flex-col h-[237.5px] items-center justify-center gap-4'>
                 <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" fill="none">
                     <path d="M28.3327 17V31.1667H5.66602V17" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     <path d="M31.1673 9.91663H2.83398V17H31.1673V9.91663Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -414,19 +387,24 @@ const PointShop: React.FC = () => {
                     <path d="M23.375 9.91671H17C17 9.91671 18.4167 2.83337 23.375 2.83337C24.3143 2.83337 25.2151 3.20651 25.8793 3.8707C26.5435 4.5349 26.9167 5.43573 26.9167 6.37504C26.9167 7.31435 26.5435 8.21519 25.8793 8.87938C25.2151 9.54357 24.3143 9.91671 23.375 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
                 <h3 className="text-3xl font-semibold">무제한 프리미엄</h3>
-                <ul>
+                <ul className='text-left'>
                     <li>
-                        •무제한 포인트
+                    •무제한 포인트
                     </li>
                     <li>
-                        •하루 최대 5회 PDF 다운로드
+                    •하루 최대 5회 PDF 다운로드
                     </li>
                 </ul>
-                <p className="text-lg font-medium text-gray-700">₩ 25000</p>
+                <div className="w-full text-lg font-medium text-gray-700">
+                    <span className="relative">₩ 25000/월
+
+                        <span className="absolute -left-28 line-through text-gray-400">₩ 30000/월</span>
+                    </span>
+                </div>
             </div>
             <button
                 className="h-[51.5px] w-full rounded-b-lg border-t-2"
-                onClick={() => initiatePurchase(0, 25000, true)}
+                onClick={() => initiatePurchase(0, 25000, true, 0)}
             >
                 구독하기
             </button>
@@ -437,7 +415,7 @@ const PointShop: React.FC = () => {
     const PurchaseHistory: React.FC = () => (
         <div className="space-y-2">
             {isLoading ? (
-                <p>Loading purchase history...</p>
+                <p>구매 기록을 불러오는 중입니다...</p>
             ) : error ? (
                 <p>Error: {error}</p>
             ) : historyItems.length > 0 ? (
@@ -549,7 +527,7 @@ const PointShop: React.FC = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <p className="text-sm text-gray-500">No history available.</p>
+                    <p className="text-sm text-gray-500">구매 기록이 없습니다.</p>
                 )}
             </div>
         );
@@ -564,14 +542,25 @@ const PointShop: React.FC = () => {
                         <span>구매자명</span>
                         <span>{name || '이름을 가져오는 중...'}</span> {/* Display the user's name */}
                     </div>
-                    <div className="flex justify-between items-center text-lg">
-                        <span>구매 포인트</span>
-                        <span>{selectedPoints}P</span>
-                    </div>
-                    <div className="flex justify-between items-center text-lg">
-                        <span>보너스 포인트</span>
-                        <span>0P</span>
-                    </div>
+                    {!isPremium ? (
+                        <div className='space-y-4'>
+                            <div className="flex justify-between items-center text-lg">
+                                <span>구매 포인트</span>
+                                <span>{selectedPoints}P</span>
+                            </div>
+                            <div className="flex justify-between items-center text-lg">
+                                <span>보너스 포인트</span>
+                                <span>{bonusPoints}P</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <div className="flex justify-between items-center text-lg">
+                                <span>상품명</span>
+                                <span>무제한 프리미엄</span>
+                            </div>
+                        </div>
+                    )}
                     <hr className="border-gray-300" />
                     <div className="flex justify-between items-center text-xl font-semibold">
                         <span>총 결제 금액</span>
@@ -673,6 +662,21 @@ const PointShop: React.FC = () => {
                     <div className="p-10">
                         {activeTab === 'purchase' &&
                             <div className="space-y-8">
+                                <div className='flex justify-between'>
+                                    <div className='flex gap-12'>
+                                        <div>
+                                            포인트란?
+                                        </div>
+                                        <div>
+                                            영문이력서의 불렛포인트 생성을 위해 필요한 전용결제 수단입니다.
+                                        </div>
+                                    </div>
+                                    <div className='-mt-4'>
+                                        <p>불렛포인트 생성에는 50 포인트, 챗으로 수정하기에는 20pt가 사용됩니다. </p>
+                                        <p>일반회원의 경우, 하루 최대 1회 PDF 다운로드 가능합니다. </p>
+                                    </div>
+                                </div>
+                                <div className='h-[0.5px] bg-gray-300' />
                                 {/* Point Packages */}
                                 <div className="flex justify-between gap-8">
                                     <PointPackage points={500} price={5000} />
@@ -680,7 +684,7 @@ const PointShop: React.FC = () => {
                                     <PointPackage points={1000} price={10000} />
                                 </div>
                                 {/* Premium Subscription */}
-                                <div className="mt-4">
+                                <div className="flex justify-center mt-4">
                                     <PremiumPackage />
                                 </div>
                                 {/* Point Code input */}
@@ -691,11 +695,11 @@ const PointShop: React.FC = () => {
                                             value={pinCode}
                                             onChange={(e: any) => setPinCode(e.target.value)}
                                             placeholder="PIN 코드 입력"
-                                            className='border-2'
+                                            className='border-2 h-10 w-72 px-2 rounded-lg'
                                         />
-                                        <button onClick={handlePinSubmit} className='bg-blue-500 text-white'>포인트 받기</button>
+                                        <button onClick={handlePinSubmit} className='bg-blue-500 h-10 text-white p-2 rounded-lg'>포인트 받기</button>
                                     </div>
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-sm text-gray-500 mt-3">
                                         * ‘포인트 받기’ 버튼을 누르신 후에는 화면을 이탈하시더라도 이미 진행 중인 충전 절차가 취소되지 않습니다.
                                     </p>
                                 </div>

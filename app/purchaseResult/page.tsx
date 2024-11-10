@@ -17,37 +17,65 @@ const PurchaseResultContent: React.FC = () => {
 
     const [error, setError] = useState<string | null>(null);
     const [processing, setProcessing] = useState(false);
-    const hasProcessed = useRef(false); // Ref to track if processing has already happened
+    const hasProcessed = useRef(false);
     const supabase = createClient();
 
     useEffect(() => {
-        if (processing || hasProcessed.current) return; // Prevent re-execution
+        if (processing || hasProcessed.current) return;
 
         const processPurchase = async () => {
             if (success !== 'true' || !tid || !amount || !goodsName || !cardName || !orderId) {
                 return;
             }
-
+        
             setProcessing(true);
-            hasProcessed.current = true; // Set the flag to prevent future re-runs
-
+            hasProcessed.current = true;
+        
             try {
-                const points = Number(amount) / 10;
-
+                let points = 0;
+                let changeEventPoint = 0;
+                let reason = '포인트 구매';
+        
+                if (amount === '7000') {
+                    changeEventPoint = 100;  // 100 points for 7,000 KRW purchase
+                    points = Number(amount) / 10;
+                } else if (amount === '10000') {
+                    changeEventPoint = 200;  // 200 points for 10,000 KRW purchase
+                    points = Number(amount) / 10;
+                } else if (amount === '5000') {
+                    points = Number(amount) / 10;  // General points calculation for other amounts
+                } else{
+                    reason = "프리미엄 구매"
+                }
+        
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError || !user) throw new Error("User not authenticated.");
-
-                // Check if tid already exists in purchaseHistory
+        
                 const { data: existingPurchase, error: checkError } = await supabase
                     .from('purchaseHistory')
                     .select('tid')
                     .eq('tid', tid)
                     .single();
-
+        
                 if (checkError && checkError.code !== 'PGRST116') throw checkError;
                 if (existingPurchase) return;
-
-                // Retrieve the latest bullet point history
+        
+                if (amount === '25000') {
+                    reason = '프리미엄 구매';
+                    const expirationDate = new Date();
+                    expirationDate.setUTCDate(expirationDate.getUTCDate() + 30);
+        
+                    const { error: updateProfileError } = await supabase
+                        .from('profiles')
+                        .update({
+                            isPremium: true,
+                            premium_expiration: expirationDate.toISOString()
+                        })
+                        .eq('user_id', user.id);
+        
+                    if (updateProfileError) throw updateProfileError;
+                }
+        
                 const { data: latestHistory, error: historyError } = await supabase
                     .from('BulletPointHistory')
                     .select('purchasePoint, eventPoint')
@@ -55,60 +83,43 @@ const PurchaseResultContent: React.FC = () => {
                     .order('timestamp', { ascending: false })
                     .limit(1)
                     .single();
-
+        
                 if (historyError) throw new Error("Failed to retrieve latest history points.");
-
+        
                 const previousPurchasePoint = latestHistory ? latestHistory.purchasePoint : 0;
                 const previousEventPoint = latestHistory ? latestHistory.eventPoint : 0;
-
-                const newPurchasePoint = previousPurchasePoint + points;
-
-                // Insert updated record in BulletPointHistory
+        
+                const newPurchasePoint = points + previousPurchasePoint;
+                const newEventPoint = changeEventPoint + previousEventPoint;
+        
                 const { error: insertHistoryError } = await supabase
                     .from('BulletPointHistory')
                     .insert({
                         user_id: user.id,
-                        changeEventPoint: 0,
+                        changeEventPoint,
                         change: points,
                         purchasePoint: newPurchasePoint,
-                        eventPoint: previousEventPoint,
-                        reason: '상품 구매'
+                        eventPoint: newEventPoint,
+                        reason
                     });
-
+        
                 if (insertHistoryError) throw insertHistoryError;
-
-                // Insert purchase record in purchaseHistory
+        
                 const { error: insertPurchaseError } = await supabase
                     .from('purchaseHistory')
                     .insert({
                         user_id: user.id,
-                        구매포인트: points,
-                        잔여포인트: newPurchasePoint + previousEventPoint,
+                        구매포인트: points + changeEventPoint,
+                        잔여포인트: newPurchasePoint + newEventPoint,
                         금액: amount,
                         상품명: goodsName,
                         카드명: cardName,
                         orderId: orderId,
                         tid: tid
                     });
-
+        
                 if (insertPurchaseError) throw insertPurchaseError;
-
-                // Update isPremium in profiles if amount is 25000
-                // Inside your processPurchase function
-                const expirationDate = new Date();
-                expirationDate.setUTCDate(expirationDate.getUTCDate() + 30); // Set 30 days ahead in UTC
-
-                const { error: updateProfileError } = await supabase
-                    .from('profiles')
-                    .update({
-                        isPremium: true,
-                        premium_expiration: expirationDate.toISOString() // Convert to UTC string
-                    })
-                    .eq('id', user.id);
-
-                if (updateProfileError) throw updateProfileError;
-
-
+        
             } catch (err) {
                 console.error("Error processing purchase:", err);
                 setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -116,6 +127,7 @@ const PurchaseResultContent: React.FC = () => {
                 setProcessing(false);
             }
         };
+        
 
         processPurchase();
     }, [success, tid, amount, goodsName, cardName, orderId, processing]);
