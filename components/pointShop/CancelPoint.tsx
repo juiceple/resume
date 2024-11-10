@@ -136,8 +136,7 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
                         change: -points,
                         eventPoint: eventPoints,
                         purchasePoint: newPoints,
-                        reason: '구매 취소',
-                        timestamp: new Date().toISOString(),
+                        reason: '구매 취소'
                     },
                 ]);
 

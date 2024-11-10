@@ -106,29 +106,30 @@ const PointShop: React.FC = () => {
     };
 
     useEffect(() => {
-        // Fetch user name from profiles table
         const fetchUserName = async () => {
             try {
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError || !user) throw new Error("User not authenticated.");
-
+    
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('name')
                     .eq('id', user.id)
                     .single();
-
+    
                 if (profileError) throw profileError;
-
+    
                 setName(profile?.name || null);
             } catch (error) {
                 console.error("Error fetching user name:", error);
                 setError(error instanceof Error ? error.message : 'An unknown error occurred');
             }
         };
-
+    
+        // Execute fetchUserName only if user exists
         fetchUserName();
-    }, []);
+    }, []); // Runs only once on component mount
+    
 
 
     // Fetch purchase history
@@ -148,22 +149,23 @@ const PointShop: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const fetchPurchaseHistory = async () => {
+        const fetchUserAndPurchaseHistory = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
-
+    
+                // Get authenticated user
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError || !user) throw new Error("User not authenticated.");
-
+    
                 const { data, error: historyError } = await supabase
                     .from('purchaseHistory')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('구매일자', { ascending: false });
-
+    
                 if (historyError) throw historyError;
-
+    
                 const formattedHistoryItems = data.map((item: any) => ({
                     date: new Date(item.구매일자).toLocaleDateString(),
                     amount: item.금액,
@@ -172,7 +174,7 @@ const PointShop: React.FC = () => {
                     tid: item.tid,
                     status: item.status,
                 }));
-
+    
                 setHistoryItems(formattedHistoryItems);
             } catch (err) {
                 console.error("Error fetching purchase history:", err);
@@ -181,9 +183,12 @@ const PointShop: React.FC = () => {
                 setIsLoading(false);
             }
         };
-
-        fetchPurchaseHistory();
-    }, [historyUpdated]); // Re-fetch when historyUpdated changes
+    
+        if (activeTab === 'history' || historyUpdated) {
+            fetchUserAndPurchaseHistory();
+        }
+    }, [activeTab, historyUpdated]); // Add activeTab as a dependency
+    
 
 
     const handlePinSubmit = async () => {
@@ -267,8 +272,7 @@ const PointShop: React.FC = () => {
                 .from('couponredemptions')
                 .insert({
                     user_id: user.id,
-                    쿠폰코드: pinCode,
-                    사용일: new Date().toISOString()
+                    쿠폰코드: pinCode
                 });
 
             if (redemptionInsertError) throw redemptionInsertError;
@@ -749,7 +753,6 @@ const PointShop: React.FC = () => {
                 />
             )}
             {isConfirmationModalOpen && <ConfirmationModal />}
-
         </div>
     );
 };

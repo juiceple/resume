@@ -82,7 +82,6 @@ const PurchaseResultContent: React.FC = () => {
                     .from('purchaseHistory')
                     .insert({
                         user_id: user.id,
-                        구매일자: new Date().toISOString(),
                         구매포인트: points,
                         잔여포인트: newPurchasePoint + previousEventPoint,
                         금액: amount,

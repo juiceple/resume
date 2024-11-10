@@ -192,8 +192,7 @@ export default function Edits() {
         purchasePoint: updatedPurchasePoints,
         changeEventPoint: -eventPointDeduction,  // 이벤트 포인트 차감 내역
         change: -purchasePointDeduction,         // 구매 포인트 차감 내역
-        reason: isCreation ? '불렛 포인트 생성' : '불렛 포인트 수정',
-        timestamp: new Date(),  // 현재 시간
+        reason: isCreation ? '불렛 포인트 생성' : '불렛 포인트 수정'
       }]);
   
     if (insertError) {
