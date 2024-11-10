@@ -10,14 +10,15 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (error) {
-      console.error("Error exchanging code for session:", error);
+    if (exchangeError) {
+      console.error("Error exchanging code for session:", exchangeError);
       return NextResponse.redirect(`${origin}/login?error=AuthenticationFailed`);
     }
   }
 
+  // Retrieve the session directly after exchanging the code
   const supabase = createClient();
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
@@ -36,16 +37,16 @@ export async function GET(request: Request) {
     .single();
 
   if (fetchError || !existingUser) {
-    // Redirect to sign-up page if user does not exist
+    console.error("User not found in profiles table or error occurred:", fetchError);
     return NextResponse.redirect(`${origin}/signup/google`);
+  }
+
+  // Redirect based on the 'type' parameter or other query parameters
+  if (type === "signup") {
+    return NextResponse.redirect(`${origin}/signup/google`);
+  } else if (redirectTo) {
+    return NextResponse.redirect(`${origin}${redirectTo}`);
   } else {
-    // Redirect based on the type or default to docs
-    if (type === "signup") {
-      return NextResponse.redirect(`${origin}/signup/google`);
-    } else if (redirectTo) {
-      return NextResponse.redirect(`${origin}${redirectTo}`);
-    } else {
-      return NextResponse.redirect(`${origin}/docs`);
-    }
+    return NextResponse.redirect(`${origin}/docs`);
   }
 }
