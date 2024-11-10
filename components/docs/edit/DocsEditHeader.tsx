@@ -38,6 +38,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     const router = useRouter();
     const supabase = createClient();
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [availablePoints, setAvailablePoints] = useState<number | null>(null);
 
     // Define updateAlert state for CustomAlert
     const [alert, setAlert] = useState({
@@ -154,6 +155,25 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             setLoading(false);
         }
     }, [resumeId, router]);
+
+    const fetchUserPoints = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('BulletPoint')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (error) throw error;
+                setAvailablePoints(data?.BulletPoint || 0);
+            }
+        } catch (error) {
+            console.error('Error fetching user points:', error);
+        }
+    }, [supabase]);
+
     //--현재 Resume 삭제 함수--//
     const handleDeleteResume = useCallback(async () => {
         setLoading(true);
@@ -358,7 +378,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
 
     return (
         <>
-            {loading && <FullScreenLoader message={loadingMessage} isVisible={true}/>}
+            {loading && <FullScreenLoader message={loadingMessage} isVisible={true} />}
             <div className="w-full h-[55px] pl-6 pr-5 Resume-color-30 flex items-center justify-between ">
                 <div className="flex gap-4 items-center">
                     <Link href={`/docs`} passHref>
@@ -383,6 +403,16 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                                 <p className='text-[15px] text-black'>저장!</p>
                             </div>
                         )}
+                    </div>
+                    <div className='flex items-center gap-4 font-bold'>
+                        <div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+                                <path d="M3 14.6117L13 2.61169L12 10.6117H21L11 22.6117L12 14.6117H3Z" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </div>
+                        <div>
+                            사용 가능한 포인트: <span>{availablePoints !== null ? availablePoints : '로딩 중...'}</span>
+                        </div>
                     </div>
                 </div>
                 <div className="flex h-[35px]">

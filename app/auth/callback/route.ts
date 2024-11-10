@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   // Check if the user exists in the profiles table
   const { data: existingUser, error: fetchError } = await supabase
     .from("profiles")
-    .select("id")
+    .select("*")
     .eq("user_id", userId)
     .single();
 
