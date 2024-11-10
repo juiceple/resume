@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 const FadeInText = dynamic(() => import('@/components/FadeInText').then(mod => mod.default), { ssr: false });
 const CountUp = dynamic(() => import('@/components/CountUp').then(mod => mod.default), { ssr: false });
 const SlideUpSection = dynamic(() => import('@/components/SlideUpSection').then(mod => mod.default), { ssr: false });
-const FirstVisitAlert = dynamic(() => import('@/components/FirstVisitAlert').then(mod => mod.default), { ssr: false });
+const FirstVisitAlert = dynamic(() => import('@/components/FirstVisitAlertMobile').then(mod => mod.default), { ssr: false });
 const featureData = [
     {
         title: 'ATS-Friendly CV',
