@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 
-export default function FirstVisitAlert() {
+export default function FirstVisitAlertMobile() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function FirstVisitAlert() {
 
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-      <AlertDialogContent className="w-[200px] h-auto py-12 flex flex-col justify-between items-center rounded-xl">
+      <AlertDialogContent className="w-[300px] h-auto py-12 flex flex-col justify-between items-center rounded-xl">
         <div>
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
         </div>
