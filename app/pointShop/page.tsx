@@ -307,7 +307,7 @@ const PointShop: React.FC = () => {
             const amount = isPremium ? 25000 : selectedPrice;
             // 일반 1회 결제 요청
             AUTHNICE.requestPay({
-                clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+                clientId: 'R2_1952d214395045458fdb126e406b16b6',
                 method: 'cardAndEasyPay',
                 orderId: uniqueOrderId,
                 amount,
