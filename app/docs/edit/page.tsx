@@ -88,6 +88,7 @@ export default function Edits() {
     fetchUserId();
   }, []);
 
+
   const fetchUserProfile = async (userId: string) => {
     console.log("함수 실행됨")
     const { data, error } = await supabase
@@ -136,78 +137,90 @@ export default function Edits() {
   }, [searchParams]);
 
   const deductPoints = async (amount: number, isCreation: boolean) => {
-    if (!userId) return;
-    console.log(eventPoints, purchasePoints)
-    let remainingAmount = amount;
-    let updatedEventPoints = eventPoints;
-    let updatedPurchasePoints = purchasePoints;
-    let eventPointDeduction = 0;
-    let purchasePointDeduction = 0;
-  
+  if (!userId) return;
+
+  // Check if user is Premium
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('isPremium')
+    .eq('user_id', userId)
+    .single();
+
+  if (profileError) {
+    updateAlert("에러", "사용자 정보를 가져오는 데 실패했습니다.");
+    console.error('Error fetching profile:', profileError);
+    return;
+  }
+
+  // If user is premium, set deductions to zero
+  let remainingAmount = amount;
+  let updatedEventPoints = eventPoints;
+  let updatedPurchasePoints = purchasePoints;
+  let eventPointDeduction = 0;
+  let purchasePointDeduction = 0;
+
+  if (profileData?.isPremium) {
+    eventPointDeduction = 0;
+    purchasePointDeduction = 0;
+    remainingAmount = 0;
+    console.log("Premium user - no points deducted");
+  } else {
     console.log("초기 상태 - eventPoints:", eventPoints, "purchasePoints:", purchasePoints);
-  
-    // 이벤트 포인트에서 먼저 차감
+
+    // Deduct from event points first
     if (eventPoints >= amount) {
       updatedEventPoints -= remainingAmount;
       eventPointDeduction = remainingAmount;
       remainingAmount = 0;
-      console.log("이벤트 포인트에서 전부 차감 - 차감량:", eventPointDeduction);
     } else {
       eventPointDeduction = eventPoints;
       remainingAmount -= eventPoints;
       updatedEventPoints = 0;
-  
-      // 남은 양은 구매 포인트에서 차감
+
+      // Deduct remaining amount from purchase points
       updatedPurchasePoints -= remainingAmount;
       purchasePointDeduction = remainingAmount;
-      console.log("이벤트 포인트 전부 소진, 남은 양을 구매 포인트에서 차감 - 구매 포인트 차감량:", purchasePointDeduction);
     }
-  
-    console.log("차감 후 상태 - updatedEventPoints:", updatedEventPoints, "updatedPurchasePoints:", updatedPurchasePoints);
-    console.log("차감 기록 - eventPointDeduction:", eventPointDeduction, "purchasePointDeduction:", purchasePointDeduction);
-  
-    // Supabase에서 포인트 업데이트
-    const { error: updateError } = await supabase
-      .from('BulletPointHistory')
-      .update({
-        eventPoint: updatedEventPoints,
-        purchasePoint: updatedPurchasePoints,
-      })
-      .eq('user_id', userId);
-  
-    if (updateError) {
-      updateAlert("에러", "포인트 업데이트에 실패했습니다.");
-      console.error('Error updating points in database:', updateError);
-      return;
-    } else {
-      console.log("포인트 업데이트 성공 - eventPoint:", updatedEventPoints, "purchasePoint:", updatedPurchasePoints);
-    }
-  
-    // BulletPointHistory에 이벤트 포인트와 구매 포인트 차감 기록 추가
-    const { error: insertError } = await supabase
-      .from('BulletPointHistory')
-      .insert([{
-        user_id: userId,
-        eventPoint: updatedEventPoints,
-        purchasePoint: updatedPurchasePoints,
-        changeEventPoint: -eventPointDeduction,  // 이벤트 포인트 차감 내역
-        change: -purchasePointDeduction,         // 구매 포인트 차감 내역
-        reason: isCreation ? '불렛 포인트 생성' : '불렛 포인트 수정'
-      }]);
-  
-    if (insertError) {
-      updateAlert("에러", "포인트 기록을 저장하는 데 실패했습니다.");
-      console.error('Error inserting into BulletPointHistory:', insertError);
-    } else {
-      console.log("포인트 기록 추가 성공 - changeEventPoint:", -eventPointDeduction, "change:", -purchasePointDeduction);
-      
-      // 데이터베이스 업데이트가 성공하면 로컬 상태 업데이트
-      setEventPoints(updatedEventPoints);
-      setPurchasePoints(updatedPurchasePoints);
-      setBulletPoints(updatedEventPoints + updatedPurchasePoints); // 전체 포인트 업데이트
-      console.log("로컬 상태 업데이트 완료 - 총 포인트:", updatedEventPoints + updatedPurchasePoints);
-    }
-  };
+  }
+
+  // Update points in the database
+  const { error: updateError } = await supabase
+    .from('BulletPointHistory')
+    .update({
+      eventPoint: updatedEventPoints,
+      purchasePoint: updatedPurchasePoints,
+    })
+    .eq('user_id', userId);
+
+  if (updateError) {
+    updateAlert("에러", "포인트 업데이트에 실패했습니다.");
+    console.error('Error updating points in database:', updateError);
+    return;
+  }
+
+  // Log the deduction in BulletPointHistory
+  const { error: insertError } = await supabase
+    .from('BulletPointHistory')
+    .insert([{
+      user_id: userId,
+      eventPoint: updatedEventPoints,
+      purchasePoint: updatedPurchasePoints,
+      changeEventPoint: -eventPointDeduction,
+      change: -purchasePointDeduction,
+      reason: isCreation ? '불렛 포인트 생성' : '불렛 포인트 수정'
+    }]);
+
+  if (insertError) {
+    updateAlert("에러", "포인트 기록을 저장하는 데 실패했습니다.");
+    console.error('Error inserting into BulletPointHistory:', insertError);
+  } else {
+    // Update local state
+    setEventPoints(updatedEventPoints);
+    setPurchasePoints(updatedPurchasePoints);
+    setBulletPoints(updatedEventPoints + updatedPurchasePoints);
+  }
+};
+
   
   
 

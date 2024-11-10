@@ -87,7 +87,7 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
             const { purchasePoints } = pointsData;
 
             if (purchasePoints < points) {
-                updateAlert("포인트 부족", "취소하기 위한 포인트가 부족합니다.");
+                updateAlert("잔려 포인트를 일부만 취소하고 싶어요.", "잔여 포인트는 결제일로부터 지난 일 수, 결제 수단에 따라 취소 여부가 다르므로 구매내역과 함께 고객센터에 문의 부탁드립니다.");
                 return;
             }
 
@@ -149,7 +149,7 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
             setBulletPoints(newPoints + eventPoints);
             onCancellation();
             // Show success alert after cancellation is complete
-            updateAlert("취소 완료", "취소가 완료됐습니다!");
+            updateAlert("환불 요청 완료", "카드사에 환불 요청을 완료하여, 영업일 7일 이내 결제하신 수단으로 환불될 예정입니다!");
         } catch (err) {
             updateAlert("취소 요청 중 오류", "구매 취소를 완료할 수 없습니다.");
         } finally {

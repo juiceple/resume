@@ -328,7 +328,7 @@ const PointShop: React.FC = () => {
                     goodsName,
                     returnUrl: '/api/serverAuth',
                     fnError: function (result: any) {
-                        updateAlert("결제 오류", '결제 오류: ' + result.errorMsg);
+                        updateAlert("결제 오류", '잠시 후에 다시 시도해주세요. 계속적인 오류 발생 시 고객센터로 문의 부탁드립니다.');
                     }
                 });
             }
@@ -431,11 +431,19 @@ const PointShop: React.FC = () => {
                     <path d="M23.375 9.91671H17C17 9.91671 18.4167 2.83337 23.375 2.83337C24.3143 2.83337 25.2151 3.20651 25.8793 3.8707C26.5435 4.5349 26.9167 5.43573 26.9167 6.37504C26.9167 7.31435 26.5435 8.21519 25.8793 8.87938C25.2151 9.54357 24.3143 9.91671 23.375 9.91671Z" stroke="#2871E6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
                 <h3 className="text-3xl font-semibold">무제한 프리미엄</h3>
+                <ul>
+                    <li>
+                    •무제한 포인트
+                    </li>
+                    <li>
+                    •하루 최대 5회 PDF 다운로드
+                    </li>
+                </ul>
                 <p className="text-lg font-medium text-gray-700">₩ 25000</p>
             </div>
             <button
                 className="h-[51.5px] w-full rounded-b-lg border-t-2"
-                onClick={() => initiatePurchase(0, 25000)}
+                onClick={() => initiatePurchase(0, 25000,true)}
             >
                 구독하기
             </button>
@@ -607,7 +615,7 @@ const PointShop: React.FC = () => {
                             />
                             <span className="ml-2">[필수] 결제 정보 제 3자 제공 동의</span>
                         </div>
-                        <a href="/terms/결제%20서비스%20이용약관" target="_blank" className="text-blue-600">약관 보기</a>
+                        <a href="/terms/결제%20약관" target="_blank" className="text-blue-600">약관 보기</a>
                     </label>
                     <label className="flex items-center justify-between">
                         <div className="flex items-center">
@@ -619,7 +627,7 @@ const PointShop: React.FC = () => {
                             />
                             <span className="ml-2">[필수] CVMATE 유료서비스 이용약관</span>
                         </div>
-                        <a href="/terms/결제%20서비스%20이용약관" target="_blank" className="text-blue-600">약관 보기</a>
+                        <a href="/terms/결제%20약관" target="_blank" className="text-blue-600">약관 보기</a>
                     </label>
                 </div>
                 <div className="flex space-x-4 mt-6">

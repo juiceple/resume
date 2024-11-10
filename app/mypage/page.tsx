@@ -207,13 +207,13 @@ const useMyPageData = () => {
                 ...prev,
                 ...updatedData
             }));
-            setAlertTitle("Success");
-            setAlertMessage("데이터가 성공적으로 저장되었습니다.");
+            setAlertTitle("수정 완료");
+            setAlertMessage("수정이 정상적으로 완료되었습니다.");
             setShowAlert(true);
         } catch (error) {
-            console.error('Error saving my page data:', error);
-            setAlertTitle("Error");
-            setAlertMessage("데이터 저장 중 오류가 발생했습니다.");
+            console.error('오류가 발생했습니다.');
+            setAlertTitle("오류가 발생했습니다.");
+            setAlertMessage("잠시 후에 다시 시도해주세요. 계속적인 오류 발생 시 고객센터로 문의 부탁드립니다. ");
             setShowAlert(true);
         }
     };

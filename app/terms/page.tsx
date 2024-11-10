@@ -56,7 +56,7 @@ export default function TermsPage() {
               date="마케팅 이용 및 수신 동의(2024.11.03. 본)"
             />
             <TermsSection 
-              title="결제 서비스 이용약관" 
+              title="결제 약관" 
               date="결제 서비스 이용약관(2024.11.09. 본)"
             />
           </div>

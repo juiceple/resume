@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import FullScreenLoader from '@/components/FullScreenLoad';
 import CustomAlert from '@/components/CustomAlert';
+import { RealtimeChannel } from '@supabase/supabase-js'
+import PdfDownloadModal from './pdfDownModal';
 
 interface EditHeaderProps {
     resumeId: string;
@@ -39,13 +41,14 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     const supabase = createClient();
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [availablePoints, setAvailablePoints] = useState<number | null>(null);
-
+    const [isPremium, setIsPremium] = useState<boolean | null>(null)
     // Define updateAlert state for CustomAlert
     const [alert, setAlert] = useState({
         show: false,
         title: '',
         message: [] as string[],
     });
+    const [pdfPoint, setPdfPoint] = useState<number | null>(null);
 
     // Function to update updateAlert state
     const updateAlert = (title: string, message: string | string[], show = true) => {
@@ -160,21 +163,61 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
 
     const fetchUserPoints = useCallback(async () => {
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 const { data, error } = await supabase
                     .from('profiles')
-                    .select('BulletPoint')
+                    .select('BulletPoint, isPremium, pdfPoint')
                     .eq('user_id', user.id)
-                    .single();
+                    .single()
 
-                if (error) throw error;
-                setAvailablePoints(data?.BulletPoint || 0);
+                if (error) throw error
+
+                console.log(data);
+
+                setAvailablePoints(data?.BulletPoint || 0)
+                setIsPremium(data?.isPremium || false)
+                setPdfPoint(data?.pdfPoint || 0);
+                console.log(data?.BulletPoint, data?.isPremium, data?.pdfPoint)
+                console.log(availablePoints, isPremium, pdfPoint);
             }
         } catch (error) {
-            console.error('Error fetching user points:', error);
+            console.error('Error fetching user points:', error)
         }
-    }, [supabase]);
+    }, [supabase])
+
+    useEffect(() => {
+        fetchUserPoints()
+
+        // Set up real-time subscription for BulletPoint updates
+        let channel: RealtimeChannel | null = null
+
+        const setupRealtimeSubscription = async () => {
+            channel = supabase
+                .channel('table-db-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'profiles',
+                    },
+                    (payload) => {
+                        console.log('Profiles table change detected:', payload)
+                        fetchUserPoints()
+                    }
+                )
+                .subscribe()
+        }
+
+        setupRealtimeSubscription()
+
+        return () => {
+            if (channel) {
+                supabase.removeChannel(channel)
+            }
+        }
+    }, [fetchUserPoints, supabase])
 
     useEffect(() => {
         fetchUserPoints();
@@ -199,7 +242,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             setShowDeleteAlert(false);
         }
     }, [resumeId, router]);
-    //--PDF를 생성하는 함수(아직 미해결 사안)--//
+
     // const generatePDF = useCallback(async () => {
     //     setLoading(true);
     //     setLoadingMessage('PDF를 생성 중입니다...');
@@ -288,6 +331,11 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
     //     }
     //   }, [title]);
     const generatePDF = useCallback(async () => {
+        if (pdfPoint == 0) {
+            updateAlert('최대 사용 횟수 도달', '1일 PDF 다운로드 최대횟수에 도달하셨습니다.');
+            return;
+        }
+        
         setLoading(true);
         setLoadingMessage('PDF를 생성 중입니다...');
 
@@ -344,7 +392,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
             const htmlContent = cleanedContent.innerHTML;
 
-            const response = await fetch('http://localhost:3001/api/generate-pdf', {
+            const response = await fetch('/api/generate-pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -373,14 +421,29 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             link.download = `${title || 'resume'}.pdf`;
             link.click();
             window.URL.revokeObjectURL(url);
+            // After successful PDF download, decrement pdfPoint by 1
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ pdfPoint: (pdfPoint || 1) - 1 })
+                    .eq('user_id', user.id);
+
+                if (error) throw error;
+
+                // Update the local state to reflect the new pdfPoint value
+                setPdfPoint((pdfPoint || 0) - 1);
+            }
 
         } catch (error) {
             console.error('PDF 생성 오류:', error);
-            updateAlert('PDF 생성 오류', `PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+            // alert(`PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         } finally {
             setLoading(false);
+            
         }
     }, [title]);
+
 
     return (
         <>
@@ -411,28 +474,31 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                         )}
                     </div>
                     <div className='flex items-center gap-4 font-bold'>
-                        <div>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-                                <path d="M3 14.6117L13 2.61169L12 10.6117H21L11 22.6117L12 14.6117H3Z" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        </div>
-                        <div>
-                            사용 가능한 포인트: <span>{availablePoints !== null ? availablePoints : '로딩 중...'}</span>
-                        </div>
+                        {isPremium ? (
+                            <div className='w-32 rounded-full bg-gray-400 text-center text-xss'>프리미엄 유저</div>
+                        ) : (
+                            <div className="flex items-center gap-6 font-bold">
+                                <div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+                                        <path d="M3 14.6117L13 2.61169L12 10.6117H21L11 22.6117L12 14.6117H3Z" stroke="#5D5D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                                사용 가능한 포인트:<span>{availablePoints !== null ? availablePoints : '로딩 중...'}</span>
+                                <div className='w-32 rounded-full bg-gray-400 text-center text-xss'>일반 유저</div>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="flex h-[35px]">
-                    <button
-                        className="Resume-color-10 rounwhite rounded-full text-black flex shrink-0 items-center w-[120px] items-center justify-center gap-1 hover:bg-[#1759C4]"
-                        onClick={generatePDF}
-                    >
-                        <div className='text-white text-xs'>
-                            PDF 다운 받기
-                        </div>
-                        <div>
-                            <Download size={16} color={"#FFFFFF"} />
-                        </div>
-                    </button>
+                    <div className='flex items-center gap-3 mr-4'>
+                        <p className='text-[12px]'>PDF 다운로드 가능 횟수</p>
+                        <div className='flex items-center justify-center rounded-full text-white w-8 h-8 bg-gray-300'>{pdfPoint}</div>
+                    </div>
+                    <PdfDownloadModal
+                        onDownload={() => {
+                            generatePDF();
+                        }}
+                    />
 
                     <Popover>
                         <PopoverTrigger asChild>

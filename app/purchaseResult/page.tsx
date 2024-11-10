@@ -92,6 +92,23 @@ const PurchaseResultContent: React.FC = () => {
                     });
 
                 if (insertPurchaseError) throw insertPurchaseError;
+
+                // Update isPremium in profiles if amount is 25000
+                // Inside your processPurchase function
+                const expirationDate = new Date();
+                expirationDate.setUTCDate(expirationDate.getUTCDate() + 30); // Set 30 days ahead in UTC
+
+                const { error: updateProfileError } = await supabase
+                    .from('profiles')
+                    .update({
+                        isPremium: true,
+                        premium_expiration: expirationDate.toISOString() // Convert to UTC string
+                    })
+                    .eq('id', user.id);
+
+                if (updateProfileError) throw updateProfileError;
+
+
             } catch (err) {
                 console.error("Error processing purchase:", err);
                 setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -124,23 +141,21 @@ const PurchaseResultContent: React.FC = () => {
                     </div>
                     <div className="flex justify-between text-gray-600">
                         <span>구매 내역</span>
-                        <span className="font-semibold text-gray-800">{goodsName ||  "NONE"}</span>
+                        <span className="font-semibold text-gray-800">{goodsName || "NONE"}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
                         <span>결제 수단</span>
-                        <span className="font-semibold text-gray-800">{cardName ||  "NONE"}</span>
+                        <span className="font-semibold text-gray-800">{cardName || "NONE"}</span>
                     </div>
                     <div className="flex justify-between text-gray-600">
                         <span>결제 금액</span>
-                        <span className="font-semibold text-gray-800">₩{amount ||  "NONE"}</span>
+                        <span className="font-semibold text-gray-800">₩{amount || "NONE"}</span>
                     </div>
                 </div>
-
                 <Link href={"/docs"}>
                     <div className="mt-8 w-full bg-blue-500 text-white py-2 rounded-lg text-center font-semibold hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
                         영문이력서 만들러 가기
                     </div>
-                    
                 </Link>
             </div>
         </div>

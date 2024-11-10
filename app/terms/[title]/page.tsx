@@ -460,7 +460,7 @@ export default function TermsDetailPage() {
         }
       ]
     },
-    '결제 서비스 이용약관':{
+    '결제 약관':{
       sections: [
         {
           title: '제 1 조 (목적)',
