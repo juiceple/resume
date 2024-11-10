@@ -114,7 +114,7 @@ const PointShop: React.FC = () => {
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('name')
-                    .eq('id', user.id)
+                    .eq('user_id', user.id)
                     .single();
     
                 if (profileError) throw profileError;
