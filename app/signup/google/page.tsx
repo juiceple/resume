@@ -155,6 +155,7 @@ export default function SignupPage() {
         .insert({
           user_id: user.id, // if user_id is relevant to the other table
           reason: '계정생성',
+          changeEventPoint: 200
         });
   
       if (otherTableError) {
