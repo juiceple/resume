@@ -192,10 +192,6 @@ export default function SignupPage() {
         .from('BulletPointHistory') // Replace with the actual table name
         .insert({
           user_id: user.id, // if user_id is relevant to the other table
-          eventPoint: 200,
-          purchasePoint: 0,
-          change: 0,
-          changeEventPoint: 0,
           reason: '계정생성',
         });
   
