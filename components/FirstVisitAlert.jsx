@@ -19,14 +19,14 @@ export default function FirstVisitAlert() {
 
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-      <AlertDialogContent className="w-144 h-[500px] py-12 flex flex-col justify-between items-center">
+      <AlertDialogContent className="w-[400px] h-[500px] py-12 flex flex-col justify-between items-center">
         <div>
           <Image src="/images/resume.png" alt="Logo" width={192} height={68} />
         </div>
         <div className="text-2xl font-semibold">
           <h2>출시 기념 200P 무료 제공!</h2>
         </div>
-        <div className="flex flex-col text-[12px] items-center text-center gap-[8px]">
+        <div className="flex flex-col text-[16px] items-center text-center gap-[8px]">
           <p>감사하게도 너무나 많은 분들의 응원과 관심을 받게 되어,</p>
           <p>회원가입 시 200포인트를 무료로 제공해드립니다.</p>
           <p>지금 바로 회원가입하고 혜택을 받아보세요!</p>

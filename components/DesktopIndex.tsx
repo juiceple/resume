@@ -236,7 +236,7 @@ export default function Index() {
           <div className="flex flex-col items-center max-w-[800px] mx-auto">
             <h1 className="text-5xl font-bold mb-[50px]">
               <span className="highlight-container relative inline-block">
-                <span className="highlight-text px-2 py-0.5 relative z-10">출시 알람 한정</span>
+                <span className="highlight-text px-2 py-0.5 relative z-10">출시 한정</span>
                 <span className="highlight-background absolute inset-0 bg-yellow-300 transform -skew-x-12"></span>
               </span> 무료 혜택 제공!
             </h1>
@@ -249,14 +249,13 @@ export default function Index() {
                 quality={100}
               />
               <div className="relative z-10 p-[60px] flex flex-col items-center gap-6">
-                <h3 className="text-2xl font-bold mb-2">사전예약 EVENT</h3>
-                <h2 className="text-3xl font-bold mb-2 text-white line-through">5,000원</h2>
-                <h2 className="text-4xl font-bold mb-4">0원 스타터 패키지</h2>
-                <HomeButton variant="gradient" text="지금 바로 사용해보기" url="/signup" size="small" />
-                <p className="text-sm text-white mb-4">무료로 특별한 혜택을 만나보세요:</p>
+                <h3 className="text-2xl font-bold mb-2">출시 EVENT</h3>
+                <h2 className="text-4xl font-bold mb-4">무료 200 포인트!</h2>
+                <HomeButton variant="gradient" text="지금 혜택 받기" url="/signup" size="small" />
+                <p className="text-sm text-white mb-4">출시 기념 무료 포인트로 CVMATE를 체험해보세요!</p>
                 <div className='text-start'>
                   <ul className="text-sm font-semibold list-none pl-0">
-                    <li>첫 한 달간, 무료로 AI 기반 불렛포인트 생성</li>
+                    <li>쉽고 간편한 AI 기반 불렛포인트 생성</li>
                     <li>대기업 합격 이력서 템플릿 무료 제공</li>
                     <li>무제한으로 이력서 파일 생성 및 저장</li>
                   </ul>

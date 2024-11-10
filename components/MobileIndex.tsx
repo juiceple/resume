@@ -10,7 +10,7 @@ const FadeInText = dynamic(() => import('@/components/FadeInText').then(mod => m
 const CountUp = dynamic(() => import('@/components/CountUp').then(mod => mod.default), { ssr: false });
 const SlideUpSection = dynamic(() => import('@/components/SlideUpSection').then(mod => mod.default), { ssr: false });
 const FirstVisitAlert = dynamic(() => import('@/components/FirstVisitAlertMobile').then(mod => mod.default), { ssr: false });
-const HomeButton =dynamic(() => import('@/components/HomeButtonMobile').then(mod => mod.default), { ssr: false });
+const HomeButton = dynamic(() => import('@/components/HomeButtonMobile').then(mod => mod.default), { ssr: false });
 const featureData = [
     {
         title: 'ATS-Friendly CV',
@@ -190,19 +190,18 @@ export default function Index() {
                 <SlideUpSection className="w-full flex flex-col w-full justify-center items-center bg-white py-6 pb-12 text-center">
                     <h1 className="text-2xl font-bold mb-[50px]">
                         <span className="highlight-container">
-                            <span className="highlight-text px-2 py-0.5">출시 알람 한정</span>
+                            <span className="highlight-text px-2 py-0.5">출시 한정</span>
                             <span className="highlight-background"></span>
                         </span> 무료 혜택 제공!
                     </h1>
                     <div className="flex flex-col justify-center items-center max-w-md w-full mx-auto shadow-md start-card p-[20px] gap-4">
-                        <h3 className="text-xl font-bold">사전예약 EVENT</h3>
-                        <h2 className="text-2xl font-bold text-white line-through">5,000원</h2>
-                        <h2 className="text-2xl font-bold">0원 스타터 패키지</h2>
-                        <HomeButton variant="gradient" text="지금 이용하러가기" url="/signup" size="small" />
-                        <p className="text-xs text-white">무료로 특별한 혜택을 만나보세요:</p>
+                        <h3 className="text-xl font-bold">출시 EVENT</h3>
+                        <h2 className="text-2xl font-bold">무료 200 포인트!</h2>
+                        <HomeButton variant="gradient" text="지금 혜택 받기" url="/signup" size="small" />
+                        <p className="text-xs text-white mb-4">출시 기념 무료 포인트로 CVMATE를 체험해보세요!</p>
                         <div className=' pl-10 text-start'>
                             <ul className="text-xs font-semibold list-none pl-0">
-                                <li>첫 한 달간, 무료로 AI 기반 불렛포인트 생성</li>
+                                <li>쉽고 간편한 AI 기반 불렛포인트 생성</li>
                                 <li>대기업 합격 이력서 템플릿 무료 제공</li>
                                 <li>무제한으로 이력서 파일 생성 및 저장</li>
                             </ul>
