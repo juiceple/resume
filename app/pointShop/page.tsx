@@ -257,8 +257,7 @@ const PointShop: React.FC = () => {
                     changeEventPoint: assignedPoints,  // 이번에 추가된 이벤트 포인트
                     purchasePoint: previousPurchasePoint, // 구매 포인트는 변경 없음
                     eventPoint: newEventPoint,         // 누적된 이벤트 포인트
-                    reason: '쿠폰 코드 교환',                // 상태는 'Redeemed'
-                    timestamp: new Date().toISOString()     // 현재 날짜
+                    reason: '쿠폰 코드 교환',                // 상태는 'Redeemed'   // 현재 날짜
                 });
 
             if (insertError) throw insertError;

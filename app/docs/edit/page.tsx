@@ -228,6 +228,7 @@ export default function Edits() {
     }
   };
 
+
   const handleSubmitMessage = useCallback(async () => {
     if (!input.trim()) return;
     if (bulletPoints >= 20) { // 20 포인트 이상 필요
