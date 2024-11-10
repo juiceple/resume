@@ -52,7 +52,7 @@ const SignupStep1: React.FC<{
         {/* Name Input */}
         <div>
           <label htmlFor="name" className="block text-lg font-medium text-gray-700">
-             <span className="text-red-700">*</span>
+            이름 <span className="text-red-700">*</span>
           </label>
           <input
             type="text"
@@ -154,7 +154,7 @@ const SignupStep1: React.FC<{
                 <span className="ml-2">마케팅 정보 수신 동의 (선택)</span>
               </label>
               <a href="/terms/마케팅 이용 및 수신 동의" target="_blank" className="text-blue-600">약관 보기</a>
-              
+
             </div>
           </div>
         </div>

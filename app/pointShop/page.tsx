@@ -44,6 +44,44 @@ const PointShop: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [historyUpdated, setHistoryUpdated] = useState(false);
     const supabase = createClient();
+    const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+    const [selectedPoints, setSelectedPoints] = useState(0);
+    const [selectedPrice, setSelectedPrice] = useState(0);
+    const [isPremium, setIsPremium] = useState(false);
+
+    // Agreement checkboxes state
+    const [formData, setFormData] = useState({
+        agreements: {
+            all: false,
+            terms: false,
+            privacy: false,
+        },
+    });
+
+    const handleAgreementChange = (field: string, checked: boolean) => {
+        setFormData((prevFormData) => {
+            const updatedAgreements = { ...prevFormData.agreements, [field]: checked };
+
+            // If 'all' is checked or unchecked, set all agreements accordingly
+            if (field === 'all') {
+                updatedAgreements.terms = checked;
+                updatedAgreements.privacy = checked;
+            } else {
+                // Set 'all' based on individual agreement checkboxes
+                updatedAgreements.all = updatedAgreements.terms && updatedAgreements.privacy;
+            }
+
+            return { agreements: updatedAgreements };
+        });
+    };
+
+    // 모달을 열고 결제 정보를 설정하는 함수
+    const initiatePurchase = (points: number, price: number, premium: boolean = false) => {
+        setSelectedPoints(points);
+        setSelectedPrice(price);
+        setIsPremium(premium);
+        setIsConfirmationModalOpen(true);
+    };
 
 
     const handleTabChange = (tab: 'purchase' | 'history' | 'bulletPointHistory') => {
@@ -65,6 +103,7 @@ const PointShop: React.FC = () => {
             show,
         });
     };
+
 
     // Fetch purchase history
     const [historyItems, setHistoryItems] = useState<HistoryItemProps[]>([]);
@@ -222,33 +261,35 @@ const PointShop: React.FC = () => {
         setHistoryUpdated(false); // Toggle historyUpdated to refresh history
     };
 
-
-
-    const handlePurchase = async (points: number, price: number, isPremium: boolean = false) => {
+    const confirmPurchase = async () => {
         try {
             setIsLoading(true);
+
+            // 인증된 사용자 가져오기
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError || !user) throw new Error("User not authenticated.");
-    
+
+            // 주문 ID 및 상품 이름 설정
             const uniqueOrderId = `${user.id}_${Date.now()}`;
-            const goodsName = isPremium ? "무제한 프리미엄" : `${points} 포인트`;
-            const amount = isPremium ? 25000 : price;
-    
+            const goodsName = isPremium ? "무제한 프리미엄" : `${selectedPoints} 포인트`;
+            const amount = isPremium ? 25000 : selectedPrice;
+
+            // 결제 요청
             if (isPremium) {
-                // Make a subscription request for the premium purchase
+                // 프리미엄 구독 요청
                 AUTHNICE.requestPay({
                     clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-                    method: 'card', // Change to subscription method for recurring payment
+                    method: 'card', // 반복 결제를 위한 방법 설정
                     orderId: uniqueOrderId,
                     amount,
                     goodsName,
-                    returnUrl: '/api/subscription', // Actual endpoint
+                    returnUrl: '/api/subscription', // 실제 엔드포인트
                     fnError: function (result: any) {
                         updateAlert("구독 오류", '구독 오류: ' + result.errorMsg);
                     }
                 });
             } else {
-                // Standard one-time purchase request
+                // 일반 1회 결제 요청
                 AUTHNICE.requestPay({
                     clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
                     method: 'cardAndEasyPay',
@@ -261,18 +302,69 @@ const PointShop: React.FC = () => {
                     }
                 });
             }
-    
-            setHistoryUpdated(true);
+
+            setHistoryUpdated(true); // 결제 내역 업데이트 트리거
         } catch (err) {
+            // 에러 발생 시 알림 표시
             updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.");
-            console.error("Error recording purchase:", err);
+            console.error("Error confirming purchase:", err);
             setError(err instanceof Error ? err.message : 'An unknown error occurred');
         } finally {
-            setIsLoading(false);
-            setHistoryUpdated(false);
+            setIsLoading(false); // 로딩 상태 종료
+            setHistoryUpdated(false); // 내역 업데이트 상태 초기화
         }
     };
-    
+
+
+    // const handlePurchase = async (points: number, price: number, isPremium: boolean = false) => {
+    //     try {
+    //         setIsLoading(true);
+    //         const { data: { user }, error: userError } = await supabase.auth.getUser();
+    //         if (userError || !user) throw new Error("User not authenticated.");
+
+    //         const uniqueOrderId = `${user.id}_${Date.now()}`;
+    //         const goodsName = isPremium ? "무제한 프리미엄" : `${points} 포인트`;
+    //         const amount = isPremium ? 25000 : price;
+
+    //         if (isPremium) {
+    //             // Make a subscription request for the premium purchase
+    //             AUTHNICE.requestPay({
+    //                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+    //                 method: 'card', // Change to subscription method for recurring payment
+    //                 orderId: uniqueOrderId,
+    //                 amount,
+    //                 goodsName,
+    //                 returnUrl: '/api/subscription', // Actual endpoint
+    //                 fnError: function (result: any) {
+    //                     updateAlert("구독 오류", '구독 오류: ' + result.errorMsg);
+    //                 }
+    //             });
+    //         } else {
+    //             // Standard one-time purchase request
+    //             AUTHNICE.requestPay({
+    //                 clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+    //                 method: 'cardAndEasyPay',
+    //                 orderId: uniqueOrderId,
+    //                 amount,
+    //                 goodsName,
+    //                 returnUrl: '/api/serverAuth',
+    //                 fnError: function (result: any) {
+    //                     updateAlert("결제 오류", '결제 오류: ' + result.errorMsg);
+    //                 }
+    //             });
+    //         }
+
+    //         setHistoryUpdated(true);
+    //     } catch (err) {
+    //         updateAlert("에러가 발생했습니다.", err ? `${err}` : "알 수 없는 오류가 발생했습니다.");
+    //         console.error("Error recording purchase:", err);
+    //         setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    //     } finally {
+    //         setIsLoading(false);
+    //         setHistoryUpdated(false);
+    //     }
+    // };
+
 
 
 
@@ -294,7 +386,7 @@ const PointShop: React.FC = () => {
                 <h3 className="text-3xl font-semibold">{points.toLocaleString()} P</h3>
                 <p className="text-lg font-medium text-gray-700">₩ {price.toLocaleString()}</p>
             </div>
-            <button className="w-full h-[51.5px] rounded-b-lg border-t-2" onClick={() => handlePurchase(points, price)}>구매하기</button>
+            <button className="w-full h-[51.5px] rounded-b-lg border-t-2" onClick={() => initiatePurchase(points, price)}>구매하기</button>
         </div>
     );
 
@@ -313,7 +405,7 @@ const PointShop: React.FC = () => {
             </div>
             <button
                 className="h-[51.5px] w-full rounded-b-lg border-t-2"
-                onClick={() => handlePurchase(0, 25000, true)}
+                onClick={() => initiatePurchase(0, 25000)}
             >
                 구독하기
             </button>
@@ -442,6 +534,86 @@ const PointShop: React.FC = () => {
         );
     };
 
+    const ConfirmationModal: React.FC = () => (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-3xl shadow-xl w-[500px] space-y-6">
+                <h2 className="text-center text-2xl font-bold">주문 확인</h2>
+                <div className="bg-gray-100 p-4 rounded-lg space-y-4">
+                    <div className="flex justify-between items-center text-lg">
+                        <span>구매자명</span>
+                        <span>김예은</span>
+                    </div>
+                    <div className="flex justify-between items-center text-lg">
+                        <span>구매 포인트</span>
+                        <span>{selectedPoints}P</span>
+                    </div>
+                    <div className="flex justify-between items-center text-lg">
+                        <span>보너스 포인트</span>
+                        <span>0P</span>
+                    </div>
+                    <hr className="border-gray-300" />
+                    <div className="flex justify-between items-center text-xl font-semibold">
+                        <span>총 결제 금액</span>
+                        <span>{selectedPrice.toLocaleString()}원</span>
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={formData.agreements.all}
+                            onChange={(e) => handleAgreementChange('all', e.target.checked)}
+                            className="w-5 h-5 rounded border-gray-300 text-indigo-600"
+                        />
+                        <span className="ml-2 text-lg">아래 내용에 모두 동의합니다.</span>
+                    </label>
+                    <label className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={formData.agreements.terms}
+                                onChange={(e) => handleAgreementChange('terms', e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-indigo-600"
+                            />
+                            <span className="ml-2">[필수] 결제 정보 제 3자 제공 동의</span>
+                        </div>
+                        <a href="/terms/third-party-consent" target="_blank" className="text-blue-600">약관 보기</a>
+                    </label>
+                    <label className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={formData.agreements.privacy}
+                                onChange={(e) => handleAgreementChange('privacy', e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-indigo-600"
+                            />
+                            <span className="ml-2">[필수] CVMATE 유료서비스 이용약관</span>
+                        </div>
+                        <a href="/terms/cvmate-service" target="_blank" className="text-blue-600">약관 보기</a>
+                    </label>
+                </div>
+                <div className="flex space-x-4 mt-6">
+                    <button
+                        onClick={() => setIsConfirmationModalOpen(false)}
+                        className="w-full py-2 rounded-lg bg-gray-300"
+                    >
+                        취소
+                    </button>
+                    <button
+                        onClick={confirmPurchase}
+                        className="w-full py-2 rounded-lg bg-blue-500 text-white"
+                        disabled={!formData.agreements.terms || !formData.agreements.privacy} // Disable button if required checkboxes are not checked
+                    >
+                        결제하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+    
+    
+
+
 
 
 
@@ -550,6 +722,8 @@ const PointShop: React.FC = () => {
                     onClose={() => setAlert({ ...alert, show: false })}
                 />
             )}
+            {isConfirmationModalOpen && <ConfirmationModal />}
+
         </div>
     );
 };

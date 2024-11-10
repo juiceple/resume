@@ -158,7 +158,8 @@ export default function SignupPage() {
   const uploadProfileData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const { error } = await supabase
+      // Insert or update profile data in the 'profiles' table
+      const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
@@ -179,12 +180,31 @@ export default function SignupPage() {
           onConflict: 'user_id',
           ignoreDuplicates: false
         });
-
-      if (error) {
-        console.error('Error updating profile:', error);
+  
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
         setErrorMessage("프로필 업데이트 중 오류가 발생했습니다.");
         return false;
       }
+  
+      // Insert a row in the other table with integer values as 0 and reason as "계정생성"
+      const { error: otherTableError } = await supabase
+        .from('BulletPointHistory') // Replace with the actual table name
+        .insert({
+          user_id: user.id, // if user_id is relevant to the other table
+          eventPoint: 0,
+          purchasePoint: 0,
+          change: 0,
+          changeEventPoint: 0,
+          reason: '계정생성',
+        });
+  
+      if (otherTableError) {
+        console.error('Error inserting into other table:', otherTableError);
+        setErrorMessage("다른 테이블에 데이터 추가 중 오류가 발생했습니다.");
+        return false;
+      }
+  
       return true;
     }
     setErrorMessage("사용자 정보를 찾을 수 없습니다.");
