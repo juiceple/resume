@@ -33,7 +33,7 @@ export default function FirstVisitAlert() {
         </div>
         <AlertDialogCancel
           onClick={() => setIsAlertOpen(false)}
-          className="bg-[#2871E6] text-[25px] flex w-[160px] h-[60px] items-center justify-center rounded-2xl text-white hover:bg-[#2871E6] hover:text-white"
+          className="bg-[#2871E6] text-[25px] flex w-36 h-24 items-center justify-center rounded-2xl text-white hover:bg-[#2871E6] hover:text-white"
         >
           확인
         </AlertDialogCancel>
