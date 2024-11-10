@@ -110,26 +110,26 @@ const PointShop: React.FC = () => {
             try {
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError || !user) throw new Error("User not authenticated.");
-    
+
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('name')
                     .eq('user_id', user.id)
                     .single();
-    
+
                 if (profileError) throw profileError;
-    
+
                 setName(profile?.name || null);
             } catch (error) {
                 console.error("Error fetching user name:", error);
                 setError(error instanceof Error ? error.message : 'An unknown error occurred');
             }
         };
-    
+
         // Execute fetchUserName only if user exists
         fetchUserName();
     }, []); // Runs only once on component mount
-    
+
 
 
     // Fetch purchase history
@@ -153,19 +153,19 @@ const PointShop: React.FC = () => {
             try {
                 setIsLoading(true);
                 setError(null);
-    
+
                 // Get authenticated user
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError || !user) throw new Error("User not authenticated.");
-    
+
                 const { data, error: historyError } = await supabase
                     .from('purchaseHistory')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('구매일자', { ascending: false });
-    
+
                 if (historyError) throw historyError;
-    
+
                 const formattedHistoryItems = data.map((item: any) => ({
                     date: new Date(item.구매일자).toLocaleDateString(),
                     amount: item.금액,
@@ -174,7 +174,7 @@ const PointShop: React.FC = () => {
                     tid: item.tid,
                     status: item.status,
                 }));
-    
+
                 setHistoryItems(formattedHistoryItems);
             } catch (err) {
                 console.error("Error fetching purchase history:", err);
@@ -183,12 +183,12 @@ const PointShop: React.FC = () => {
                 setIsLoading(false);
             }
         };
-    
+
         if (activeTab === 'history' || historyUpdated) {
             fetchUserAndPurchaseHistory();
         }
     }, [activeTab, historyUpdated]); // Add activeTab as a dependency
-    
+
 
 
     const handlePinSubmit = async () => {
@@ -303,35 +303,18 @@ const PointShop: React.FC = () => {
             const uniqueOrderId = `${user.id}_${Date.now()}`;
             const goodsName = isPremium ? "무제한 프리미엄" : `${selectedPoints} 포인트`;
             const amount = isPremium ? 25000 : selectedPrice;
-
-            // 결제 요청
-            if (isPremium) {
-                // 프리미엄 구독 요청
-                AUTHNICE.requestPay({
-                    clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-                    method: 'card', // 반복 결제를 위한 방법 설정
-                    orderId: uniqueOrderId,
-                    amount,
-                    goodsName,
-                    returnUrl: '/api/subscription', // 실제 엔드포인트
-                    fnError: function (result: any) {
-                        updateAlert("구독 오류", '구독 오류: ' + result.errorMsg);
-                    }
-                });
-            } else {
-                // 일반 1회 결제 요청
-                AUTHNICE.requestPay({
-                    clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
-                    method: 'cardAndEasyPay',
-                    orderId: uniqueOrderId,
-                    amount,
-                    goodsName,
-                    returnUrl: '/api/serverAuth',
-                    fnError: function (result: any) {
-                        updateAlert("결제 오류", '잠시 후에 다시 시도해주세요. 계속적인 오류 발생 시 고객센터로 문의 부탁드립니다.');
-                    }
-                });
-            }
+            // 일반 1회 결제 요청
+            AUTHNICE.requestPay({
+                clientId: 'S2_be72bcdeab1840b0aad7be10d4ec5acc',
+                method: 'cardAndEasyPay',
+                orderId: uniqueOrderId,
+                amount,
+                goodsName,
+                returnUrl: '/api/serverAuth',
+                fnError: function (result: any) {
+                    updateAlert("결제 오류", '잠시 후에 다시 시도해주세요. 계속적인 오류 발생 시 고객센터로 문의 부탁드립니다.');
+                }
+            });
 
             setHistoryUpdated(true); // 결제 내역 업데이트 트리거
         } catch (err) {
@@ -433,17 +416,17 @@ const PointShop: React.FC = () => {
                 <h3 className="text-3xl font-semibold">무제한 프리미엄</h3>
                 <ul>
                     <li>
-                    •무제한 포인트
+                        •무제한 포인트
                     </li>
                     <li>
-                    •하루 최대 5회 PDF 다운로드
+                        •하루 최대 5회 PDF 다운로드
                     </li>
                 </ul>
                 <p className="text-lg font-medium text-gray-700">₩ 25000</p>
             </div>
             <button
                 className="h-[51.5px] w-full rounded-b-lg border-t-2"
-                onClick={() => initiatePurchase(0, 25000,true)}
+                onClick={() => initiatePurchase(0, 25000, true)}
             >
                 구독하기
             </button>
@@ -648,8 +631,8 @@ const PointShop: React.FC = () => {
             </div>
         </div>
     );
-    
-    
+
+
 
 
 

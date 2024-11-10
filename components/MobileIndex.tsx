@@ -64,7 +64,7 @@ export default function Index() {
                         <p className="mb-2 text-sm sm:text-base">10,000개의 외국 대기업 합격 이력서를 학습한 AI 전문가와 단 몇 분에 꿈을 이루세요!</p>
                         <p className="mb-4 text-sm sm:text-base">출시알람 받고 무료로 체험하세요.</p>
                         <div className="flex justify-center mb-6">
-                            <HomeButton variant="gradient" text="출시 알람 받기" url="https://forms.gle/vFYbvEkf7kAJbtZNA" size="small" />
+                            <HomeButton variant="gradient" text="지금 바로 사용해보기" url="/signup" size="small" />
                         </div>
                     </div>
                     <div className="absolute top-[200px] left-1/2 transform -translate-x-1/2 translate-y-1/2 w-full max-w-sm flex flex-col items-center">
@@ -105,7 +105,7 @@ export default function Index() {
                             CV메이트로 빠르고 손쉽게 <br />합격 영문 이력서를 작성해보세요
                         </FadeInText>
                         <div className='w-32'>
-                            <HomeButton variant="gradient" text="출시 알람 받기" url="https://forms.gle/vFYbvEkf7kAJbtZNA" size="small" />
+                            <HomeButton variant="gradient" text="지금 바로 사용해보기" url="/signup" size="small" />
                         </div>
                     </div>
                     <div className='relative overflow-hidden p-8 w-[300px] h-[330px]'>
@@ -155,7 +155,7 @@ export default function Index() {
                             <p className="text-xs mb-8">어렵고 귀찮게만 느껴졌던 영문 이력서 작성,<br /> 해외, 외국계 합격 이력서 10,000개+를 학습한 AI 전문가 CV메이트가 이젠 대신 해드릴게요!</p>
                         </div>
                         <div className='flex justify-start'>
-                            <HomeButton variant='blue' text='지금 바로 시작하기' url='https://forms.gle/vFYbvEkf7kAJbtZNA' size='small'></HomeButton>
+                            <HomeButton variant='blue' text='지금 바로 시작하기' url='/signup' size='small'></HomeButton>
                         </div>
                     </div>
                     {/* Statistics Section */}
@@ -196,7 +196,7 @@ export default function Index() {
                         <h3 className="text-xl font-bold">사전예약 EVENT</h3>
                         <h2 className="text-2xl font-bold text-white line-through">5,000원</h2>
                         <h2 className="text-2xl font-bold">0원 스타터 패키지</h2>
-                        <HomeButton variant="gradient" text="출시 알람 받기" url="https://forms.gle/vFYbvEkf7kAJbtZNA" size="small" />
+                        <HomeButton variant="gradient" text="출시 알람 받기" url="/signup" size="small" />
                         <p className="text-xs text-white">무료로 특별한 혜택을 만나보세요:</p>
                         <div className=' pl-10 text-start'>
                             <ul className="text-xs font-semibold list-none pl-0">
@@ -220,8 +220,8 @@ export default function Index() {
                 </div>
                 <div className='flex gap-10'>
                     <Link href="/terms/이용약관"><p className='underline decoration-solid'>이용약관</p></Link>
-                    <Link href="terms/개인정보처리방침"><p className='underline decoration-solid'>개인정보 처리방침</p></Link>
-                    <Link href="terms/마케팅%20이용%20및%20수신%20동의"><p className='underline decoration-solid'>마케팅 이용 및 수신 동의</p></Link>
+                    <Link href="/terms/개인정보처리방침"><p className='underline decoration-solid'>개인정보 처리방침</p></Link>
+                    <Link href="/terms/마케팅%20이용%20및%20수신%20동의"><p className='underline decoration-solid'>마케팅 이용 및 수신 동의</p></Link>
                 </div>
             </footer>
         </div>

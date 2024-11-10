@@ -11,6 +11,10 @@ import Image from 'next/image';
 // New import for Google Sign-In button
 import GoogleSignInButton from "@/components/login/GoogleSingIn";
 
+export const metadata = {
+  viewport: "width=1024" // PC 화면과 동일한 너비로 유지
+};
+
 export default function Login({ searchParams }: { searchParams: Message }) {
   const signIn = async (formData: FormData) => {
     "use server";
@@ -33,6 +37,7 @@ export default function Login({ searchParams }: { searchParams: Message }) {
 
   return (
     <div className="flex flex-col bg-[#EEE] flex-1 p-4 w-full items-center justify-center min-h-screen">
+
       <div className="relative w-1/4 bg-white shadow-lg rounded-xl">
         <div className="absolute w-full -top-20 flex justify-center">
           <div>
