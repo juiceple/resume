@@ -72,8 +72,7 @@ const PurchaseResultContent: React.FC = () => {
                         change: points,
                         purchasePoint: newPurchasePoint,
                         eventPoint: previousEventPoint,
-                        reason: '상품 구매',
-                        timestamp: new Date().toISOString()
+                        reason: '상품 구매'
                     });
 
                 if (insertHistoryError) throw insertHistoryError;
