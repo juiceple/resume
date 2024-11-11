@@ -442,7 +442,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             setLoading(false);
             
         }
-    }, [title]);
+    }, [title, pdfPoint]);
 
 
     return (
