@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { TermsSectionProps } from '@/types/terms';
 import Image from 'next/image';
 import Link from 'next/link';
+import AuthButton from '@/components/AuthButton';
 
 const TermsSection: React.FC<TermsSectionProps> = ({ title, date }) => {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function TermsPage() {
           <Link href="/">
             <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
           </Link>
-          {/* <AuthButton /> */}
+          <AuthButton />
         </div>
       </nav>
       

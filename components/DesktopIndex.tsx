@@ -69,7 +69,7 @@ export default function Index() {
           <Link href="/docs">
             <Image src='/images/resume.png' alt="Logo" width={120} height={40} />
           </Link>
-          {/* <AuthButton /> */}
+          <AuthButton />
 
         </div>
       </nav>
