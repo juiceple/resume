@@ -35,6 +35,31 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
         message: [] as string[],
     });
 
+    // 추가: 구매 시 제공된 이벤트 포인트와 구매 포인트를 계산하는 함수
+    const computePurchaseAndEventPoints = (points: number) => {
+        let purchasePointsInPurchase = 0;
+        let eventPointsInPurchase = 0;
+
+        // points 값에 따라 purchasePoints와 eventPoints를 계산
+        if (points === 500) {
+            purchasePointsInPurchase = 500;
+            eventPointsInPurchase = 0;
+        } else if (points === 800) {
+            purchasePointsInPurchase = 700;
+            eventPointsInPurchase = 100;
+        } else if (points === 1200) {
+            purchasePointsInPurchase = 1000;
+            eventPointsInPurchase = 200;
+        } else {
+            // 다른 경우에 대한 로직 추가 필요
+            // 예를 들어, 기본적으로 모든 포인트를 구매 포인트로 처리하거나 오류 처리
+            purchasePointsInPurchase = points;
+            eventPointsInPurchase = 0;
+        }
+
+        return { purchasePointsInPurchase, eventPointsInPurchase };
+    };
+
     const updateAlert = (title: string, message: string | string[], show = true) => {
         setAlert({
             title,
@@ -52,6 +77,12 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
         };
         fetchUserId();
     }, []);
+
+    useEffect(() => {
+        if (userId) {
+            fetchUserProfile(userId);
+        }
+    }, [userId]);
 
     const fetchUserProfile = async (userId: string) => {
         const { data, error } = await supabase
@@ -77,17 +108,28 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
     const handleCancel = async () => {
         if (!userId) return;
 
-        setIsDialogOpen(false); // Close the dialog immediately
-        setIsLoading(true); // Start loading
+        setIsDialogOpen(false); // 다이얼로그 즉시 닫기
+
+        // 가격이 25000원일 때는 취소 불가 처리
+        if (price === 25000) {
+            updateAlert("취소 불가", "이 상품은 구매 취소가 불가능합니다.");
+            return;
+        }
+
+        setIsLoading(true); // 로딩 시작
 
         try {
             const pointsData = await fetchUserProfile(userId);
             if (!pointsData) return;
 
-            const { purchasePoints } = pointsData;
+            const { purchasePoints: userPurchasePoints, eventPoints: userEventPoints } = pointsData;
 
-            if (purchasePoints < points) {
-                updateAlert("잔려 포인트를 일부만 취소하고 싶어요.", "잔여 포인트는 결제일로부터 지난 일 수, 결제 수단에 따라 취소 여부가 다르므로 구매내역과 함께 고객센터에 문의 부탁드립니다.");
+            // 추가: 구매 시 사용된 구매 포인트와 이벤트 포인트 계산
+            const { purchasePointsInPurchase, eventPointsInPurchase } = computePurchaseAndEventPoints(points);
+
+            // 구매 및 이벤트 포인트 모두 체크
+            if (userPurchasePoints < purchasePointsInPurchase || userEventPoints < eventPointsInPurchase) {
+                updateAlert("잔여 포인트를 일부만 취소하고 싶어요.", "잔여 포인트는 결제일로부터 지난 일 수, 결제 수단에 따라 취소 여부가 다르므로 구매내역과 함께 고객센터에 문의 부탁드립니다. ");
                 return;
             }
 
@@ -127,15 +169,18 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
                 return;
             }
 
-            const newPoints = purchasePoints - points;
+            // 포인트 차감 처리
+            const newPurchasePoints = userPurchasePoints - purchasePointsInPurchase; // 구매 포인트 차감
+            const newEventPoints = userEventPoints - eventPointsInPurchase;         // 이벤트 포인트 차감
+
             const { error: deductionError } = await supabase
                 .from('BulletPointHistory')
                 .insert([
                     {
                         user_id: userId,
-                        change: -points,
-                        eventPoint: eventPoints,
-                        purchasePoint: newPoints,
+                        change: -(purchasePointsInPurchase + eventPointsInPurchase), // 총 차감 포인트
+                        eventPoint: newEventPoints,
+                        purchasePoint: newPurchasePoints,
                         reason: '구매 취소'
                     },
                 ]);
@@ -145,18 +190,19 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
                 return;
             }
 
-            setPurchasePoints(newPoints);
-            setBulletPoints(newPoints + eventPoints);
+            setPurchasePoints(newPurchasePoints);
+            setEventPoints(newEventPoints);
+            setBulletPoints(newPurchasePoints + newEventPoints);
             onCancellation();
-            // Show success alert after cancellation is complete
+
+            // 취소 완료 후 성공 알림 표시
             updateAlert("환불 요청 완료", "카드사에 환불 요청을 완료하여, 영업일 7일 이내 결제하신 수단으로 환불될 예정입니다!");
         } catch (err) {
             updateAlert("취소 요청 중 오류", "구매 취소를 완료할 수 없습니다.");
         } finally {
-            setIsLoading(false); // Stop loading
+            setIsLoading(false); // 로딩 종료
         }
     };
-
 
     return (
         <>
@@ -174,6 +220,8 @@ const CancelPoint: React.FC<CancellationPointProps> = ({ tid, points, price, onC
                     </AlertDialogHeader>
                     <AlertDialogDescription className="text-center text-black text-2xl">
                         구매: {points}P<br />
+                        {/* 추가: 포인트 상세 정보 표시 */}
+                        구매 포인트: {computePurchaseAndEventPoints(points).purchasePointsInPurchase}P, 이벤트 포인트: {computePurchaseAndEventPoints(points).eventPointsInPurchase}P<br />
                         가격: {price.toLocaleString()}원
                     </AlertDialogDescription>
                     <div className="text-sm text-gray-500 text-left">

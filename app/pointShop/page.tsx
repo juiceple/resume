@@ -50,7 +50,7 @@ const PointShop: React.FC = () => {
     const [bonusPoints, setBonusPoint]= useState(0);
     const [isPremium, setIsPremium] = useState(false);
     const [name, setName] = useState<string | null>(null); // State to hold user's name
-
+    const [isSubscribed, setIsSubscribed] = useState(false);
     // Agreement checkboxes state
     const [formData, setFormData] = useState({
         agreements: {
@@ -59,6 +59,29 @@ const PointShop: React.FC = () => {
             privacy: false,
         },
     });
+
+    useEffect(() => {
+        const checkSubscriptionStatus = async () => {
+            try {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) throw new Error("User not authenticated.");
+
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('isPremium')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+                
+                setIsSubscribed(profile?.isPremium || false);
+            } catch (error) {
+                console.error("Error checking subscription status:", error);
+            }
+        };
+
+        checkSubscriptionStatus();
+    }, [isSubscribed]);
 
     const handleAgreementChange = (field: string, checked: boolean) => {
         setFormData((prevFormData) => {
@@ -79,6 +102,11 @@ const PointShop: React.FC = () => {
 
     // 모달을 열고 결제 정보를 설정하는 함수
     const initiatePurchase = (points: number, price: number, premium: boolean = false, bonusPoints: number) => {
+        if (premium && isSubscribed) {
+            updateAlert("구독 상태 확인", "이미 프리미엄 구독 중입니다.");
+            return;
+        }
+        
         setSelectedPoints(points);
         setSelectedPrice(price);
         setIsPremium(premium);
@@ -327,6 +355,7 @@ const PointShop: React.FC = () => {
         } finally {
             setIsLoading(false); // 로딩 상태 종료
             setHistoryUpdated(false); // 내역 업데이트 상태 초기화
+            setIsPremium(false);
         }
     };
 
