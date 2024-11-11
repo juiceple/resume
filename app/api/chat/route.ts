@@ -102,63 +102,37 @@ IMPROVING: Making systems, processes, or products better through enhancements.
 SUPERVISE
 `
 const Choose_KeyWord_Of_Job_Description = `
-YOU ARE THE WORLD'S MOST ACCURATE AND EFFICIENT EXPERT IN JOB DESCRIPTION ANALYSIS. YOU SPECIALIZE IN EXTRACTING KEYWORDS THAT CANDIDATES MUST INCLUDE IN THEIR CVS AND BULLET POINTS TO MAXIMIZE THEIR RELEVANCE TO SPECIFIC JOB POSTINGS. YOUR ROLE IS TO IDENTIFY AND EXTRACT THE MOST IMPORTANT TERMS, CONCEPTS, AND SKILLS FROM A PROVIDED JOB DESCRIPTION.
+YOU ARE AN EXPERT IN EXTRACTING KEYWORDS FROM JOB DESCRIPTIONS TO HELP CANDIDATES ALIGN THEIR CVS WITH SPECIFIC ROLES. IDENTIFY THE MOST RELEVANT TERMS, SKILLS, AND CONCEPTS FROM THE PROVIDED JOB DESCRIPTION.
 
 ###INSTRUCTIONS###
 
-- You MUST READ and COMPREHEND the provided job description.
-- IDENTIFY and EXTRACT the KEYWORDS and IMPORTANT TERMS that are crucial for a candidate to include in their CV to demonstrate alignment with the job role.
-- FOCUS on industry-specific terminology, required skills, tools, and relevant competencies mentioned in the job description.
-- ENSURE that the extracted keywords COVER both technical skills (if applicable) and soft skills, along with any company-specific or role-specific concepts.
-- DO NOT EXTRACT general or irrelevant words.
-- You MUST follow the "Chain of Thoughts" process before answering.
+- READ the job description thoroughly.
+- EXTRACT critical keywords, focusing on specific skills, tools, certifications, and soft skills relevant to the role.
+- INCLUDE industry-specific and role-specific terms.
+- AVOID general or irrelevant words.
 
-###Chain of Thoughts###
+###Steps###
 
-FOLLOW these steps to ACCURATELY EXTRACT KEYWORDS:
+1. READ to understand core responsibilities, skills, and qualifications.
+2. IDENTIFY technical skills (e.g., tools, certifications).
+3. NOTE soft skills and key competencies.
+4. LIST any industry-specific terms or concepts.
 
-1. UNDERSTAND THE JOB DESCRIPTION:
-   1.1. THOROUGHLY READ the provided job description to understand the core responsibilities, required skills, and qualifications.
-   1.2. IDENTIFY any recurring terms or phrases that highlight the priorities of the employer.
-
-2. EXTRACT TECHNICAL SKILLS:
-   2.1. IDENTIFY specific software, tools, and platforms mentioned.
-   2.2. INCLUDE any certifications or technical knowledge required.
-
-3. EXTRACT SOFT SKILLS AND COMPETENCIES:
-   3.1. LOOK FOR soft skills such as communication, leadership, decision-making, teamwork, or critical thinking that are explicitly stated or implied.
-   3.2. FOCUS on the desired behaviors or outcomes that are important for the role.
-
-4. EXTRACT INDUSTRY OR ROLE-SPECIFIC CONCEPTS:
-   4.1. PINPOINT any concepts, methodologies, or frameworks that are specific to the industry or job function (e.g., "GTM strategies").
-   4.2. INCLUDE any strategic or business-related terms that are emphasized in the job description.
-
-5. FINALIZE THE LIST:
-   5.1. COMPILE the most relevant keywords into a clear list.
-   5.2. ENSURE that each keyword directly relates to the job description and will enhance a candidate's alignment with the role.
-
-###What Not To Do###
-
-- DO NOT EXTRACT common words like "team," "company," or "clients" unless they are contextually critical.
-- DO NOT INCLUDE irrelevant or overly general terms that aren't specific to the role.
-- NEVER MISINTERPRET the job description and extract irrelevant concepts.
-- DO NOT FAIL to EXTRACT important technical skills or key competencies mentioned in the job description.
-
-###Few-Shot Example###
+###Example###
 
 **Job Description:**
-"We are looking for a strategic marketing manager with experience in developing and implementing GTM strategies. The ideal candidate will have strong decision-making skills, be proficient in digital marketing tools, and have experience with market research and data analysis. Strong communication and leadership abilities are a must."
+"Looking for a strategic marketing manager with experience in GTM strategies, digital marketing tools, market research, data analysis, and strong communication and leadership skills."
 
 **Extracted Keywords:**
 - "GTM strategies"
-- "Decision-Making"
 - "Digital Marketing Tools"
 - "Market Research"
 - "Data Analysis"
 - "Communication"
 - "Leadership"
-
 `
+
+
 
 function FIRST_SYSTEM_PROMPT(bulletPointExample: string[], actionVerb: string[], keyWordOfJobDescription?: string) {
   let promptText = `
@@ -187,35 +161,47 @@ IF THE USER PROVIDES INFORMATION OTHER THAN JOB TITLE AND EXPERIENCE DESCRIPTION
 `;
 
   promptText += `
-   ### BULLET POINT GENERATION REQUIREMENTS ###
+### GUIDELINES FOR PARAPHRASING ###
 
-- **GENERATE BULLET POINTS EVEN IF INPUT IS LIMITED**: If the user provides only minimal information, generate bullet points based on assumptions or typical responsibilities for that role. Use placeholder metrics (e.g., “X%” or “N units”) to indicate where quantifiable results could be added.
-- **START WITH AN ACTION VERB**: Begin each bullet with a strong, action-oriented verb (e.g., "Developed," "Led," "Improved").
-  - **USE ONLY ONE ACTION VERB** at the beginning of each bullet point sentence to maintain clarity and impact.
-- **BE SPECIFIC**: Describe the specific tasks or projects the user performed, highlighting key details.
-- **INCLUDE QUANTIFIABLE RESULTS**: Use numbers or metrics wherever possible to show impact (e.g., "increased sales by 25%," "reduced costs by 15%").
-- **AVOID PERSONAL PRONOUNS**: Do not use "I" or "My" in any bullet point.
+- YOU WILL BE PROVIDED WITH A SIMILAR BULLET POINT BASED ON A RETRIEVED SENTENCE SIMILAR TO THE USER’S EXPERIENCE. PARAPHRASE THIS BULLET POINT WITHOUT COPYING IT DIRECTLY. 
+  Example format: ${bulletPointExample}
 
-### PARAPHRASING GUIDELINES ###
+- YOU WILL ALSO BE PROVIDED WITH A LIST OF **RECOMMENDED ACTION VERBS**. USE THIS ACTION VERB IF IT FITS THE USER'S EXPERIENCE OR OPT FOR A BETTER ONE IF NECESSARY. 
+  Example format: ${actionVerb}
+- YOU WILL BE OPTIONALLY PROVIDED WITH  A LIST OF **KEY WORDS LIST OF THE JOB DESCRIPTION**. USE THE KEYWORDS IF IT FITS THE USER'S EXPERIENCE.   
+   Example format: ${keyWordOfJobDescription}
 
-- If provided, you may see a similar bullet point or recommended action verb for guidance. Paraphrase this bullet point based on the user’s input.
-  - **Example format for similar bullet point**: ${bulletPointExample}
-  - **Example format for action verb**: ${actionVerb}
-- If given, use **keywords from the job description** where relevant to the user's experience.${keyWordOfJobDescription} : 
-- **MUST INCLUDE QUANTIFIED RESULTS** when applicable, such as "15%", "twice," "200%". 
+### CHAIN OF THOUGHTS FOR QUANTIFYING RESULTS ###
 
+1. **ANALYZE THE EXPERIENCE**:
+   - Identify actions or achievements with measurable outcomes, such as revenue growth, cost reduction, or efficiency improvements.
 
-### OUTPUT INSTRUCTIONS ###
+2. **CHOOSE A RELEVANT METRIC**:
+   - Prioritize metrics that align with common industry measures:
+     - **Growth** (e.g., increases in sales, engagement, or productivity)
+     - **Efficiency** (e.g., reductions in costs, time, or errors)
+     - **Completion** (e.g., projects completed, deadlines met, or team size managed)
 
-1. **GENERATE A LIST OF BULLET POINTS**: Produce concise, professional bullet points as a formatted list, with each bullet on a new line.
-2. **MAINTAIN A CONSISTENT FORMAT**: Each bullet should follow the structure: Action Verb + Specific Task + Quantifiable Result (when available).
+3. **ESTIMATE OR USE PLACEHOLDERS IF NECESSARY**:
+   - Where exact figures aren’t available, estimate typical metrics for the role (e.g., “improved efficiency by 15%”).
+   - Use placeholders like “X%,” “N units,” or “Y months” if expected data is missing but could be relevant.
 
----
+4. **INTEGRATE THE METRIC INTO THE BULLET POINT**:
+   - Embed the metric naturally to highlight the impact:
+     - “Increased [metric] by [number]% through [action].”
+     - “Reduced [metric] by [number]% by implementing [method].”
 
-**EXAMPLE TO GUIDE OUTPUT**:
+5. **VERIFY AND POLISH**:
+   - Ensure the quantified metric enhances clarity and impact.
+   - Adjust wording for smooth readability and emphasis where needed.
+
+6. **abstract actions to specific actions**:
+  - Ensure that if there is abstract actions you should change more specific action.
+
+### EXAMPLES ###
 
 **User Input**:
-- Job Title: Marketing Manager
+- Job Title: Marketing Manage
 - Experience Description: "Led digital marketing campaigns that increased website traffic and improved customer engagement."
 
 **Expected Output**:
@@ -286,17 +272,18 @@ export async function POST(req: Request) {
     const userInput = messages[messages.length - 1].content;
 
 
-    const choosedJobTitle = await chooseJobTitle(jobFormData.job);
+    // 병렬로 실행
+    const [jobTitlePromise, actionVerbPromise, keywordPromise, bulletPointPromise] = await Promise.all([
+      chooseJobTitle(jobFormData.job),
+      chooseActionVerb(jobFormData.workOnJob),
+      chooseKeyWordOfJobDescription(jobFormData.announcement),
+      generateOneBulletPoint(jobFormData.workOnJob, jobFormData.job)
+    ]);
 
-    const choosedActionVerb = await chooseActionVerb(jobFormData.workOnJob);
-
-    let choosedKeyWordOfJobDescription;
-    if (jobFormData.announcement && jobFormData.announcement.trim() !== '') {
-      choosedKeyWordOfJobDescription = await chooseKeyWordOfJobDescription(jobFormData.announcement);
-    }
-
-    const preBulletPoint = await generateOneBulletPoint(jobFormData.workOnJob, jobFormData.job)
-    console.log(preBulletPoint);
+    const choosedJobTitle = await jobTitlePromise;
+    const choosedActionVerb = await actionVerbPromise;
+    const choosedKeyWordOfJobDescription = await keywordPromise;
+    const preBulletPoint = await bulletPointPromise;
 
     const embedding = await generateEmbedding(preBulletPoint);
 
