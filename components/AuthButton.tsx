@@ -24,6 +24,12 @@ export default async function AuthButton() {
           Logout
         </button>
       </form>
+      <Link
+        href="/docs"
+        className="h-8 flex items-center justify-center rounded-md no-underline text-sm font-semibold px-4"
+      >
+        Resume 편집하기
+      </Link>
     </div>
   ) : (
     <div className="flex gap-2">
