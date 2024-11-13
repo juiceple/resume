@@ -338,16 +338,15 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
         
         setLoading(true);
         setLoadingMessage('PDF를 생성 중입니다...');
-
+    
         try {
             const resumeContent = document.querySelector('.doc');
             if (!resumeContent || !(resumeContent instanceof HTMLElement)) {
                 throw new Error('이력서 내용을 찾을 수 없습니다.');
             }
-
+    
             // 제외할 선택자 목록 정의
             const excludeSelectors = [
-                '.ProseMirror-focused',
                 '.pdf-exclude',
                 '.page-break',
                 '.button-container',
@@ -356,7 +355,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                 '.add-section-button-container',
                 '.custom-date-picker:focus-within'
             ];
-
+    
             // Collect all stylesheet CSS rules
             const cssRules: string[] = [];
             for (let i = 0; i < document.styleSheets.length; i++) {
@@ -379,19 +378,34 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                     console.warn('스타일시트 접근 오류:', e);
                 }
             }
-
+    
             const inlineStyles = resumeContent.getAttribute('style') || '';
             const computedStyles = window.getComputedStyle(resumeContent);
-
+    
             const cleanedContent = resumeContent.cloneNode(true) as HTMLElement;
+            
+            // 제외할 요소들 제거
             cleanedContent.querySelectorAll(excludeSelectors.join(', ')).forEach(el => el.remove());
+            
+            // focus 관련 클래스와 스타일만 제거하고 요소는 유지
             cleanedContent.querySelectorAll('.ProseMirror-focused').forEach(el => {
-                (el as HTMLElement).style.cssText = '';
+                el.classList.remove('ProseMirror-focused');  // focus 클래스 제거
+                const element = el as HTMLElement;
+                
+                // focus 관련 스타일만 제거
+                element.style.outline = 'none';
+                element.style.boxShadow = 'none';
             });
-            // .custom-date-picker:focus-within 요소 제거
-            cleanedContent.querySelectorAll('.custom-date-picker:focus-within').forEach(el => el.remove());
+    
+            // custom-date-picker focus 처리
+            cleanedContent.querySelectorAll('.custom-date-picker').forEach(el => {
+                const element = el as HTMLElement;
+                element.style.outline = 'none';
+                element.style.boxShadow = 'none';
+            });
+    
             const htmlContent = cleanedContent.innerHTML;
-
+    
             const response = await fetch('/api/generate-pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -408,12 +422,12 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                     }
                 }),
             });
-
+    
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`서버 응답 오류: ${response.status} ${errorText}`);
             }
-
+    
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -421,6 +435,7 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
             link.download = `${title || 'resume'}.pdf`;
             link.click();
             window.URL.revokeObjectURL(url);
+            
             // After successful PDF download, decrement pdfPoint by 1
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
@@ -428,19 +443,18 @@ export default function EditHeader({ resumeId, refreshResumes, isUpdating }: Edi
                     .from('profiles')
                     .update({ pdfPoint: (pdfPoint || 1) - 1 })
                     .eq('user_id', user.id);
-
+    
                 if (error) throw error;
-
+    
                 // Update the local state to reflect the new pdfPoint value
                 setPdfPoint((pdfPoint || 0) - 1);
             }
-
+    
         } catch (error) {
             console.error('PDF 생성 오류:', error);
             // alert(`PDF 생성에 실패했습니다. 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         } finally {
             setLoading(false);
-            
         }
     }, [title, pdfPoint]);
 
